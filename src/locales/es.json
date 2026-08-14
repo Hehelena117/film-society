@@ -80,7 +80,9 @@
     "delete": "Eliminar esta lista",
     "addTo": "Añadir a una lista",
     "newNamed": "Nombre de la nueva lista",
-    "alsoPeople": "O comparte con una persona"
+    "alsoPeople": "O comparte con una persona",
+    "sharedWith": "Compartida con",
+    "aGroup": "Un grupo"
   },
   "groups": {
     "title": "Grupos",

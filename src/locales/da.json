@@ -80,7 +80,9 @@
     "delete": "Slet denne liste",
     "addTo": "Tilføj til en liste",
     "newNamed": "Navn på ny liste",
-    "alsoPeople": "Eller del med én person"
+    "alsoPeople": "Eller del med én person",
+    "sharedWith": "Delt med",
+    "aGroup": "En gruppe"
   },
   "groups": {
     "title": "Grupper",

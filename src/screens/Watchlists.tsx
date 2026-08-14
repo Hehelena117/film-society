@@ -225,6 +225,14 @@ function WatchlistDetail({
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [sharing, setSharing] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+
+  // Answers "who can see this?" without anyone having to open the panel.
+  const sharingSummary = groupId
+    ? (groups.find((g) => g.id === groupId)?.name ?? t('lists.aGroup'))
+    : members.length > 0
+      ? members.map((m) => m.username).join(', ')
+      : t('lists.justMe')
 
   async function beginSwipe() {
     setStarting(true)
@@ -318,64 +326,6 @@ function WatchlistDetail({
       <main className="relative z-10 mx-auto max-w-lg px-6 py-8">
         {error && <p className="mb-5 text-[0.875rem] text-velvet-500">{error}</p>}
 
-        {/* ---- Who can see this list -------------------------------------- */}
-        {isOwner && (
-          <section className="mb-7 rounded-[2px] border border-rule bg-ground-2 p-4">
-            <span className="type-meta mb-2 block text-ink-3">{t('lists.shareWith')}</span>
-            <select
-              value={groupId}
-              onChange={(e) => void changeGroup(e.target.value)}
-              className="w-full rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
-            >
-              <option value="">{t('lists.justMe')}</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-
-            <span className="type-meta mt-4 mb-2 block text-ink-3">{t('lists.alsoPeople')}</span>
-            <div className="flex gap-2">
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={t('groups.usernamePlaceholder')}
-                className="min-w-0 flex-1 rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
-              />
-              <button
-                type="button"
-                onClick={() => void invite()}
-                disabled={sharing || !username.trim()}
-                className="type-marquee rounded-[2px] bg-velvet-600 px-5 text-[13px] text-plate hover:bg-velvet-700 disabled:opacity-60"
-              >
-                {t('groups.add')}
-              </button>
-            </div>
-
-            {members.length > 0 && (
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {members.map((m) => (
-                  <li
-                    key={m.userId}
-                    className="flex items-center gap-2 rounded-full border border-rule px-3 py-1.5"
-                  >
-                    <span className="text-[0.8125rem] text-ink">{m.username}</span>
-                    <button
-                      type="button"
-                      onClick={() => void uninvite(m.userId)}
-                      aria-label={`${t('lists.remove')} ${m.username}`}
-                      className="text-[0.8125rem] text-ink-3 hover:text-velvet-500"
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
         {/* ---- Decide together --------------------------------------------- */}
         {items.length > 0 &&
           (groupId ? (
@@ -433,10 +383,93 @@ function WatchlistDetail({
           </ul>
         )}
 
+        {/* ---- Who can see this list ---------------------------------------
+            Below the titles and folded away: changing a list's audience is a
+            once-in-a-while act, and it was crowding out the thing people
+            actually came for. The summary line still says who can see it, so
+            it does not have to be opened to be answered. */}
+        {isOwner && (
+          <section className="mt-12 border-t border-rule pt-4">
+            <button
+              type="button"
+              onClick={() => setShareOpen((o) => !o)}
+              aria-expanded={shareOpen}
+              className="flex w-full items-center justify-between py-2 text-left"
+            >
+              <span className="type-meta text-ink-3">
+                {t('lists.sharedWith')}
+                <span className="ml-2 text-ink-2">{sharingSummary}</span>
+              </span>
+              <span aria-hidden className="text-ink-3 transition-transform">
+                {shareOpen ? '−' : '+'}
+              </span>
+            </button>
+
+            {shareOpen && (
+              <div className="mt-3 rounded-[2px] border border-rule bg-ground-2 p-4">
+                <span className="type-meta mb-2 block text-ink-3">{t('lists.shareWith')}</span>
+                <select
+                  value={groupId}
+                  onChange={(e) => void changeGroup(e.target.value)}
+                  className="w-full rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+                >
+                  <option value="">{t('lists.justMe')}</option>
+                  {groups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="type-meta mt-4 mb-2 block text-ink-3">
+                  {t('lists.alsoPeople')}
+                </span>
+                <div className="flex gap-2">
+                  <input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={t('groups.usernamePlaceholder')}
+                    className="min-w-0 flex-1 rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void invite()}
+                    disabled={sharing || !username.trim()}
+                    className="type-marquee rounded-[2px] bg-velvet-600 px-5 text-[13px] text-plate hover:bg-velvet-700 disabled:opacity-60"
+                  >
+                    {t('groups.add')}
+                  </button>
+                </div>
+
+                {members.length > 0 && (
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {members.map((m) => (
+                      <li
+                        key={m.userId}
+                        className="flex items-center gap-2 rounded-full border border-rule px-3 py-1.5"
+                      >
+                        <span className="text-[0.8125rem] text-ink">{m.username}</span>
+                        <button
+                          type="button"
+                          onClick={() => void uninvite(m.userId)}
+                          aria-label={`${t('lists.remove')} ${m.username}`}
+                          className="text-[0.8125rem] text-ink-3 hover:text-velvet-500"
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
         <button
           type="button"
           onClick={() => void destroy()}
-          className="type-meta mt-12 w-full text-center text-ink-3 underline underline-offset-4 hover:text-velvet-500"
+          className="type-meta mt-8 w-full text-center text-ink-3 underline underline-offset-4 hover:text-velvet-500"
         >
           {t('lists.delete')}
         </button>
