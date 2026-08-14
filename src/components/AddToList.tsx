@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { catalogTitle } from '@/lib/api'
+import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
 import { addToWatchlist, createWatchlist, getMyWatchlists, type Watchlist } from '@/lib/watchlists'
@@ -34,7 +35,7 @@ export function AddToList({ target, onClose }: { target: AddTarget; onClose: () 
   useEffect(() => {
     getMyWatchlists()
       .then(setLists)
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false))
   }, [])
 
@@ -60,7 +61,7 @@ export function AddToList({ target, onClose }: { target: AddTarget; onClose: () 
       setDone(listId)
       window.setTimeout(onClose, 700)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setSaving(null)
     }
@@ -74,7 +75,7 @@ export function AddToList({ target, onClose }: { target: AddTarget; onClose: () 
       const listId = await createWatchlist(newName.trim(), null, null)
       await add(listId)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
       setSaving(null)
     }
   }

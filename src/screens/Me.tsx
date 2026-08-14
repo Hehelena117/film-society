@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
+import { errorMessage } from '@/lib/errors'
 import { deleteEntry, getMyLog, type LoggedEntry } from '@/lib/log'
 
 /** Your own shelf: everything you have logged, with the notes only you can see. */
@@ -18,7 +19,7 @@ export function Me() {
     try {
       setEntries(await getMyLog(i18n.resolvedLanguage ?? 'en'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -33,7 +34,7 @@ export function Me() {
       await deleteEntry(id)
       setEntries((current) => current.filter((e) => e.id !== id))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
+import { errorMessage } from '@/lib/errors'
 import {
   addMemberByUsername,
   createGroup,
@@ -29,7 +30,7 @@ export function Groups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) => vo
     try {
       setGroups(await getMyGroups())
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -48,7 +49,7 @@ export function Groups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) => vo
       setCreating(false)
       await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -167,7 +168,7 @@ function GroupDetail({
       setMembers(m)
       setSessions(s)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }, [group.id])
 
@@ -184,7 +185,7 @@ function GroupDetail({
       setUsername('')
       await load()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -199,7 +200,7 @@ function GroupDetail({
       }
       await load()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }
 

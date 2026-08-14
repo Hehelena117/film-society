@@ -191,6 +191,14 @@ try {
   const { data: bobGroupNow } = await bob.client.from('groups').select('name').eq('id', groupId)
   check('member now sees the group', bobGroupNow?.[0]?.name === 'Test Family')
 
+  // RLS lets you read every membership row of a group you belong to, so the
+  // group list must filter to your own row or a group of N appears N times.
+  const { data: aliceGroups } = await alice.client
+    .from('group_members')
+    .select('role, group:groups!inner(id, name)')
+    .eq('user_id', alice.id)
+  check('group appears once, not once per member', aliceGroups?.length === 1, `${aliceGroups?.length} rows`)
+
   const { data: bobListNow } = await bob.client.from('watchlists').select('name').eq('id', wl.id)
   check('member now sees the group watchlist', bobListNow?.[0]?.name === 'Tonight')
 
@@ -207,11 +215,26 @@ try {
     .single()
   check('create session', !s1Err, s1Err?.message)
 
-  await alice.client.from('swipe_participants').insert({ session_id: s1.id })
+  const { error: joinErr } = await alice.client
+    .from('swipe_participants')
+    .insert({ session_id: s1.id })
+  check('host joins own session', !joinErr, joinErr?.message)
+
   await bob.client.from('swipe_participants').insert({ session_id: s1.id })
-  await alice.client
+
+  // Previously inserted without checking the error, which hid a missing INSERT
+  // policy on swipe_candidates: the deck silently never built, and the match
+  // tests still passed because swipes do not reference candidates.
+  const { error: deckErr } = await alice.client
     .from('swipe_candidates')
     .insert({ session_id: s1.id, title_id: cat.id, position: 0 })
+  check('build the deck', !deckErr, deckErr?.message)
+
+  const { data: deck, error: deckReadErr } = await bob.client
+    .from('swipe_candidates')
+    .select('title_id')
+    .eq('session_id', s1.id)
+  check('participants can read the deck', !deckReadErr && deck?.length === 1, deckReadErr?.message)
 
   await alice.client.from('swipes').insert({ session_id: s1.id, title_id: cat.id, liked: true })
   const { data: afterOne } = await alice.client

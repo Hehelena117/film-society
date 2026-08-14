@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useAuth } from '@/lib/auth'
+import { errorMessage } from '@/lib/errors'
 
 type Mode = 'signIn' | 'signUp'
 
@@ -39,7 +40,7 @@ export function BoxOffice() {
         await signIn(email, password)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setBusy(false)
     }

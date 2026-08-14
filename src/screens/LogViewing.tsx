@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AddToList } from '@/components/AddToList'
 import { catalogTitle, searchTitles, type CatalogedTitle, type SearchHit } from '@/lib/api'
+import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
 import { logViewing } from '@/lib/log'
@@ -22,6 +24,7 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
   const [hits, setHits] = useState<SearchHit[]>([])
   const [searching, setSearching] = useState(false)
   const [chosen, setChosen] = useState<CatalogedTitle | null>(null)
+  const [addingToList, setAddingToList] = useState<CatalogedTitle | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Debounce so a fast typist does not fire a request per keystroke.
@@ -37,7 +40,7 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
       try {
         setHits(await searchTitles(query, language))
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(errorMessage(err))
       } finally {
         setSearching(false)
       }
@@ -52,7 +55,7 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
       // Caches the title server-side and hands back our internal id.
       setChosen(await catalogTitle(hit.tmdbId, hit.mediaType, language, profile?.country ?? 'DK'))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }
 
@@ -79,12 +82,24 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
         )}
 
         {chosen ? (
-          <RatingForm
-            title={chosen}
-            onCancel={() => setChosen(null)}
-            onSaved={onDone}
-            onError={setError}
-          />
+          <>
+            <RatingForm
+              title={chosen}
+              onCancel={() => setChosen(null)}
+              onSaved={onDone}
+              onError={setError}
+            />
+
+            {/* A search often ends in "not tonight, but remember it" rather
+                than "I watched this", so both endings live on one screen. */}
+            <button
+              type="button"
+              onClick={() => setAddingToList(chosen)}
+              className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-3.5 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+            >
+              + {t('actions.addToWatchlist')}
+            </button>
+          </>
         ) : (
           <>
             <label className="block">
@@ -132,6 +147,17 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
             </ul>
           </>
         )}
+
+        {addingToList && (
+          <AddToList
+            target={{
+              tmdbId: addingToList.tmdbId,
+              mediaType: addingToList.mediaType,
+              name: addingToList.name,
+            }}
+            onClose={() => setAddingToList(null)}
+          />
+        )}
       </main>
     </div>
   )
@@ -168,7 +194,7 @@ function RatingForm({
       })
       onSaved()
     } catch (err) {
-      onError(err instanceof Error ? err.message : String(err))
+      onError(errorMessage(err))
     } finally {
       setBusy(false)
     }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
 import { getRatingSeeds, getRecommendations, type RatingSeed } from '@/lib/api'
+import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
 import type { Recommendation } from '@/types'
@@ -81,7 +82,7 @@ export function Lobby() {
         })),
       ])
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
       busyRef.current = false

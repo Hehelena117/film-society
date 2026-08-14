@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import { errorMessage } from '@/lib/errors'
 import {
   getCandidates,
   getParticipantCount,
@@ -51,7 +52,7 @@ export function Swipe({ sessionId, onExit }: { sessionId: string; onExit: () => 
         setCards(c)
         setParticipants(n)
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : String(err))
+        if (active) setError(errorMessage(err))
       } finally {
         if (active) setLoading(false)
       }
@@ -83,7 +84,7 @@ export function Swipe({ sessionId, onExit }: { sessionId: string; onExit: () => 
       try {
         await swipe(sessionId, card.titleId, liked)
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        setError(errorMessage(err))
       }
     },
     [cards, index, sessionId],

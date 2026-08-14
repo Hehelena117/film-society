@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { getMyGroups, type Group } from '@/lib/groups'
+import { errorMessage } from '@/lib/errors'
 import {
   createWatchlist,
   deleteWatchlist,
@@ -30,7 +31,7 @@ export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string)
       setLists(l)
       setGroups(g)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -134,7 +135,7 @@ function NewListForm({
       await createWatchlist(name.trim(), null, groupId || null)
       onCreated()
     } catch (err) {
-      onError(err instanceof Error ? err.message : String(err))
+      onError(errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -213,7 +214,7 @@ function WatchlistDetail({
     try {
       onStartSwipe(await startSession(list.id, list.groupId))
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = errorMessage(err)
       setError(message === 'empty-watchlist' ? t('swipe.needTitles') : message)
       setStarting(false)
     }
@@ -224,7 +225,7 @@ function WatchlistDetail({
     try {
       setItems(await getWatchlistItems(list.id, language))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -239,7 +240,7 @@ function WatchlistDetail({
       await removeFromWatchlist(list.id, titleId)
       setItems((current) => current.filter((i) => i.titleId !== titleId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }
 
@@ -248,7 +249,7 @@ function WatchlistDetail({
       await deleteWatchlist(list.id)
       onBack()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(errorMessage(err))
     }
   }
 

@@ -22,9 +22,17 @@ export interface GroupMember {
  * RLS restricts this to groups the caller belongs to.
  */
 export async function getMyGroups(): Promise<Group[]> {
+  const { data: auth } = await supabase.auth.getUser()
+  const uid = auth.user?.id
+  if (!uid) return []
+
   const { data, error } = await supabase
     .from('group_members')
     .select('role, group:groups!inner(id, name, avatar_url, members:group_members(count))')
+    // Without this the query returns one row per MEMBER, not per group: RLS
+    // lets you read every membership row of a group you belong to, so a group
+    // of three appeared in the list three times.
+    .eq('user_id', uid)
     .order('joined_at', { ascending: false })
 
   if (error) throw error
