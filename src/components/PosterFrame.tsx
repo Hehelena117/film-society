@@ -10,30 +10,40 @@ function hueFor(name: string): number {
 
 /**
  * A poster in a bulb-lit lobby surround, after the Cinemark frames in the
- * mood-board: black outer frame, brass reveal, marquee plate top and bottom,
+ * mood-board: dark outer frame, brass reveal, marquee plate top and bottom,
  * bulbs running the full perimeter.
+ *
+ * The frame is the only dark mass on the page — everything around it is paper,
+ * so the artwork carries the contrast rather than the chrome.
  */
 export function PosterFrame({ rec }: { rec: Recommendation }) {
   const { t } = useTranslation()
   const { title } = rec
   const hue = hueFor(title.name)
 
-  return (
-    <article className="mx-auto w-full max-w-sm">
-      {/* ---- The lit frame ------------------------------------------------ */}
-      <div className="relative rounded-sm bg-ink p-2 shadow-[0_28px_60px_-12px_rgba(0,0,0,0.9)] ring-1 ring-black/60">
-        {/* bulb perimeter */}
-        <div className="pointer-events-none absolute inset-x-3 top-[3px] h-[10px] bulbs-h bulb-breathe" />
-        <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-[10px] bulbs-h bulb-breathe" />
-        <div className="pointer-events-none absolute inset-y-3 left-[3px] w-[10px] bulbs-v bulb-breathe" />
-        <div className="pointer-events-none absolute inset-y-3 right-[3px] w-[10px] bulbs-v bulb-breathe" />
+  const meta = [
+    title.mediaType === 'tv' && title.seasons
+      ? t('title.seasons', { count: title.seasons })
+      : title.runtimeMinutes && t('title.runtime', { minutes: title.runtimeMinutes }),
+    title.genres[0],
+    title.certification,
+  ].filter(Boolean)
 
-        <div className="relative rounded-[2px] bg-ink p-[6px] ring-1 ring-brass-700/70">
-          {/* top marquee plate */}
+  return (
+    <article className="mx-auto w-full max-w-[22rem]">
+      {/* ---- The lit frame ------------------------------------------------ */}
+      <div className="relative rounded-[3px] bg-ink p-2 shadow-frame">
+        {/* Bulb perimeter. Each side is offset so they never breathe in sync. */}
+        <div className="pointer-events-none absolute inset-x-3 top-[3px] h-2.5 bulbs-h bulb-breathe" />
+        <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-2.5 bulbs-h bulb-breathe bulb-offset-2" />
+        <div className="pointer-events-none absolute inset-y-3 left-[3px] w-2.5 bulbs-v bulb-breathe bulb-offset-1" />
+        <div className="pointer-events-none absolute inset-y-3 right-[3px] w-2.5 bulbs-v bulb-breathe bulb-offset-3" />
+
+        <div className="relative rounded-[2px] bg-ink p-[7px] ring-1 ring-brass-600/40">
           <MarqueePlate />
 
           {/* ---- The poster itself ---------------------------------------- */}
-          <div className="relative my-[6px] aspect-[2/3] overflow-hidden bg-pitch ring-1 ring-brass-700/40 texture-grain">
+          <div className="relative my-[7px] aspect-[2/3] overflow-hidden bg-pitch texture-grain">
             {title.posterUrl ? (
               <img
                 src={title.posterUrl}
@@ -45,35 +55,36 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
               <FallbackPoster name={title.name} year={title.year} hue={hue} />
             )}
 
-            {/* glass reflection from the lobby lights */}
-            <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/12 via-transparent to-transparent" />
-            <div className="pointer-events-none absolute inset-0 vignette" />
+            {/* Glass reflection from the lobby lights. */}
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/14 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute inset-0 vignette-warm" />
           </div>
 
-          {/* bottom marquee plate */}
           <MarqueePlate />
         </div>
       </div>
 
-      {/* ---- Caption below the frame -------------------------------------- */}
-      <div className="mt-4 px-1 text-center">
-        <h2 className="type-title text-xl text-cream-100">
-          {title.name} <span className="text-cream-300/70">({title.year})</span>
-        </h2>
+      {/* ---- Caption, set on the paper ------------------------------------ */}
+      <div className="mt-5 px-2 text-center">
+        <h2 className="type-title text-[1.6rem] text-ink">{title.name}</h2>
 
-        <p className="type-marquee mt-1.5 text-[11px] text-brass-500/90">
-          {[
-            title.director && t('title.directedBy', { name: title.director }),
-            title.mediaType === 'tv' && title.seasons
-              ? t('title.seasons', { count: title.seasons })
-              : title.runtimeMinutes && t('title.runtime', { minutes: title.runtimeMinutes }),
-            title.certification,
-          ]
-            .filter(Boolean)
-            .join('  ·  ')}
+        <p className="type-meta mt-2 text-brass-700">
+          {title.year}
+          {meta.length > 0 && <span className="text-paper-4"> · </span>}
+          {meta.join(' · ')}
         </p>
 
-        <p className="mx-auto mt-3 max-w-[34ch] text-[13px] leading-relaxed text-cream-200/60 italic">
+        {title.director && (
+          <p className="mt-1.5 text-[0.8125rem] text-ink-3">
+            {t('title.directedBy', { name: title.director })}
+          </p>
+        )}
+
+        <div className="rule-pip my-4" aria-hidden>
+          <span className="size-1 rotate-45 bg-brass-600/70" />
+        </div>
+
+        <p className="mx-auto max-w-[32ch] text-[0.875rem] leading-relaxed text-ink-2">
           {rec.reason}
         </p>
       </div>
@@ -85,8 +96,8 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
 function MarqueePlate() {
   const { t } = useTranslation()
   return (
-    <div className="flex h-6 items-center justify-center bg-linear-to-b from-cream-100 to-cream-200 shadow-inner">
-      <span className="type-marquee text-[13px] text-oxblood-800">{t('app.name')}</span>
+    <div className="flex h-[26px] items-center justify-center bg-linear-to-b from-paper to-paper-2 shadow-plate">
+      <span className="type-marquee text-[13px] text-velvet-600">{t('app.name')}</span>
     </div>
   )
 }
@@ -98,17 +109,18 @@ function MarqueePlate() {
 function FallbackPoster({ name, year, hue }: { name: string; year: number; hue: number }) {
   return (
     <div
-      className="flex h-full w-full flex-col items-center justify-center gap-4 px-5 text-center"
+      className="flex h-full w-full flex-col items-center justify-center gap-5 px-6 text-center"
       style={{
-        background: `radial-gradient(120% 80% at 50% 0%, hsl(${hue} 45% 22%) 0%, hsl(${hue} 55% 8%) 70%, #060405 100%)`,
+        background: `radial-gradient(125% 85% at 50% 0%, hsl(${hue} 42% 26%) 0%, hsl(${hue} 52% 11%) 65%, #0b0809 100%)`,
       }}
     >
-      <div className="h-px w-10 bg-brass-500/60" />
-      <h3 className="type-title text-2xl leading-tight text-cream-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+      <span className="type-marquee text-[10px] text-brass-500/70">Film Society</span>
+      <div className="h-px w-12 bg-brass-500/50" />
+      <h3 className="type-title text-[1.75rem] leading-[1.15] text-paper drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
         {name}
       </h3>
-      <div className="h-px w-10 bg-brass-500/60" />
-      <span className="type-marquee text-sm text-brass-500">{year}</span>
+      <div className="h-px w-12 bg-brass-500/50" />
+      <span className="type-marquee text-[15px] text-brass-500">{year}</span>
     </div>
   )
 }

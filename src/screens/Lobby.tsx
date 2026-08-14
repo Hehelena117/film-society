@@ -54,45 +54,46 @@ export function Lobby() {
   }, [loadMore])
 
   return (
-    <div className="relative min-h-dvh wall-oxblood texture-grain">
+    <div className="min-h-dvh wall-paper texture-paper">
       {/* ---- Marquee header ------------------------------------------------ */}
-      <header className="relative z-10 px-5 pt-10 pb-8 text-center">
-        <div className="relative mx-auto inline-block bg-ink px-1 py-1 shadow-[0_18px_40px_-8px_rgba(0,0,0,0.9)]">
-          <div className="pointer-events-none absolute inset-x-2 top-[2px] h-2 bulbs-h bulb-breathe" />
-          <div className="pointer-events-none absolute inset-x-2 bottom-[2px] h-2 bulbs-h bulb-breathe" />
-          <div className="bg-linear-to-b from-cream-100 to-cream-200 px-7 py-3">
-            <h1 className="type-marquee text-3xl text-oxblood-800">{t('app.name')}</h1>
+      <header className="relative z-10 px-6 pt-12 pb-7 text-center">
+        <div className="relative inline-block rounded-[3px] bg-ink px-1.5 py-1.5 shadow-frame">
+          <div className="pointer-events-none absolute inset-x-3 top-[3px] h-2 bulbs-h bulb-breathe" />
+          <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-2 bulbs-h bulb-breathe bulb-offset-2" />
+
+          <div className="bg-linear-to-b from-paper to-paper-2 px-8 py-3.5">
+            <h1 className="type-marquee text-[2rem] text-velvet-600">{t('app.name')}</h1>
           </div>
         </div>
 
-        <p className="type-script mt-5 text-2xl text-cream-100/90">{t('lobby.subtitle')}</p>
+        <p className="type-script mt-5 text-[1.65rem] text-ink-2">{t('app.tagline')}</p>
       </header>
 
+      {/* ---- Tile dado, as along the lobby wall ---------------------------- */}
+      <div className="relative z-10 h-7 floor-checker opacity-[0.18]" aria-hidden />
+
       {/* ---- The poster corridor ------------------------------------------- */}
-      <main className="relative z-10 flex flex-col gap-14 px-6 pb-40">
-        {recs.map((rec) => (
-          <PosterFrame key={rec.title.id} rec={rec} />
-        ))}
+      <main className="relative z-10 px-6 pt-12 pb-24">
+        <div className="rule-pip mb-11" aria-hidden={false}>
+          <span className="type-meta whitespace-nowrap text-ink-3">{t('lobby.nowShowing')}</span>
+        </div>
+
+        <div className="flex flex-col gap-16">
+          {recs.map((rec) => (
+            <PosterFrame key={rec.title.id} rec={rec} />
+          ))}
+        </div>
 
         <div ref={sentinelRef} aria-hidden className="h-px" />
 
         <p
-          className="type-marquee text-center text-xs text-brass-500/60"
+          className="type-meta mt-14 text-center text-ink-3/70"
           role="status"
           aria-live="polite"
         >
           {loading ? t('lobby.loading') : ''}
         </p>
       </main>
-
-      {/* ---- Tile floor ----------------------------------------------------- */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-16">
-        <div className="h-full w-full floor-checker opacity-90" />
-        <div className="absolute inset-0 bg-linear-to-b from-pitch via-pitch/50 to-transparent" />
-      </div>
-
-      {/* ---- Room falloff ---------------------------------------------------- */}
-      <div className="pointer-events-none fixed inset-0 z-30 vignette" />
     </div>
   )
 }
