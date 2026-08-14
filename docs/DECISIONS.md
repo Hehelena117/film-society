@@ -134,6 +134,14 @@ so it follows them between devices. Currently `localStorage` only.
 - Ratings are whole numbers, 1–10.
 - Rewatches are supported — one film can have several logged entries.
 - Notes are **always private**.
+- **Watch dates are private.** `log_entries` is owner-only. Profiles read the
+  `public_ratings` and `public_watch_counts` views, which expose the latest
+  rating per title plus a count — never `watched_on`, `season_number` or
+  `created_at`. Those views are deliberately `security_invoker = false`: that
+  is what lets them be the one controlled window onto an owner-only table.
+  **Do not add date columns to them.** Column-level grants cannot substitute
+  here — they are per-role, so hiding a column from the public would also hide
+  it from its owner.
 - TV is tracked at **season** granularity, never episodes.
 - Swipe match: **2 people = unanimous**, **3+ = majority**.
 - Activity feed exists **only inside a group**, never globally.
@@ -144,5 +152,14 @@ so it follows them between devices. Currently `localStorage` only.
 
 ## Caching
 
-TMDB data must not be cached longer than **6 months**. Any table storing TMDB
-fields needs a `fetched_at` column and a purge job. Not yet implemented.
+TMDB data must not be cached longer than **6 months**. Every table storing TMDB
+fields carries a `fetched_at` column, and `purge_stale_tmdb_cache()` clears
+anything older.
+
+That function empties the content columns but **keeps the title row and its
+`tmdb_id`**. Deleting rows would cascade into `log_entries`, `watchlist_items`
+and `favourites` — destroying users' own data to satisfy a restriction on
+TMDB's. The next read repopulates.
+
+**To do:** schedule it once pg_cron is enabled —
+`select cron.schedule('purge-tmdb-cache', '0 4 * * *', $$select public.purge_stale_tmdb_cache()$$);`

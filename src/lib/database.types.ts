@@ -765,7 +765,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_ratings: {
+        Row: {
+          rating: number | null
+          title_id: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_entries_title_id_fkey"
+            columns: ["title_id"]
+            isOneToOne: false
+            referencedRelation: "titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "log_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_watch_counts: {
+        Row: {
+          titles_watched: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "log_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_watchlist: { Args: { wid: string }; Returns: boolean }

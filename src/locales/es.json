@@ -22,6 +22,20 @@
     "rate": "Puntuar",
     "notInterested": "No es para mí"
   },
+  "auth": {
+    "tagline": "Solo socios. Pregunta en taquilla.",
+    "signIn": "Iniciar sesión",
+    "signUp": "Hazte socio",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "username": "Nombre de usuario",
+    "usernameHint": "Letras, números y guiones bajos. Así te verán los demás.",
+    "haveAccount": "¿Ya eres socio? Inicia sesión",
+    "noAccount": "¿Aún no eres socio? Hazte socio",
+    "working": "Un momento…",
+    "checkEmail": "Revisa tu correo para confirmar tu cuenta.",
+    "signOut": "Cerrar sesión"
+  },
   "theme": {
     "label": "Elige una sala",
     "lobby": { "name": "Vestíbulo", "note": "Papel cálido" },

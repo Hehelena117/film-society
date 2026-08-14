@@ -154,18 +154,28 @@ async function resolveOnTmdb(name: string, year: number, locale: string) {
   if (!res.ok) return null
 
   const data = await res.json()
-  const hit = (data.results ?? []).find(
-    (r: Record<string, unknown>) =>
-      (r.media_type === 'movie' || r.media_type === 'tv') &&
-      String(r.release_date ?? r.first_air_date ?? '').startsWith(String(year)),
+  const candidates = (data.results ?? []).filter(
+    (r: Record<string, unknown>) => r.media_type === 'movie' || r.media_type === 'tv',
   )
-  if (!hit) return null
+  if (!candidates.length) return null
+
+  const yearOf = (r: Record<string, unknown>) =>
+    Number(String(r.release_date ?? r.first_air_date ?? '').slice(0, 4)) || 0
+
+  // Match the year loosely. TMDB dates are region-specific and a festival run
+  // can precede general release by a year, so demanding an exact match drops
+  // titles that were resolved perfectly well otherwise. Fall back to TMDB's
+  // own relevance ranking rather than returning nothing.
+  const hit =
+    candidates.find((r: Record<string, unknown>) => yearOf(r) === year) ??
+    candidates.find((r: Record<string, unknown>) => Math.abs(yearOf(r) - year) <= 1) ??
+    candidates[0]
 
   return {
     tmdbId: hit.id,
     mediaType: hit.media_type,
     name: hit.title ?? hit.name,
-    year,
+    year: yearOf(hit) || year,
     posterUrl: hit.poster_path ? `https://image.tmdb.org/t/p/w500${hit.poster_path}` : null,
   }
 }

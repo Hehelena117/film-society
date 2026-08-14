@@ -22,6 +22,20 @@
     "rate": "Bedøm denne",
     "notInterested": "Ikke noget for mig"
   },
+  "auth": {
+    "tagline": "Kun for medlemmer. Spørg i billetlugen.",
+    "signIn": "Log ind",
+    "signUp": "Bliv medlem",
+    "email": "E-mail",
+    "password": "Adgangskode",
+    "username": "Brugernavn",
+    "usernameHint": "Bogstaver, tal og understreg. Sådan ser andre dig.",
+    "haveAccount": "Allerede medlem? Log ind",
+    "noAccount": "Ikke medlem endnu? Bliv medlem",
+    "working": "Et øjeblik…",
+    "checkEmail": "Tjek din e-mail for at bekræfte din konto.",
+    "signOut": "Log ud"
+  },
   "theme": {
     "label": "Vælg en sal",
     "lobby": { "name": "Foyer", "note": "Varmt papir" },

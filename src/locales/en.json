@@ -22,6 +22,20 @@
     "rate": "Rate this",
     "notInterested": "Not for me"
   },
+  "auth": {
+    "tagline": "Members only. Ask at the box office.",
+    "signIn": "Sign in",
+    "signUp": "Join",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "usernameHint": "Letters, numbers and underscores. This is how others see you.",
+    "haveAccount": "Already a member? Sign in",
+    "noAccount": "Not a member yet? Join",
+    "working": "One moment…",
+    "checkEmail": "Check your email to confirm your account.",
+    "signOut": "Sign out"
+  },
   "theme": {
     "label": "Choose a room",
     "lobby": { "name": "Lobby", "note": "Warm paper" },
