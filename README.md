@@ -40,7 +40,9 @@ data so the look can be approved before the rest is built.
 - [x] Four themes as a user setting — Lobby, Marquee, Velvet, Night
 - [x] Edge Functions for TMDB + OpenRouter written (not yet deployed)
 - [x] GitHub Pages deployment workflow
-- [ ] Supabase project, schema, auth
+- [x] Database schema + row-level security written *(not yet run against a database)*
+- [ ] Supabase project created, migrations applied
+- [ ] Auth
 - [ ] Real TMDB data
 - [ ] Logging, ratings, notes
 - [ ] Watchlists, groups, swipe-to-decide
