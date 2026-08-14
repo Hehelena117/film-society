@@ -101,14 +101,21 @@ export async function getWatchlistItems(
   })
 }
 
-/** The title must already be catalogued — call catalogTitle first. */
+/**
+ * The title must already be catalogued — call catalogTitle first.
+ *
+ * Plain insert rather than upsert: PostgREST does not apply column DEFAULTs on
+ * the upsert path, so `added_by DEFAULT auth.uid()` would have arrived NULL and
+ * quietly lost track of who added what. Adding the same title twice is a no-op,
+ * not an error.
+ */
 export async function addToWatchlist(watchlistId: string, titleId: number): Promise<void> {
   const { error } = await supabase
     .from('watchlist_items')
-    // added_by defaults to auth.uid(). Ignore a repeat add rather than erroring.
-    .upsert({ watchlist_id: watchlistId, title_id: titleId }, { onConflict: 'watchlist_id,title_id' })
+    .insert({ watchlist_id: watchlistId, title_id: titleId })
 
-  if (error) throw error
+  // 23505 = unique_violation: it is already on the list, which is the goal.
+  if (error && error.code !== '23505') throw error
 }
 
 export async function removeFromWatchlist(watchlistId: string, titleId: number): Promise<void> {

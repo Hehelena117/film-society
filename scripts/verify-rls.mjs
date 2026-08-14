@@ -130,8 +130,18 @@ try {
 
   const { error: addErr } = await alice.client
     .from('watchlist_items')
-    .upsert({ watchlist_id: wl.id, title_id: cat.id }, { onConflict: 'watchlist_id,title_id' })
+    .insert({ watchlist_id: wl.id, title_id: cat.id })
   check('add to watchlist', !addErr, addErr?.message)
+
+  // Column DEFAULTs are the easiest thing to lose silently — added_by is
+  // nullable, so a NULL here would never raise, just quietly forget who added it.
+  const { data: whoAdded } = await alice.client
+    .from('watchlist_items')
+    .select('added_by')
+    .eq('watchlist_id', wl.id)
+    .eq('title_id', cat.id)
+    .single()
+  check('added_by is recorded, not null', whoAdded?.added_by === alice.id, `${whoAdded?.added_by}`)
 
   const { data: items, error: itErr } = await alice.client
     .from('watchlist_items')
@@ -185,7 +195,7 @@ try {
   console.log('\n=== membership ===')
   const { error: addMemberErr } = await alice.client
     .from('group_members')
-    .upsert({ group_id: groupId, user_id: bob.id, role: 'member' }, { onConflict: 'group_id,user_id' })
+    .insert({ group_id: groupId, user_id: bob.id, role: 'member' })
   check('admin adds a member', !addMemberErr, addMemberErr?.message)
 
   const { data: bobGroupNow } = await bob.client.from('groups').select('name').eq('id', groupId)
@@ -202,10 +212,23 @@ try {
   const { data: bobListNow } = await bob.client.from('watchlists').select('name').eq('id', wl.id)
   check('member now sees the group watchlist', bobListNow?.[0]?.name === 'Tonight')
 
+  // A different title, so this tests the permission rather than re-testing the
+  // unique constraint.
+  const { data: cat2 } = await bob.client.functions.invoke('catalog', {
+    body: { tmdbId: 278, mediaType: 'movie', language: 'en', country: 'DK' },
+  })
   const { error: bobWriteErr } = await bob.client
     .from('watchlist_items')
-    .upsert({ watchlist_id: wl.id, title_id: cat.id }, { onConflict: 'watchlist_id,title_id' })
+    .insert({ watchlist_id: wl.id, title_id: cat2.id })
   check('member can add to the group list', !bobWriteErr, bobWriteErr?.message)
+
+  const { data: bobAdded } = await alice.client
+    .from('watchlist_items')
+    .select('added_by')
+    .eq('watchlist_id', wl.id)
+    .eq('title_id', cat2.id)
+    .single()
+  check("another member's addition is attributed to them", bobAdded?.added_by === bob.id)
 
   console.log('\n=== swipe: two people must agree ===')
   const { data: s1, error: s1Err } = await alice.client
@@ -220,7 +243,29 @@ try {
     .insert({ session_id: s1.id })
   check('host joins own session', !joinErr, joinErr?.message)
 
-  await bob.client.from('swipe_participants').insert({ session_id: s1.id })
+  // The app joins twice for the host: startSession has to seat them before it
+  // may build the deck, then the swipe screen joins again on mount. A plain
+  // upsert takes the UPDATE path on conflict and swipe_participants has no
+  // UPDATE policy, so this used to fail with "(USING expression)".
+  const { error: rejoinErr } = await alice.client
+    .from('swipe_participants')
+    .insert({ session_id: s1.id })
+  check(
+    're-joining is a tolerable duplicate, not a failure',
+    rejoinErr?.code === '23505',
+    rejoinErr?.code ?? 'no error at all',
+  )
+
+  const { error: bobJoinErr } = await bob.client
+    .from('swipe_participants')
+    .insert({ session_id: s1.id })
+  check('second person joins', !bobJoinErr, bobJoinErr?.message)
+
+  const { count: partCount } = await alice.client
+    .from('swipe_participants')
+    .select('user_id', { count: 'exact', head: true })
+    .eq('session_id', s1.id)
+  check('session really has two participants', partCount === 2, `${partCount}`)
 
   // Previously inserted without checking the error, which hid a missing INSERT
   // policy on swipe_candidates: the deck silently never built, and the match
@@ -236,7 +281,11 @@ try {
     .eq('session_id', s1.id)
   check('participants can read the deck', !deckReadErr && deck?.length === 1, deckReadErr?.message)
 
-  await alice.client.from('swipes').insert({ session_id: s1.id, title_id: cat.id, liked: true })
+  const { error: swipeErr } = await alice.client
+    .from('swipes')
+    .insert({ session_id: s1.id, title_id: cat.id, liked: true })
+  check('record a swipe the way the app does', !swipeErr, swipeErr?.message)
+
   const { data: afterOne } = await alice.client
     .from('swipe_sessions')
     .select('status')
@@ -257,7 +306,7 @@ try {
   const carol = await makeUser('carol')
   await alice.client
     .from('group_members')
-    .upsert({ group_id: groupId, user_id: carol.id, role: 'member' }, { onConflict: 'group_id,user_id' })
+    .insert({ group_id: groupId, user_id: carol.id, role: 'member' })
 
   const { data: s2 } = await alice.client
     .from('swipe_sessions')

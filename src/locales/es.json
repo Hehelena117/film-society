@@ -58,6 +58,8 @@
     "remaining_other": "quedan {{count}}",
     "waiting": "Eso es todo",
     "waitingHint": "Has visto todos los títulos. Esperando a los demás.",
+    "emptyDeck": "No hay nada que decidir",
+    "emptyDeckHint": "Esta sesión no tiene títulos. Empieza una nueva desde una lista con contenido.",
     "itsAMatch": "¡Coincidís!",
     "done": "Listo"
   },

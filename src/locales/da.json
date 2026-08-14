@@ -58,6 +58,8 @@
     "remaining_other": "{{count}} tilbage",
     "waiting": "Det var dem alle",
     "waitingHint": "Du har set alle titler. Venter på de andre.",
+    "emptyDeck": "Der er intet at vælge imellem",
+    "emptyDeckHint": "Denne session har ingen titler. Start en ny fra en liste med indhold.",
     "itsAMatch": "I er enige",
     "done": "Færdig"
   },

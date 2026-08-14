@@ -190,10 +190,24 @@ export function Swipe({ sessionId, onExit }: { sessionId: string; onExit: () => 
           </>
         ) : (
           <div className="py-16 text-center">
-            <p className="type-script text-[1.75rem] text-ink-2">{t('swipe.waiting')}</p>
-            <p className="mt-3 text-[0.875rem] leading-relaxed text-ink-3">
-              {t('swipe.waitingHint')}
+            {/* An empty deck is not the same as having got through one. Saying
+                "you have seen them all" when there was never anything to see
+                sends people hunting for a bug in the wrong place. */}
+            <p className="type-script text-[1.75rem] text-ink-2">
+              {cards.length === 0 ? t('swipe.emptyDeck') : t('swipe.waiting')}
             </p>
+            <p className="mx-auto mt-3 max-w-[34ch] text-[0.875rem] leading-relaxed text-ink-3">
+              {cards.length === 0 ? t('swipe.emptyDeckHint') : t('swipe.waitingHint')}
+            </p>
+            {cards.length === 0 && (
+              <button
+                type="button"
+                onClick={onExit}
+                className="type-marquee mt-7 rounded-[2px] bg-velvet-600 px-7 py-3 text-[13px] text-plate hover:bg-velvet-700"
+              >
+                {t('nav.back')}
+              </button>
+            )}
           </div>
         )}
       </main>

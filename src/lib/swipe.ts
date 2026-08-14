@@ -48,24 +48,34 @@ export async function startSession(
     .insert({ session_id: sessionId })
   if (joinErr) throw joinErr
 
-  const { data: items, error: itemsErr } = await supabase
-    .from('watchlist_items')
-    .select('title_id')
-    .eq('watchlist_id', watchlistId)
-  if (itemsErr) throw itemsErr
+  // A session whose deck never got built is worse than no session: it sits in
+  // the group's "happening now" list forever, inviting people into a room with
+  // nothing in it. So anything that fails from here on cancels it on the way
+  // out. There is no delete policy on swipe_sessions by design — cancelling is
+  // the honest record of what happened.
+  try {
+    const { data: items, error: itemsErr } = await supabase
+      .from('watchlist_items')
+      .select('title_id')
+      .eq('watchlist_id', watchlistId)
+    if (itemsErr) throw itemsErr
 
-  const deck = (items ?? []).map((row, i) => ({
-    session_id: sessionId,
-    title_id: row.title_id,
-    position: i,
-  }))
+    const deck = (items ?? []).map((row, i) => ({
+      session_id: sessionId,
+      title_id: row.title_id,
+      position: i,
+    }))
 
-  if (!deck.length) throw new Error('empty-watchlist')
+    if (!deck.length) throw new Error('empty-watchlist')
 
-  const { error: deckErr } = await supabase.from('swipe_candidates').insert(deck)
-  if (deckErr) throw deckErr
+    const { error: deckErr } = await supabase.from('swipe_candidates').insert(deck)
+    if (deckErr) throw deckErr
 
-  return sessionId
+    return sessionId
+  } catch (err) {
+    await supabase.from('swipe_sessions').update({ status: 'cancelled' }).eq('id', sessionId)
+    throw err
+  }
 }
 
 export interface OpenSession {
@@ -92,11 +102,30 @@ export async function getOpenSessions(groupId: string): Promise<OpenSession[]> {
   }))
 }
 
+/** Postgres unique_violation — the row is already there, which is the goal. */
+const DUPLICATE = '23505'
+
+/**
+ * Idempotent: the host is already a participant by the time they reach the
+ * swipe screen, because startSession must seat them before it may build the
+ * deck.
+ *
+ * A plain insert, not an upsert, for two reasons found the hard way:
+ *
+ *  - upsert takes the UPDATE path on conflict, and swipe_participants has no
+ *    UPDATE policy, which surfaces as "violates row-level security policy
+ *    (USING expression)". USING belongs to UPDATE — that phrase is the tell.
+ *  - more importantly, the user_id DEFAULT auth.uid() is not applied on
+ *    PostgREST's upsert path, so user_id arrived NULL, `NULL = auth.uid()` is
+ *    NULL rather than true, and the WITH CHECK failed for anyone whose row did
+ *    not already exist.
+ *
+ * Nobody ever needs to update a participant row, so tolerating the duplicate
+ * is both simpler and truer to the intent.
+ */
 export async function joinSession(sessionId: string): Promise<void> {
-  const { error } = await supabase
-    .from('swipe_participants')
-    .upsert({ session_id: sessionId }, { onConflict: 'session_id,user_id' })
-  if (error) throw error
+  const { error } = await supabase.from('swipe_participants').insert({ session_id: sessionId })
+  if (error && error.code !== DUPLICATE) throw error
 }
 
 export async function getSession(sessionId: string): Promise<SwipeSession | null> {
@@ -160,13 +189,13 @@ export async function getCandidates(
  * it cannot be bent by whoever swipes last.
  */
 export async function swipe(sessionId: string, titleId: number, liked: boolean): Promise<void> {
+  // Plain insert for the same reasons as joinSession. A vote is final anyway:
+  // the match trigger fires on INSERT only, so an overwrite would never be
+  // re-evaluated even if the policies allowed one.
   const { error } = await supabase
     .from('swipes')
-    .upsert(
-      { session_id: sessionId, title_id: titleId, liked },
-      { onConflict: 'session_id,user_id,title_id' },
-    )
-  if (error) throw error
+    .insert({ session_id: sessionId, title_id: titleId, liked })
+  if (error && error.code !== DUPLICATE) throw error
 }
 
 export async function getParticipantCount(sessionId: string): Promise<number> {

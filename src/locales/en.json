@@ -58,6 +58,8 @@
     "remaining_other": "{{count}} left",
     "waiting": "That's your lot",
     "waitingHint": "You have seen every title. Waiting for the others to catch up.",
+    "emptyDeck": "Nothing to decide on",
+    "emptyDeckHint": "This session has no titles in it. Start a new one from a list that has some.",
     "itsAMatch": "It's a match",
     "done": "Done"
   },
