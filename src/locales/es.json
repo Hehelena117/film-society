@@ -32,6 +32,33 @@
     "groups": "Grupos",
     "me": "Yo"
   },
+  "detail": {
+    "title": "Título",
+    "votes_one": "{{count}} voto",
+    "votes_other": "{{count}} votos",
+    "logIt": "Registrar visualización",
+    "trailer": "Tráiler",
+    "play": "Reproducir",
+    "synopsis": "Sinopsis",
+    "whereToWatch": "Dónde verla en {{country}}",
+    "streaming": "Incluida en",
+    "rentBuy": "Alquilar o comprar",
+    "justwatch": "Disponibilidad facilitada por JustWatch. Film Society no enlaza a estos servicios.",
+    "credits": "Ficha técnica",
+    "director": "Dirección",
+    "createdBy": "Creada por",
+    "writers": "Guion",
+    "genres": "Género",
+    "cast": "Reparto",
+    "themes": "Temas",
+    "parental": "Clasificación por edad",
+    "rated": "Clasificada {{rating}} en {{country}}.",
+    "noRating": "No hay clasificación por edad para tu país."
+  },
+  "attribution": {
+    "tmdb": "This product uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.",
+    "justwatch": "Disponibilidad de streaming facilitada por JustWatch."
+  },
   "me": {
     "title": "Yo",
     "watched": "Títulos",

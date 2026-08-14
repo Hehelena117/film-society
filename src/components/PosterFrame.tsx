@@ -19,9 +19,11 @@ function hueFor(name: string): number {
 export function PosterFrame({
   rec,
   onAddToList,
+  onOpen,
 }: {
   rec: Recommendation
   onAddToList?: () => void
+  onOpen?: () => void
 }) {
   const { t } = useTranslation()
   const { title } = rec
@@ -49,7 +51,20 @@ export function PosterFrame({
           <MarqueePlate />
 
           {/* ---- The poster itself ---------------------------------------- */}
-          <div className="relative my-[7px] aspect-[2/3] overflow-hidden bg-pitch texture-grain">
+          <div
+            role={onOpen ? 'button' : undefined}
+            tabIndex={onOpen ? 0 : undefined}
+            onClick={onOpen}
+            onKeyDown={(e) => {
+              if (onOpen && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault()
+                onOpen()
+              }
+            }}
+            className={`relative my-[7px] aspect-[2/3] overflow-hidden bg-pitch texture-grain ${
+              onOpen ? 'cursor-pointer' : ''
+            }`}
+          >
             {title.posterUrl ? (
               <img
                 src={title.posterUrl}

@@ -15,7 +15,14 @@ import { logViewing } from '@/lib/log'
  * said which film it is, and splitting them keeps the search results from
  * fighting the rating controls for space on a phone.
  */
-export function LogViewing({ onDone }: { onDone: () => void }) {
+export function LogViewing({
+  onDone,
+  prefill,
+}: {
+  onDone: () => void
+  /** Set when arriving from a title page, so the search step is skipped. */
+  prefill?: { tmdbId: number; mediaType: 'movie' | 'tv' } | null
+}) {
   const { t, i18n } = useTranslation()
   const { profile } = useAuth()
   const language = (i18n.resolvedLanguage ?? 'en') as SupportedLanguage
@@ -26,6 +33,18 @@ export function LogViewing({ onDone }: { onDone: () => void }) {
   const [chosen, setChosen] = useState<CatalogedTitle | null>(null)
   const [addingToList, setAddingToList] = useState<CatalogedTitle | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Arriving from a title page: go straight to the rating form.
+  useEffect(() => {
+    if (!prefill) return
+    let active = true
+    catalogTitle(prefill.tmdbId, prefill.mediaType, language, profile?.country ?? 'DK')
+      .then((d) => active && setChosen(d))
+      .catch((err) => active && setError(errorMessage(err)))
+    return () => {
+      active = false
+    }
+  }, [prefill, language, profile?.country])
 
   // Debounce so a fast typist does not fire a request per keystroke.
   useEffect(() => {

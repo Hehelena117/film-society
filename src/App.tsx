@@ -10,6 +10,7 @@ import { Lobby } from '@/screens/Lobby'
 import { LogViewing } from '@/screens/LogViewing'
 import { Me } from '@/screens/Me'
 import { Swipe } from '@/screens/Swipe'
+import { TitleDetail, type TitleRef } from '@/screens/TitleDetail'
 import { Watchlists } from '@/screens/Watchlists'
 
 export default function App() {
@@ -24,6 +25,8 @@ function Gate() {
   const { session, loading } = useAuth()
   const [view, setView] = useState<View>('lobby')
   const [swipeSession, setSwipeSession] = useState<string | null>(null)
+  const [openTitle, setOpenTitle] = useState<TitleRef | null>(null)
+  const [prefill, setPrefill] = useState<TitleRef | null>(null)
   // Remounts the Lobby after a save, so a newly logged film feeds the
   // recommender straight away rather than on next reload.
   const [lobbyKey, setLobbyKey] = useState(0)
@@ -37,22 +40,47 @@ function Gate() {
     return <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
   }
 
+  // Title pages layer over whatever you were doing, and hand you back to it.
+  if (openTitle) {
+    return (
+      <TitleDetail
+        title={openTitle}
+        onBack={() => setOpenTitle(null)}
+        onLog={(t) => {
+          setPrefill({ tmdbId: t.tmdbId, mediaType: t.mediaType })
+          setOpenTitle(null)
+          setView('log')
+        }}
+      />
+    )
+  }
+
   return (
     <>
-      {view === 'lobby' && <Lobby key={lobbyKey} />}
-      {view === 'lists' && <Watchlists onStartSwipe={setSwipeSession} />}
+      {view === 'lobby' && <Lobby key={lobbyKey} onOpenTitle={setOpenTitle} />}
+      {view === 'lists' && (
+        <Watchlists onStartSwipe={setSwipeSession} onOpenTitle={setOpenTitle} />
+      )}
       {view === 'groups' && <Groups onJoinSwipe={setSwipeSession} />}
-      {view === 'me' && <Me />}
+      {view === 'me' && <Me onOpenTitle={setOpenTitle} />}
       {view === 'log' && (
         <LogViewing
+          prefill={prefill}
           onDone={() => {
+            setPrefill(null)
             setView('lobby')
             setLobbyKey((k) => k + 1)
           }}
         />
       )}
 
-      <BottomNav current={view} onNavigate={setView} />
+      <BottomNav
+        current={view}
+        onNavigate={(next) => {
+          if (next !== 'log') setPrefill(null)
+          setView(next)
+        }}
+      />
       <ThemeSwitcher />
     </>
   )

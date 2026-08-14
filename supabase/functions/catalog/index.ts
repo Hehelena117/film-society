@@ -66,8 +66,8 @@ Deno.serve(async (req: Request) => {
   // One TMDB call for everything we cache.
   const extras =
     mediaType === 'movie'
-      ? 'credits,videos,release_dates,watch/providers'
-      : 'credits,videos,content_ratings,watch/providers'
+      ? 'credits,videos,release_dates,watch/providers,keywords,external_ids'
+      : 'credits,videos,content_ratings,watch/providers,keywords,external_ids'
 
   const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}`)
   url.searchParams.set('api_key', TMDB_KEY)
@@ -95,7 +95,29 @@ Deno.serve(async (req: Request) => {
     ) ??
     (t.videos?.results ?? []).find(
       (v: Record<string, unknown>) => v.site === 'YouTube' && v.type === 'Trailer',
-    )
+    ) ??
+    (t.videos?.results ?? []).find((v: Record<string, unknown>) => v.site === 'YouTube')
+
+  // Writers are credited under several job titles; department is the reliable
+  // grouping. Dedupe because one person often holds two of them.
+  const writers = [
+    ...new Set(
+      (t.credits?.crew ?? [])
+        .filter((c: Record<string, unknown>) => c.department === 'Writing')
+        .map((c: Record<string, string>) => c.name),
+    ),
+  ].slice(0, 6)
+
+  const castTop = (t.credits?.cast ?? []).slice(0, 12).map((c: Record<string, unknown>) => ({
+    name: c.name,
+    character: c.character || null,
+    profilePath: c.profile_path ?? null,
+  }))
+
+  // TMDB splits keywords by media type: movies use .keywords, series .results.
+  const keywords = (t.keywords?.keywords ?? t.keywords?.results ?? [])
+    .map((k: Record<string, string>) => k.name)
+    .slice(0, 12)
 
   const { data: title, error: titleErr } = await admin
     .from('titles')
@@ -110,6 +132,12 @@ Deno.serve(async (req: Request) => {
         seasons: mediaType === 'tv' ? (t.number_of_seasons ?? null) : null,
         genres: (t.genres ?? []).map((g: { name: string }) => g.name),
         director,
+        writers,
+        cast_top: castTop,
+        keywords,
+        tagline: t.tagline || null,
+        tmdb_rating: t.vote_average ? Number(t.vote_average).toFixed(1) : null,
+        tmdb_votes: t.vote_count ?? null,
         trailer_key: trailer?.key ?? null,
         imdb_id: t.imdb_id ?? t.external_ids?.imdb_id ?? null,
         fetched_at: new Date().toISOString(),
@@ -159,9 +187,16 @@ Deno.serve(async (req: Request) => {
     seasons: mediaType === 'tv' ? (t.number_of_seasons ?? null) : null,
     genres: (t.genres ?? []).map((g: { name: string }) => g.name),
     director,
+    writers,
+    castTop,
+    keywords,
+    tagline: t.tagline || null,
+    tmdbRating: t.vote_average ? Number(Number(t.vote_average).toFixed(1)) : null,
+    tmdbVotes: t.vote_count ?? null,
     certification,
     trailerKey: trailer?.key ?? null,
     overview: t.overview || null,
+    providers,
   })
 })
 

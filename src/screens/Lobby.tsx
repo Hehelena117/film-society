@@ -7,6 +7,7 @@ import { getRatingSeeds, getRecommendations, type RatingSeed } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
+import type { TitleRef } from '@/screens/TitleDetail'
 import type { Recommendation } from '@/types'
 
 const PAGE_SIZE = 6
@@ -17,7 +18,7 @@ const PAGE_SIZE = 6
  * Scrolling walks you down a cinema corridor past bulb-lit poster frames.
  * Recommendations keep loading as long as you keep scrolling.
  */
-export function Lobby() {
+export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void }) {
   const { t, i18n } = useTranslation()
   const { profile, signOut } = useAuth()
 
@@ -160,6 +161,15 @@ export function Lobby() {
                         tmdbId: rec.title.tmdbId as number,
                         mediaType: rec.title.mediaType,
                         name: rec.title.name,
+                      })
+                  : undefined
+              }
+              onOpen={
+                rec.title.tmdbId
+                  ? () =>
+                      onOpenTitle({
+                        tmdbId: rec.title.tmdbId as number,
+                        mediaType: rec.title.mediaType,
                       })
                   : undefined
               }

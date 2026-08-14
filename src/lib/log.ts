@@ -61,6 +61,7 @@ export interface LoggedEntry {
   note: string | null
   title: {
     id: number
+    tmdbId: number
     posterUrl: string | null
     year: number | null
     mediaType: 'movie' | 'tv'
@@ -74,7 +75,7 @@ export async function getMyLog(language: string, limit = 100): Promise<LoggedEnt
     .from('log_entries')
     .select(
       'id, rating, watched_on, season_number, created_at, note:entry_notes(body), ' +
-        'title:titles!inner(id, poster_path, year, media_type, translations:title_translations(name, language))',
+        'title:titles!inner(id, tmdb_id, poster_path, year, media_type, translations:title_translations(name, language))',
     )
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -100,6 +101,7 @@ export async function getMyLog(language: string, limit = 100): Promise<LoggedEnt
       note,
       title: {
         id: row.title.id,
+        tmdbId: row.title.tmdb_id,
         posterUrl: row.title.poster_path
           ? `https://image.tmdb.org/t/p/w342${row.title.poster_path}`
           : null,

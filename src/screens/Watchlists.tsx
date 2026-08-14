@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import type { TitleRef } from '@/screens/TitleDetail'
 import { useAuth } from '@/lib/auth'
 import { getMyGroups, type Group } from '@/lib/groups'
 import { errorMessage } from '@/lib/errors'
@@ -21,7 +22,13 @@ import {
 } from '@/lib/watchlists'
 import { startSession } from '@/lib/swipe'
 
-export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string) => void }) {
+export function Watchlists({
+  onStartSwipe,
+  onOpenTitle,
+}: {
+  onStartSwipe: (sessionId: string) => void
+  onOpenTitle: (ref: TitleRef) => void
+}) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const userId = user?.id ?? null
@@ -57,6 +64,7 @@ export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string)
         isOwner={open.ownerId === userId}
         language={i18n.resolvedLanguage ?? 'en'}
         onStartSwipe={onStartSwipe}
+        onOpenTitle={onOpenTitle}
         onBack={() => {
           setOpen(null)
           void refresh()
@@ -208,6 +216,7 @@ function WatchlistDetail({
   language,
   onBack,
   onStartSwipe,
+  onOpenTitle,
 }: {
   list: Watchlist
   groups: Group[]
@@ -215,6 +224,7 @@ function WatchlistDetail({
   language: string
   onBack: () => void
   onStartSwipe: (sessionId: string) => void
+  onOpenTitle: (ref: TitleRef) => void
 }) {
   const { t } = useTranslation()
   const [items, setItems] = useState<WatchlistItem[]>([])
@@ -356,7 +366,11 @@ function WatchlistDetail({
           <ul className="grid grid-cols-3 gap-3">
             {items.map((item) => (
               <li key={item.titleId} className="group">
-                <div className="overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift">
+                <button
+                  type="button"
+                  onClick={() => onOpenTitle({ tmdbId: item.tmdbId, mediaType: item.mediaType })}
+                  className="block w-full overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift"
+                >
                   <div className="aspect-2/3 overflow-hidden bg-pitch">
                     {item.posterUrl && (
                       <img
@@ -367,7 +381,7 @@ function WatchlistDetail({
                       />
                     )}
                   </div>
-                </div>
+                </button>
                 <p className="mt-1.5 line-clamp-2 text-[0.75rem] leading-tight text-ink">
                   {item.name}
                 </p>

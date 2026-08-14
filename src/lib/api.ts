@@ -2,6 +2,23 @@ import { supabase } from '@/lib/supabase'
 import type { SupportedLanguage } from '@/lib/i18n'
 import { TMDB_LOCALE } from '@/lib/i18n'
 
+export interface CastMember {
+  name: string
+  character: string | null
+  profilePath: string | null
+}
+
+/**
+ * Where a title can be watched, per TMDB — who source it from JustWatch, who
+ * must be credited wherever it is shown. TMDB does not expose deep links, only
+ * which services carry it.
+ */
+export interface Provider {
+  provider_name: string
+  logo_path: string | null
+  offer_type: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free'
+}
+
 /** A title as the catalog function returns it, already cached in our database. */
 export interface CatalogedTitle {
   id: number
@@ -14,9 +31,17 @@ export interface CatalogedTitle {
   seasons: number | null
   genres: string[]
   director: string | null
+  writers: string[]
+  castTop: CastMember[]
+  /** TMDB keywords, shown as themes. */
+  keywords: string[]
+  tagline: string | null
+  tmdbRating: number | null
+  tmdbVotes: number | null
   certification: string | null
   trailerKey: string | null
   overview: string | null
+  providers: Provider[]
 }
 
 export interface SearchHit {

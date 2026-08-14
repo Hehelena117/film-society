@@ -97,7 +97,16 @@ Watch-provider data additionally requires attributing **JustWatch** as the
 source. TMDB does not return deep links to Netflix/Disney+ etc. — only which
 services carry a title, plus a TMDB `/watch` link.
 
-**To do:** add an attribution footer before any public deployment.
+**Done.** `src/components/Attribution.tsx` carries the logo and both notices,
+and appears on every screen showing TMDB data. The logo is served from
+`public/tmdb.svg` rather than hotlinked, so it cannot break when TMDB reshuffles
+their asset hashes.
+
+The TMDB disclaimer is deliberately **left in English in all locales**. It is a
+legal notice whose wording their terms specify; translating it would change the
+text we are obliged to reproduce.
+
+Do not remove it from a screen that shows their data.
 
 ---
 

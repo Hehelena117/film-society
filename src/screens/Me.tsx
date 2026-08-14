@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import type { TitleRef } from '@/screens/TitleDetail'
 import { useAuth } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import { deleteEntry, getMyLog, type LoggedEntry } from '@/lib/log'
 
 /** Your own shelf: everything you have logged, with the notes only you can see. */
-export function Me() {
+export function Me({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void }) {
   const { t, i18n } = useTranslation()
   const { profile, signOut } = useAuth()
   const [entries, setEntries] = useState<LoggedEntry[]>([])
@@ -86,7 +87,17 @@ export function Me() {
                 key={entry.id}
                 className="flex gap-4 rounded-[2px] border border-rule bg-ground-2 p-3"
               >
-                <div className="w-16 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOpenTitle({
+                      tmdbId: entry.title.tmdbId,
+                      mediaType: entry.title.mediaType,
+                    })
+                  }
+                  aria-label={entry.title.name}
+                  className="w-16 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5"
+                >
                   <div className="aspect-2/3 overflow-hidden bg-pitch">
                     {entry.title.posterUrl && (
                       <img
@@ -97,7 +108,7 @@ export function Me() {
                       />
                     )}
                   </div>
-                </div>
+                </button>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
