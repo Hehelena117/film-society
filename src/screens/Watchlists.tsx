@@ -2,21 +2,29 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import { useAuth } from '@/lib/auth'
 import { getMyGroups, type Group } from '@/lib/groups'
 import { errorMessage } from '@/lib/errors'
 import {
+  addWatchlistMember,
   createWatchlist,
   deleteWatchlist,
   getMyWatchlists,
   getWatchlistItems,
+  getWatchlistMembers,
   removeFromWatchlist,
+  removeWatchlistMember,
+  setWatchlistGroup,
   type Watchlist,
   type WatchlistItem,
+  type WatchlistMember,
 } from '@/lib/watchlists'
 import { startSession } from '@/lib/swipe'
 
 export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string) => void }) {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const [lists, setLists] = useState<Watchlist[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [open, setOpen] = useState<Watchlist | null>(null)
@@ -45,6 +53,8 @@ export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string)
     return (
       <WatchlistDetail
         list={open}
+        groups={groups}
+        isOwner={open.ownerId === userId}
         language={i18n.resolvedLanguage ?? 'en'}
         onStartSwipe={onStartSwipe}
         onBack={() => {
@@ -193,26 +203,34 @@ function NewListForm({
 
 function WatchlistDetail({
   list,
+  groups,
+  isOwner,
   language,
   onBack,
   onStartSwipe,
 }: {
   list: Watchlist
+  groups: Group[]
+  isOwner: boolean
   language: string
   onBack: () => void
   onStartSwipe: (sessionId: string) => void
 }) {
   const { t } = useTranslation()
   const [items, setItems] = useState<WatchlistItem[]>([])
+  const [members, setMembers] = useState<WatchlistMember[]>([])
+  const [groupId, setGroupId] = useState(list.groupId ?? '')
+  const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   async function beginSwipe() {
     setStarting(true)
     setError(null)
     try {
-      onStartSwipe(await startSession(list.id, list.groupId))
+      onStartSwipe(await startSession(list.id, groupId || null))
     } catch (err) {
       const message = errorMessage(err)
       setError(message === 'empty-watchlist' ? t('swipe.needTitles') : message)
@@ -220,10 +238,50 @@ function WatchlistDetail({
     }
   }
 
+  async function changeGroup(next: string) {
+    setGroupId(next)
+    setError(null)
+    try {
+      await setWatchlistGroup(list.id, next || null)
+    } catch (err) {
+      setError(errorMessage(err))
+      setGroupId(list.groupId ?? '') // put the control back where it was
+    }
+  }
+
+  async function invite() {
+    if (!username.trim()) return
+    setSharing(true)
+    setError(null)
+    try {
+      await addWatchlistMember(list.id, username)
+      setUsername('')
+      setMembers(await getWatchlistMembers(list.id))
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  async function uninvite(userId: string) {
+    try {
+      await removeWatchlistMember(list.id, userId)
+      setMembers((current) => current.filter((m) => m.userId !== userId))
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      setItems(await getWatchlistItems(list.id, language))
+      const [i, m] = await Promise.all([
+        getWatchlistItems(list.id, language),
+        getWatchlistMembers(list.id),
+      ])
+      setItems(i)
+      setMembers(m)
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -260,16 +318,83 @@ function WatchlistDetail({
       <main className="relative z-10 mx-auto max-w-lg px-6 py-8">
         {error && <p className="mb-5 text-[0.875rem] text-velvet-500">{error}</p>}
 
-        {items.length > 0 && (
-          <button
-            type="button"
-            onClick={() => void beginSwipe()}
-            disabled={starting}
-            className="type-marquee mb-7 w-full rounded-[2px] bg-velvet-600 py-3.5 text-[14px] text-plate hover:bg-velvet-700 disabled:opacity-60"
-          >
-            {starting ? t('auth.working') : t('swipe.start')}
-          </button>
+        {/* ---- Who can see this list -------------------------------------- */}
+        {isOwner && (
+          <section className="mb-7 rounded-[2px] border border-rule bg-ground-2 p-4">
+            <span className="type-meta mb-2 block text-ink-3">{t('lists.shareWith')}</span>
+            <select
+              value={groupId}
+              onChange={(e) => void changeGroup(e.target.value)}
+              className="w-full rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+            >
+              <option value="">{t('lists.justMe')}</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+
+            <span className="type-meta mt-4 mb-2 block text-ink-3">{t('lists.alsoPeople')}</span>
+            <div className="flex gap-2">
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={t('groups.usernamePlaceholder')}
+                className="min-w-0 flex-1 rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+              />
+              <button
+                type="button"
+                onClick={() => void invite()}
+                disabled={sharing || !username.trim()}
+                className="type-marquee rounded-[2px] bg-velvet-600 px-5 text-[13px] text-plate hover:bg-velvet-700 disabled:opacity-60"
+              >
+                {t('groups.add')}
+              </button>
+            </div>
+
+            {members.length > 0 && (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {members.map((m) => (
+                  <li
+                    key={m.userId}
+                    className="flex items-center gap-2 rounded-full border border-rule px-3 py-1.5"
+                  >
+                    <span className="text-[0.8125rem] text-ink">{m.username}</span>
+                    <button
+                      type="button"
+                      onClick={() => void uninvite(m.userId)}
+                      aria-label={`${t('lists.remove')} ${m.username}`}
+                      className="text-[0.8125rem] text-ink-3 hover:text-velvet-500"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
+
+        {/* ---- Decide together --------------------------------------------- */}
+        {items.length > 0 &&
+          (groupId ? (
+            <button
+              type="button"
+              onClick={() => void beginSwipe()}
+              disabled={starting}
+              className="type-marquee mb-7 w-full rounded-[2px] bg-velvet-600 py-3.5 text-[14px] text-plate hover:bg-velvet-700 disabled:opacity-60"
+            >
+              {starting ? t('auth.working') : t('swipe.start')}
+            </button>
+          ) : (
+            // Deciding needs a group: that is where the others find the session
+            // to join. Offering the button on a private list would open a room
+            // nobody else can reach, which is exactly the dead end it replaces.
+            <p className="mb-7 rounded-[2px] border border-dashed border-rule-strong px-4 py-3.5 text-center text-[0.8125rem] leading-relaxed text-ink-3">
+              {t('swipe.needsGroup')}
+            </p>
+          ))}
 
         {loading ? (
           <p className="type-meta text-center text-ink-3/70">{t('lists.loading')}</p>

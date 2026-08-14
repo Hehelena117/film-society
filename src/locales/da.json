@@ -48,6 +48,7 @@
     "join": "Deltag",
     "openSessions": "Sker lige nu",
     "needTitles": "Tilføj nogle titler til listen først.",
+    "needsGroup": "Del denne liste med en gruppe for at beslutte sammen — det er der, de andre finder sessionen.",
     "watching_one": "{{count}} med",
     "watching_other": "{{count}} med",
     "unanimous": "begge skal være enige",
@@ -78,7 +79,8 @@
     "remove": "Fjern",
     "delete": "Slet denne liste",
     "addTo": "Tilføj til en liste",
-    "newNamed": "Navn på ny liste"
+    "newNamed": "Navn på ny liste",
+    "alsoPeople": "Eller del med én person"
   },
   "groups": {
     "title": "Grupper",

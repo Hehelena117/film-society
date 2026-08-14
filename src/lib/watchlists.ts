@@ -67,6 +67,67 @@ export async function deleteWatchlist(id: string): Promise<void> {
   if (error) throw error
 }
 
+export interface WatchlistMember {
+  userId: string
+  username: string
+  role: 'editor' | 'viewer'
+}
+
+/**
+ * Shares an existing list with a group, or unshares it by passing null.
+ *
+ * A list's audience is not a decision anyone can make correctly at the moment
+ * they create it, so it stays changeable. Owner-only, enforced by RLS.
+ */
+export async function setWatchlistGroup(id: string, groupId: string | null): Promise<void> {
+  const { error } = await supabase.from('watchlists').update({ group_id: groupId }).eq('id', id)
+  if (error) throw error
+}
+
+export async function getWatchlistMembers(watchlistId: string): Promise<WatchlistMember[]> {
+  const { data, error } = await supabase
+    .from('watchlist_members')
+    .select('user_id, role, profile:profiles!inner(username)')
+    .eq('watchlist_id', watchlistId)
+
+  if (error) throw error
+
+  return ((data ?? []) as Array<Record<string, any>>).map((row) => ({
+    userId: row.user_id,
+    username: row.profile.username,
+    role: row.role,
+  }))
+}
+
+/** Shares a list with one person by username, without involving a group. */
+export async function addWatchlistMember(watchlistId: string, username: string): Promise<void> {
+  const { data: profile, error: lookupErr } = await supabase
+    .from('profiles')
+    .select('id')
+    .ilike('username', username.trim())
+    .maybeSingle()
+
+  if (lookupErr) throw lookupErr
+  if (!profile) throw new Error(`No member called "${username.trim()}"`)
+
+  const { error } = await supabase
+    .from('watchlist_members')
+    .insert({ watchlist_id: watchlistId, user_id: profile.id, role: 'editor' })
+
+  // Already shared with them, which is the goal.
+  if (error && error.code !== '23505') throw error
+}
+
+export async function removeWatchlistMember(watchlistId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('watchlist_members')
+    .delete()
+    .eq('watchlist_id', watchlistId)
+    .eq('user_id', userId)
+
+  if (error) throw error
+}
+
 export async function getWatchlistItems(
   watchlistId: string,
   language: string,

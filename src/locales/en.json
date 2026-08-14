@@ -48,6 +48,7 @@
     "join": "Join",
     "openSessions": "Happening now",
     "needTitles": "Add some titles to this list first.",
+    "needsGroup": "Share this list with a group to decide together — that's where the others find the session to join.",
     "watching_one": "{{count}} watching",
     "watching_other": "{{count}} watching",
     "unanimous": "both must agree",
@@ -78,7 +79,8 @@
     "remove": "Remove",
     "delete": "Delete this list",
     "addTo": "Add to a list",
-    "newNamed": "New list name"
+    "newNamed": "New list name",
+    "alsoPeople": "Or share with one person"
   },
   "groups": {
     "title": "Groups",

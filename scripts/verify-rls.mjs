@@ -230,6 +230,59 @@ try {
     .single()
   check("another member's addition is attributed to them", bobAdded?.added_by === bob.id)
 
+  console.log('\n=== sharing a list after it exists ===')
+  const { data: solo, error: soloErr } = await alice.client
+    .from('watchlists')
+    .insert({ name: 'Just Mine' })
+    .select('id')
+    .single()
+  check('create a private list', !soloErr, soloErr?.message)
+
+  const { data: bobPreShare } = await bob.client
+    .from('watchlists')
+    .select('id')
+    .eq('id', solo.id)
+  check('private list is invisible to others', (bobPreShare ?? []).length === 0)
+
+  const { error: shareErr } = await alice.client
+    .from('watchlist_members')
+    .insert({ watchlist_id: solo.id, user_id: bob.id, role: 'editor' })
+  check('owner shares with one person', !shareErr, shareErr?.message)
+
+  const { data: bobPostShare } = await bob.client
+    .from('watchlists')
+    .select('name')
+    .eq('id', solo.id)
+  check('shared-with person can now see it', bobPostShare?.[0]?.name === 'Just Mine')
+
+  const { error: bobItemErr } = await bob.client
+    .from('watchlist_items')
+    .insert({ watchlist_id: solo.id, title_id: cat.id })
+  check('editor can add to a shared list', !bobItemErr, bobItemErr?.message)
+
+  // A non-owner UPDATE is not an error under RLS — it simply matches no rows.
+  // Checking the value is the only way to know it was refused.
+  await bob.client.from('watchlists').update({ group_id: groupId }).eq('id', solo.id)
+  const { data: stillPrivate } = await alice.client
+    .from('watchlists')
+    .select('group_id')
+    .eq('id', solo.id)
+    .single()
+  check('non-owner cannot re-share the list', stillPrivate?.group_id === null, `${stillPrivate?.group_id}`)
+
+  const { error: regroupErr } = await alice.client
+    .from('watchlists')
+    .update({ group_id: groupId })
+    .eq('id', solo.id)
+  check('owner moves an existing list into a group', !regroupErr, regroupErr?.message)
+
+  const { data: carolPreview } = await bob.client
+    .from('watchlists')
+    .select('group_id')
+    .eq('id', solo.id)
+    .single()
+  check('the move actually stuck', carolPreview?.group_id === groupId)
+
   console.log('\n=== swipe: two people must agree ===')
   const { data: s1, error: s1Err } = await alice.client
     .from('swipe_sessions')

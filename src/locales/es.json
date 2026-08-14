@@ -48,6 +48,7 @@
     "join": "Unirse",
     "openSessions": "Ahora mismo",
     "needTitles": "Añade algunos títulos a la lista primero.",
+    "needsGroup": "Comparte esta lista con un grupo para decidir juntos — ahí es donde los demás encuentran la sesión.",
     "watching_one": "{{count}} participante",
     "watching_other": "{{count}} participantes",
     "unanimous": "ambos deben estar de acuerdo",
@@ -78,7 +79,8 @@
     "remove": "Quitar",
     "delete": "Eliminar esta lista",
     "addTo": "Añadir a una lista",
-    "newNamed": "Nombre de la nueva lista"
+    "newNamed": "Nombre de la nueva lista",
+    "alsoPeople": "O comparte con una persona"
   },
   "groups": {
     "title": "Grupos",
