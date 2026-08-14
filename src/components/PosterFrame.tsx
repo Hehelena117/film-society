@@ -10,11 +10,11 @@ function hueFor(name: string): number {
 
 /**
  * A poster in a bulb-lit lobby surround, after the Cinemark frames in the
- * mood-board: dark outer frame, brass reveal, marquee plate top and bottom,
- * bulbs running the full perimeter.
+ * mood-board: dark outer frame, brass reveal, cream marquee plate top and
+ * bottom, bulbs running the full perimeter.
  *
- * The frame is the only dark mass on the page — everything around it is paper,
- * so the artwork carries the contrast rather than the chrome.
+ * The frame stays constant across all four themes. It is the anchor — whatever
+ * the wall does, the poster is always presented the same way.
  */
 export function PosterFrame({ rec }: { rec: Recommendation }) {
   const { t } = useTranslation()
@@ -32,14 +32,14 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
   return (
     <article className="mx-auto w-full max-w-[22rem]">
       {/* ---- The lit frame ------------------------------------------------ */}
-      <div className="relative rounded-[3px] bg-ink p-2 shadow-frame">
+      <div className="relative rounded-[3px] bg-frame p-2 shadow-frame">
         {/* Bulb perimeter. Each side is offset so they never breathe in sync. */}
         <div className="pointer-events-none absolute inset-x-3 top-[3px] h-2.5 bulbs-h bulb-breathe" />
         <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-2.5 bulbs-h bulb-breathe bulb-offset-2" />
         <div className="pointer-events-none absolute inset-y-3 left-[3px] w-2.5 bulbs-v bulb-breathe bulb-offset-1" />
         <div className="pointer-events-none absolute inset-y-3 right-[3px] w-2.5 bulbs-v bulb-breathe bulb-offset-3" />
 
-        <div className="relative rounded-[2px] bg-ink p-[7px] ring-1 ring-brass-600/40">
+        <div className="relative rounded-[2px] bg-frame p-[7px] ring-1 ring-brass-600/40">
           <MarqueePlate />
 
           {/* ---- The poster itself ---------------------------------------- */}
@@ -64,13 +64,13 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
         </div>
       </div>
 
-      {/* ---- Caption, set on the paper ------------------------------------ */}
+      {/* ---- Caption, set on the wall ------------------------------------- */}
       <div className="mt-5 px-2 text-center">
         <h2 className="type-title text-[1.6rem] text-ink">{title.name}</h2>
 
-        <p className="type-meta mt-2 text-brass-700">
+        <p className="type-meta mt-2 text-accent">
           {title.year}
-          {meta.length > 0 && <span className="text-paper-4"> · </span>}
+          {meta.length > 0 && <span className="text-rule-strong"> · </span>}
           {meta.join(' · ')}
         </p>
 
@@ -96,7 +96,7 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
 function MarqueePlate() {
   const { t } = useTranslation()
   return (
-    <div className="flex h-[26px] items-center justify-center bg-linear-to-b from-paper to-paper-2 shadow-plate">
+    <div className="flex h-[26px] items-center justify-center bg-linear-to-b from-plate to-plate-2 shadow-plate">
       <span className="type-marquee text-[13px] text-velvet-600">{t('app.name')}</span>
     </div>
   )
@@ -116,7 +116,7 @@ function FallbackPoster({ name, year, hue }: { name: string; year: number; hue: 
     >
       <span className="type-marquee text-[10px] text-brass-500/70">Film Society</span>
       <div className="h-px w-12 bg-brass-500/50" />
-      <h3 className="type-title text-[1.75rem] leading-[1.15] text-paper drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+      <h3 className="type-title text-[1.75rem] leading-[1.15] text-plate drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
         {name}
       </h3>
       <div className="h-px w-12 bg-brass-500/50" />

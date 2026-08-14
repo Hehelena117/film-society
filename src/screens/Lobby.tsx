@@ -54,19 +54,19 @@ export function Lobby() {
   }, [loadMore])
 
   return (
-    <div className="min-h-dvh wall-paper texture-paper">
+    <div className="min-h-dvh wall-ground texture-wall">
       {/* ---- Marquee header ------------------------------------------------ */}
-      <header className="relative z-10 px-6 pt-12 pb-7 text-center">
-        <div className="relative inline-block rounded-[3px] bg-ink px-1.5 py-1.5 shadow-frame">
+      <header className="relative z-10 bg-band px-6 pt-12 pb-9 text-center transition-colors duration-500">
+        <div className="relative inline-block rounded-[3px] bg-frame px-1.5 py-1.5 shadow-frame">
           <div className="pointer-events-none absolute inset-x-3 top-[3px] h-2 bulbs-h bulb-breathe" />
           <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-2 bulbs-h bulb-breathe bulb-offset-2" />
 
-          <div className="bg-linear-to-b from-paper to-paper-2 px-8 py-3.5">
+          <div className="bg-linear-to-b from-plate to-plate-2 px-8 py-3.5">
             <h1 className="type-marquee text-[2rem] text-velvet-600">{t('app.name')}</h1>
           </div>
         </div>
 
-        <p className="type-script mt-5 text-[1.65rem] text-ink-2">{t('app.tagline')}</p>
+        <p className="type-script mt-5 text-[1.65rem] text-band-ink">{t('app.tagline')}</p>
       </header>
 
       {/* ---- Tile dado, as along the lobby wall ---------------------------- */}

@@ -3,32 +3,47 @@
 /* ==========================================================================
    FILM SOCIETY — Design tokens
 
-   Derived from resources/mood-board. The beige of the marquee plates and the
-   white lobby tile is now the ground rather than an accent, so the app reads
-   like a printed cinema programme: warm paper, oxblood and velvet for accent,
-   brass bulbs, and the dark poster frames as the focal points.
+   Derived from resources/mood-board.
+
+   Token architecture
+   ------------------
+   GROUND / INK / BAND swap per theme (see themes.css).
+   FRAME / PLATE / BULB stay constant — the poster frame is always a dark mass
+   with cream marquee plates and warm bulbs, exactly as in the reference
+   photographs, whatever the wall behind it is doing.
    ========================================================================== */
 
 @theme {
-  /* --- Paper: the ground ------------------------------------------------ */
-  --color-paper: #f4eddf; /* main background */
-  --color-paper-2: #ebe0cb; /* raised / inset surface */
-  --color-paper-3: #dbcdb2; /* dividers, hairlines */
-  --color-paper-4: #c3b190; /* muted edges */
+  /* --- Ground: the wall behind everything. Theme-dependent. ------------- */
+  --color-ground: #f4eddf;
+  --color-ground-2: #ebe0cb;
+  --color-rule: #dbcdb2;
+  --color-rule-strong: #c3b190;
 
-  /* --- Ink: type and frames --------------------------------------------- */
-  --color-ink: #1a1416; /* primary text, poster frames */
-  --color-ink-2: #4a3f42; /* secondary text */
-  --color-ink-3: #7a6d70; /* tertiary / captions */
-  --color-pitch: #0b0809; /* inside the frame, behind artwork */
+  /* --- Ink: type on the ground. Theme-dependent. ------------------------ */
+  --color-ink: #1a1416;
+  --color-ink-2: #4a3f42;
+  --color-ink-3: #7a6d70;
 
-  /* --- Oxblood: lobby walls --------------------------------------------- */
-  --color-oxblood-900: #2c0a10;
-  --color-oxblood-800: #3a0e16;
+  /* --- Band: header / dado. Theme-dependent. ---------------------------- */
+  --color-band: #ebe0cb;
+  --color-band-ink: #4a3f42;
+
+  /* --- Frame: the poster surround. Near-constant. ------------------------ */
+  --color-frame: #1a1416;
+  --color-pitch: #0b0809; /* behind the artwork */
+
+  /* --- Plate: marquee lettering panels. Constant cream. ----------------- */
+  --color-plate: #f4eddf;
+  --color-plate-2: #e6d9c2;
+
+  /* --- Oxblood ----------------------------------------------------------- */
+  --color-oxblood-900: #24080d;
+  --color-oxblood-800: #330f16;
   --color-oxblood-700: #4a1119;
   --color-oxblood-600: #5d1720;
 
-  /* --- Velvet: seats, curtains, marquee lettering ------------------------ */
+  /* --- Velvet ------------------------------------------------------------ */
   --color-velvet-700: #7a161d;
   --color-velvet-600: #8e1b22;
   --color-velvet-500: #b22a2a;
@@ -36,13 +51,16 @@
 
   /* --- Brass & bulbs ----------------------------------------------------- */
   --color-brass-800: #6b4c17;
-  --color-brass-700: #8a6320; /* brass type on paper — passes contrast */
+  --color-brass-700: #8a6320;
   --color-brass-600: #c9922e;
   --color-brass-500: #e8b44a;
-  --color-bulb: #ffe4a8; /* lit filament */
+  --color-bulb: #ffe4a8;
   --color-bulb-glow: #ffc061;
 
   --color-sepia: #c9a227;
+
+  /* --- Accent: whichever colour carries the theme. ---------------------- */
+  --color-accent: #8e1b22;
 
   /* --- Type -------------------------------------------------------------- */
   --font-marquee: 'Bebas Neue', 'Arial Narrow', sans-serif;
@@ -50,12 +68,17 @@
   --font-title: 'Playfair Display', Georgia, serif;
   --font-body: 'Inter', system-ui, sans-serif;
 
-  /* --- Elevation: warm, soft, never black -------------------------------- */
-  --shadow-plate: 0 1px 2px rgb(74 17 25 / 0.08);
-  --shadow-frame: 0 18px 40px -16px rgb(43 20 12 / 0.45), 0 4px 12px -4px rgb(43 20 12 / 0.18);
-  --shadow-lift: 0 2px 8px -2px rgb(43 20 12 / 0.16);
-
   --ease-curtain: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Non-utility custom properties. Kept out of @theme so Tailwind does not
+   generate classes for them. Overridden per theme. */
+:root {
+  --texture-blend: multiply;
+  --texture-opacity: 0.28;
+  --shadow-frame: 0 18px 40px -16px rgb(43 20 12 / 0.45), 0 4px 12px -4px rgb(43 20 12 / 0.18);
+  --shadow-plate: 0 1px 2px rgb(74 17 25 / 0.08);
+  --glow-top: 40%;
 }
 
 /* ==========================================================================
@@ -73,13 +96,16 @@
   }
 
   body {
-    background-color: var(--color-paper);
+    background-color: var(--color-ground);
     color: var(--color-ink);
     font-family: var(--font-body);
     font-weight: 400;
     overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    transition:
+      background-color 0.5s var(--ease-curtain),
+      color 0.5s var(--ease-curtain);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -97,20 +123,20 @@
    Surfaces
    ========================================================================== */
 
-/* Warm paper stock, lit slightly from above. Replaces the dark oxblood wall. */
-@utility wall-paper {
-  background-color: var(--color-paper);
+/* The wall, lit slightly from above by the marquee. */
+@utility wall-ground {
+  background-color: var(--color-ground);
   background-image:
     radial-gradient(
       100% 50% at 50% 0%,
-      color-mix(in oklab, var(--color-bulb) 40%, transparent) 0%,
+      color-mix(in oklab, var(--color-bulb) var(--glow-top), transparent) 0%,
       transparent 55%
     ),
-    linear-gradient(180deg, var(--color-paper) 0%, var(--color-paper-2) 100%);
+    linear-gradient(180deg, var(--color-ground) 0%, var(--color-ground-2) 100%);
 }
 
-/* Paper tooth. Multiplied over cream so it reads as stock, not as noise. */
-@utility texture-paper {
+/* Surface tooth. Multiplies on paper, overlays on dark walls. */
+@utility texture-wall {
   position: relative;
 
   &::after {
@@ -119,13 +145,13 @@
     inset: 0;
     pointer-events: none;
     z-index: 1;
-    opacity: 0.28;
-    mix-blend-mode: multiply;
+    opacity: var(--texture-opacity);
+    mix-blend-mode: var(--texture-blend);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
   }
 }
 
-/* Celluloid grain, for dark areas inside the frames only. */
+/* Celluloid grain, for the dark area inside a frame. */
 @utility texture-grain {
   position: relative;
 
@@ -141,25 +167,32 @@
   }
 }
 
-/* Lobby tile. Low contrast so it sits under the content rather than shouting. */
+/* Lobby tile. */
 @utility floor-checker {
   background-image:
-    linear-gradient(45deg, var(--color-ink) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--color-ink) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--color-ink) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--color-ink) 75%);
+    linear-gradient(45deg, var(--color-frame) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-frame) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-frame) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-frame) 75%);
   background-size: 26px 26px;
   background-position:
     0 0,
     0 13px,
     13px -13px,
     -13px 0px;
-  background-color: var(--color-paper-2);
+  background-color: var(--color-plate);
 }
 
-/* Soft warm falloff inside dark frames. Nothing like the old black vignette. */
 @utility vignette-warm {
   box-shadow: inset 0 0 60px 12px rgb(11 8 9 / 0.55);
+}
+
+@utility shadow-frame {
+  box-shadow: var(--shadow-frame);
+}
+
+@utility shadow-plate {
+  box-shadow: var(--shadow-plate);
 }
 
 /* ==========================================================================
@@ -192,8 +225,7 @@
   background-position: center;
 }
 
-/* Old tungsten: an uneven wander rather than a pulse. Wider range than before
-   so it is clearly alive, but slow enough that it never pulls the eye. */
+/* Old tungsten: an uneven wander rather than a pulse. */
 @keyframes bulb-breathe {
   0% {
     opacity: 0.74;
@@ -224,7 +256,7 @@
 }
 
 /* Negative delays start each strip mid-cycle, so the four sides of a frame
-   never breathe in unison — that synchronisation is what reads as "blinking". */
+   never breathe in unison — that synchronisation is what reads as blinking. */
 @utility bulb-offset-1 {
   animation-delay: -1.7s;
 }
@@ -257,7 +289,6 @@
   letter-spacing: -0.01em;
 }
 
-/* Small caps metadata line — the modern part of the mix. */
 @utility type-meta {
   font-family: var(--font-body);
   font-size: 0.6875rem;
@@ -270,7 +301,7 @@
    Components
    ========================================================================== */
 
-/* Hairline rule with a brass centre pip, as on old programme dividers. */
+/* Hairline rule, as on old programme dividers. */
 @utility rule-pip {
   display: flex;
   align-items: center;
@@ -283,10 +314,10 @@
     height: 1px;
     width: 100%;
     max-width: 3rem;
-    background: linear-gradient(90deg, transparent, var(--color-paper-4));
+    background: linear-gradient(90deg, transparent, var(--color-rule-strong));
   }
 
   &::after {
-    background: linear-gradient(90deg, var(--color-paper-4), transparent);
+    background: linear-gradient(90deg, var(--color-rule-strong), transparent);
   }
 }
