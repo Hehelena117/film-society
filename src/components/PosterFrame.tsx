@@ -16,7 +16,13 @@ function hueFor(name: string): number {
  * The frame stays constant across all four themes. It is the anchor — whatever
  * the wall does, the poster is always presented the same way.
  */
-export function PosterFrame({ rec }: { rec: Recommendation }) {
+export function PosterFrame({
+  rec,
+  onAddToList,
+}: {
+  rec: Recommendation
+  onAddToList?: () => void
+}) {
   const { t } = useTranslation()
   const { title } = rec
   const hue = hueFor(title.name)
@@ -87,6 +93,16 @@ export function PosterFrame({ rec }: { rec: Recommendation }) {
         <p className="mx-auto max-w-[32ch] text-[0.875rem] leading-relaxed text-ink-2">
           {rec.reason}
         </p>
+
+        {onAddToList && (
+          <button
+            type="button"
+            onClick={onAddToList}
+            className="type-marquee mt-5 rounded-full border border-rule-strong px-5 py-2.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            + {t('actions.addToWatchlist')}
+          </button>
+        )}
       </div>
     </article>
   )

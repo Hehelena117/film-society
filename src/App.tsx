@@ -8,6 +8,8 @@ import { BoxOffice } from '@/screens/BoxOffice'
 import { Groups } from '@/screens/Groups'
 import { Lobby } from '@/screens/Lobby'
 import { LogViewing } from '@/screens/LogViewing'
+import { Me } from '@/screens/Me'
+import { Swipe } from '@/screens/Swipe'
 import { Watchlists } from '@/screens/Watchlists'
 
 export default function App() {
@@ -21,6 +23,7 @@ export default function App() {
 function Gate() {
   const { session, loading } = useAuth()
   const [view, setView] = useState<View>('lobby')
+  const [swipeSession, setSwipeSession] = useState<string | null>(null)
   // Remounts the Lobby after a save, so a newly logged film feeds the
   // recommender straight away rather than on next reload.
   const [lobbyKey, setLobbyKey] = useState(0)
@@ -28,11 +31,18 @@ function Gate() {
   if (loading) return <Curtain />
   if (!session) return <BoxOffice />
 
+  // A swipe session takes over the screen: navigating away mid-decision would
+  // leave the others waiting on a vote that never arrives.
+  if (swipeSession) {
+    return <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
+  }
+
   return (
     <>
       {view === 'lobby' && <Lobby key={lobbyKey} />}
-      {view === 'lists' && <Watchlists />}
-      {view === 'groups' && <Groups />}
+      {view === 'lists' && <Watchlists onStartSwipe={setSwipeSession} />}
+      {view === 'groups' && <Groups onJoinSwipe={setSwipeSession} />}
+      {view === 'me' && <Me />}
       {view === 'log' && (
         <LogViewing
           onDone={() => {

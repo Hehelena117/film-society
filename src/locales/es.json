@@ -29,7 +29,37 @@
     "lobby": "Vestíbulo",
     "log": "+ Registrar",
     "lists": "Listas",
-    "groups": "Grupos"
+    "groups": "Grupos",
+    "me": "Yo"
+  },
+  "me": {
+    "title": "Yo",
+    "watched": "Títulos",
+    "entries": "Visionados",
+    "average": "Media",
+    "log": "Tu registro",
+    "empty": "Aún no has registrado nada. Usa + Registrar para añadir el primero.",
+    "noDate": "Sin fecha",
+    "delete": "Eliminar"
+  },
+  "swipe": {
+    "title": "Decidir juntos",
+    "start": "Empezar a decidir",
+    "join": "Unirse",
+    "openSessions": "Ahora mismo",
+    "needTitles": "Añade algunos títulos a la lista primero.",
+    "watching_one": "{{count}} participante",
+    "watching_other": "{{count}} participantes",
+    "unanimous": "ambos deben estar de acuerdo",
+    "majority": "decide la mayoría",
+    "yes": "Sí",
+    "no": "No",
+    "remaining_one": "queda {{count}}",
+    "remaining_other": "quedan {{count}}",
+    "waiting": "Eso es todo",
+    "waitingHint": "Has visto todos los títulos. Esperando a los demás.",
+    "itsAMatch": "¡Coincidís!",
+    "done": "Listo"
   },
   "lists": {
     "title": "Listas",
@@ -44,7 +74,9 @@
     "empty": "Aún no hay listas. Crea una para ti o compártela con un grupo.",
     "emptyList": "Aquí no hay nada todavía.",
     "remove": "Quitar",
-    "delete": "Eliminar esta lista"
+    "delete": "Eliminar esta lista",
+    "addTo": "Añadir a una lista",
+    "newNamed": "Nombre de la nueva lista"
   },
   "groups": {
     "title": "Grupos",
@@ -73,6 +105,7 @@
     "rating": "Tu puntuación",
     "ratingOptional": "Opcional. Toca de nuevo para borrar.",
     "season": "Temporada",
+    "seasonN": "Temporada {{n}}",
     "watchedOn": "Vista el",
     "note": "Nota privada",
     "notePlaceholder": "Solo tú verás esto.",

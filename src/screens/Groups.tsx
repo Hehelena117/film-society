@@ -12,8 +12,9 @@ import {
   type Group,
   type GroupMember,
 } from '@/lib/groups'
+import { getOpenSessions, type OpenSession } from '@/lib/swipe'
 
-export function Groups() {
+export function Groups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) => void }) {
   const { t } = useTranslation()
   const [groups, setGroups] = useState<Group[]>([])
   const [open, setOpen] = useState<Group | null>(null)
@@ -57,6 +58,7 @@ export function Groups() {
     return (
       <GroupDetail
         group={open}
+        onJoinSwipe={onJoinSwipe}
         onBack={() => {
           setOpen(null)
           void refresh()
@@ -142,17 +144,28 @@ export function Groups() {
   )
 }
 
-function GroupDetail({ group, onBack }: { group: Group; onBack: () => void }) {
+function GroupDetail({
+  group,
+  onBack,
+  onJoinSwipe,
+}: {
+  group: Group
+  onBack: () => void
+  onJoinSwipe: (sessionId: string) => void
+}) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [members, setMembers] = useState<GroupMember[]>([])
+  const [sessions, setSessions] = useState<OpenSession[]>([])
   const [username, setUsername] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      setMembers(await getGroupMembers(group.id))
+      const [m, s] = await Promise.all([getGroupMembers(group.id), getOpenSessions(group.id)])
+      setMembers(m)
+      setSessions(s)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
@@ -219,6 +232,37 @@ function GroupDetail({ group, onBack }: { group: Group; onBack: () => void }) {
               </div>
             </label>
           </div>
+        )}
+
+        {sessions.length > 0 && (
+          <section className="mt-6">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">
+                {t('swipe.openSessions')}
+              </span>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {sessions.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => onJoinSwipe(s.id)}
+                    className="flex w-full items-center justify-between rounded-[2px] border border-brass-600/60 bg-ground-2 px-4 py-3 text-left transition-colors hover:border-brass-600"
+                  >
+                    <span>
+                      <span className="type-title block text-[1rem] text-ink">
+                        {s.watchlistName ?? t('swipe.title')}
+                      </span>
+                      <span className="type-meta mt-1 block text-ink-3">
+                        {t('swipe.watching', { count: s.participants })}
+                      </span>
+                    </span>
+                    <span className="type-marquee text-[12px] text-accent">{t('swipe.join')}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         <ul className="mt-6 flex flex-col gap-2">

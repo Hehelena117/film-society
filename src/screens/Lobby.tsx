@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
 import { getRatingSeeds, getRecommendations, type RatingSeed } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -23,6 +24,7 @@ export function Lobby() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exhausted, setExhausted] = useState(false)
+  const [adding, setAdding] = useState<AddTarget | null>(null)
 
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const busyRef = useRef(false)
@@ -147,7 +149,20 @@ export function Lobby() {
 
         <div className="flex flex-col gap-16">
           {recs.map((rec) => (
-            <PosterFrame key={rec.title.id} rec={rec} />
+            <PosterFrame
+              key={rec.title.id}
+              rec={rec}
+              onAddToList={
+                rec.title.tmdbId
+                  ? () =>
+                      setAdding({
+                        tmdbId: rec.title.tmdbId as number,
+                        mediaType: rec.title.mediaType,
+                        name: rec.title.name,
+                      })
+                  : undefined
+              }
+            />
           ))}
         </div>
 
@@ -172,6 +187,8 @@ export function Lobby() {
           </div>
         )}
       </main>
+
+      {adding && <AddToList target={adding} onClose={() => setAdding(null)} />}
     </div>
   )
 }

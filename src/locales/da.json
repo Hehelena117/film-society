@@ -29,7 +29,37 @@
     "lobby": "Foyer",
     "log": "+ Log",
     "lists": "Lister",
-    "groups": "Grupper"
+    "groups": "Grupper",
+    "me": "Mig"
+  },
+  "me": {
+    "title": "Mig",
+    "watched": "Titler",
+    "entries": "Visninger",
+    "average": "Gennemsnit",
+    "log": "Din log",
+    "empty": "Der er ikke registreret noget endnu. Brug + Log for at tilføje den første.",
+    "noDate": "Ingen dato",
+    "delete": "Slet"
+  },
+  "swipe": {
+    "title": "Beslut sammen",
+    "start": "Begynd at beslutte",
+    "join": "Deltag",
+    "openSessions": "Sker lige nu",
+    "needTitles": "Tilføj nogle titler til listen først.",
+    "watching_one": "{{count}} med",
+    "watching_other": "{{count}} med",
+    "unanimous": "begge skal være enige",
+    "majority": "flertallet bestemmer",
+    "yes": "Ja",
+    "no": "Nej",
+    "remaining_one": "{{count}} tilbage",
+    "remaining_other": "{{count}} tilbage",
+    "waiting": "Det var dem alle",
+    "waitingHint": "Du har set alle titler. Venter på de andre.",
+    "itsAMatch": "I er enige",
+    "done": "Færdig"
   },
   "lists": {
     "title": "Se-lister",
@@ -44,7 +74,9 @@
     "empty": "Ingen lister endnu. Lav en til dig selv, eller del den med en gruppe.",
     "emptyList": "Der er ikke noget her endnu.",
     "remove": "Fjern",
-    "delete": "Slet denne liste"
+    "delete": "Slet denne liste",
+    "addTo": "Tilføj til en liste",
+    "newNamed": "Navn på ny liste"
   },
   "groups": {
     "title": "Grupper",
@@ -73,6 +105,7 @@
     "rating": "Din bedømmelse",
     "ratingOptional": "Valgfrit. Tryk igen for at rydde.",
     "season": "Sæson",
+    "seasonN": "Sæson {{n}}",
     "watchedOn": "Set den",
     "note": "Privat note",
     "notePlaceholder": "Kun du kan se dette.",

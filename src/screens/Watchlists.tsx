@@ -12,8 +12,9 @@ import {
   type Watchlist,
   type WatchlistItem,
 } from '@/lib/watchlists'
+import { startSession } from '@/lib/swipe'
 
-export function Watchlists() {
+export function Watchlists({ onStartSwipe }: { onStartSwipe: (sessionId: string) => void }) {
   const { t, i18n } = useTranslation()
   const [lists, setLists] = useState<Watchlist[]>([])
   const [groups, setGroups] = useState<Group[]>([])
@@ -44,6 +45,7 @@ export function Watchlists() {
       <WatchlistDetail
         list={open}
         language={i18n.resolvedLanguage ?? 'en'}
+        onStartSwipe={onStartSwipe}
         onBack={() => {
           setOpen(null)
           void refresh()
@@ -192,15 +194,30 @@ function WatchlistDetail({
   list,
   language,
   onBack,
+  onStartSwipe,
 }: {
   list: Watchlist
   language: string
   onBack: () => void
+  onStartSwipe: (sessionId: string) => void
 }) {
   const { t } = useTranslation()
   const [items, setItems] = useState<WatchlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [starting, setStarting] = useState(false)
+
+  async function beginSwipe() {
+    setStarting(true)
+    setError(null)
+    try {
+      onStartSwipe(await startSession(list.id, list.groupId))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message === 'empty-watchlist' ? t('swipe.needTitles') : message)
+      setStarting(false)
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -241,6 +258,17 @@ function WatchlistDetail({
 
       <main className="relative z-10 mx-auto max-w-lg px-6 py-8">
         {error && <p className="mb-5 text-[0.875rem] text-velvet-500">{error}</p>}
+
+        {items.length > 0 && (
+          <button
+            type="button"
+            onClick={() => void beginSwipe()}
+            disabled={starting}
+            className="type-marquee mb-7 w-full rounded-[2px] bg-velvet-600 py-3.5 text-[14px] text-plate hover:bg-velvet-700 disabled:opacity-60"
+          >
+            {starting ? t('auth.working') : t('swipe.start')}
+          </button>
+        )}
 
         {loading ? (
           <p className="type-meta text-center text-ink-3/70">{t('lists.loading')}</p>

@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next'
 
-export type View = 'lobby' | 'log' | 'lists' | 'groups'
+export type View = 'lobby' | 'log' | 'lists' | 'groups' | 'me'
 
 const ITEMS: Array<{ id: View; key: string; accent?: boolean }> = [
   { id: 'lobby', key: 'nav.lobby' },
-  { id: 'log', key: 'nav.log', accent: true },
   { id: 'lists', key: 'nav.lists' },
+  { id: 'log', key: 'nav.log', accent: true },
   { id: 'groups', key: 'nav.groups' },
+  { id: 'me', key: 'nav.me' },
 ]
 
 /**

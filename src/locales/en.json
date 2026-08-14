@@ -29,7 +29,37 @@
     "lobby": "Lobby",
     "log": "+ Log",
     "lists": "Lists",
-    "groups": "Groups"
+    "groups": "Groups",
+    "me": "Me"
+  },
+  "me": {
+    "title": "Me",
+    "watched": "Titles",
+    "entries": "Viewings",
+    "average": "Average",
+    "log": "Your log",
+    "empty": "Nothing logged yet. Use + Log to add the first one.",
+    "noDate": "No date",
+    "delete": "Delete"
+  },
+  "swipe": {
+    "title": "Decide together",
+    "start": "Start deciding",
+    "join": "Join",
+    "openSessions": "Happening now",
+    "needTitles": "Add some titles to this list first.",
+    "watching_one": "{{count}} watching",
+    "watching_other": "{{count}} watching",
+    "unanimous": "both must agree",
+    "majority": "majority decides",
+    "yes": "Yes",
+    "no": "No",
+    "remaining_one": "{{count}} left",
+    "remaining_other": "{{count}} left",
+    "waiting": "That's your lot",
+    "waitingHint": "You have seen every title. Waiting for the others to catch up.",
+    "itsAMatch": "It's a match",
+    "done": "Done"
   },
   "lists": {
     "title": "Watchlists",
@@ -44,7 +74,9 @@
     "empty": "No lists yet. Make one for yourself, or share it with a group.",
     "emptyList": "Nothing here yet.",
     "remove": "Remove",
-    "delete": "Delete this list"
+    "delete": "Delete this list",
+    "addTo": "Add to a list",
+    "newNamed": "New list name"
   },
   "groups": {
     "title": "Groups",
@@ -73,6 +105,7 @@
     "rating": "Your rating",
     "ratingOptional": "Optional. Tap again to clear.",
     "season": "Season",
+    "seasonN": "Season {{n}}",
     "watchedOn": "Watched on",
     "note": "Private note",
     "notePlaceholder": "Only you will ever see this.",

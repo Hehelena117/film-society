@@ -198,6 +198,89 @@ try {
     .from('watchlist_items')
     .upsert({ watchlist_id: wl.id, title_id: cat.id }, { onConflict: 'watchlist_id,title_id' })
   check('member can add to the group list', !bobWriteErr, bobWriteErr?.message)
+
+  console.log('\n=== swipe: two people must agree ===')
+  const { data: s1, error: s1Err } = await alice.client
+    .from('swipe_sessions')
+    .insert({ watchlist_id: wl.id, group_id: groupId })
+    .select('id')
+    .single()
+  check('create session', !s1Err, s1Err?.message)
+
+  await alice.client.from('swipe_participants').insert({ session_id: s1.id })
+  await bob.client.from('swipe_participants').insert({ session_id: s1.id })
+  await alice.client
+    .from('swipe_candidates')
+    .insert({ session_id: s1.id, title_id: cat.id, position: 0 })
+
+  await alice.client.from('swipes').insert({ session_id: s1.id, title_id: cat.id, liked: true })
+  const { data: afterOne } = await alice.client
+    .from('swipe_sessions')
+    .select('status')
+    .eq('id', s1.id)
+    .single()
+  check('one of two liking is not a match', afterOne?.status === 'open', afterOne?.status)
+
+  await bob.client.from('swipes').insert({ session_id: s1.id, title_id: cat.id, liked: true })
+  const { data: afterTwo } = await alice.client
+    .from('swipe_sessions')
+    .select('status, decided_title_id')
+    .eq('id', s1.id)
+    .single()
+  check('both liking decides it', afterTwo?.status === 'decided', afterTwo?.status)
+  check('the right title won', afterTwo?.decided_title_id === cat.id)
+
+  console.log('\n=== swipe: three people decide by majority ===')
+  const carol = await makeUser('carol')
+  await alice.client
+    .from('group_members')
+    .upsert({ group_id: groupId, user_id: carol.id, role: 'member' }, { onConflict: 'group_id,user_id' })
+
+  const { data: s2 } = await alice.client
+    .from('swipe_sessions')
+    .insert({ watchlist_id: wl.id, group_id: groupId })
+    .select('id')
+    .single()
+
+  for (const u of [alice, bob, carol]) {
+    await u.client.from('swipe_participants').insert({ session_id: s2.id })
+  }
+  await alice.client
+    .from('swipe_candidates')
+    .insert({ session_id: s2.id, title_id: cat.id, position: 0 })
+
+  await alice.client.from('swipes').insert({ session_id: s2.id, title_id: cat.id, liked: true })
+  const { data: m1 } = await alice.client
+    .from('swipe_sessions')
+    .select('status')
+    .eq('id', s2.id)
+    .single()
+  check('one of three is not a majority', m1?.status === 'open', m1?.status)
+
+  await bob.client.from('swipes').insert({ session_id: s2.id, title_id: cat.id, liked: true })
+  const { data: m2 } = await alice.client
+    .from('swipe_sessions')
+    .select('status')
+    .eq('id', s2.id)
+    .single()
+  check('two of three is a majority', m2?.status === 'decided', m2?.status)
+
+  const { data: carolSees } = await carol.client
+    .from('swipe_sessions')
+    .select('status, decided_title_id')
+    .eq('id', s2.id)
+    .single()
+  check('all participants see the verdict', carolSees?.decided_title_id === cat.id)
+
+  console.log('\n=== swipe: outsiders are shut out ===')
+  const dave = await makeUser('dave')
+  const { data: daveSees } = await dave.client.from('swipe_sessions').select('id').eq('id', s2.id)
+  check('non-members cannot see a session', (daveSees ?? []).length === 0)
+
+  const { error: daveSwipeErr } = await dave.client
+    .from('swipes')
+    .insert({ session_id: s2.id, title_id: cat.id, liked: true })
+  check('non-participants cannot swipe', !!daveSwipeErr, daveSwipeErr?.message?.slice(0, 60))
 } catch (err) {
   console.log(`\nTHREW: ${err.message}`)
   fail++
