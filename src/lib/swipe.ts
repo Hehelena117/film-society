@@ -29,13 +29,57 @@ const POSTER_BASE = 'https://image.tmdb.org/t/p/w500'
  * everyone swipes the same cards in the same order — otherwise "we both liked
  * it" would depend on who happened to be shown what.
  */
+export interface DeckFilters {
+  genres?: string[]
+  /** Provider names as TMDB reports them, e.g. "Netflix". */
+  services?: string[]
+  maxMinutes?: number | null
+}
+
+/**
+ * What a list could be filtered by — derived from the titles actually on it,
+ * so the controls never offer a genre that would empty the deck.
+ */
+export async function getFilterOptions(
+  watchlistId: string,
+  country: string,
+): Promise<{ genres: string[]; services: string[] }> {
+  const { data, error } = await supabase
+    .from('watchlist_items')
+    .select('title:titles!inner(id, genres)')
+    .eq('watchlist_id', watchlistId)
+
+  if (error) throw error
+
+  const rows = (data ?? []) as Array<Record<string, any>>
+  const genres = [...new Set(rows.flatMap((r) => r.title?.genres ?? []))].sort()
+  const titleIds = rows.map((r) => r.title.id)
+
+  if (!titleIds.length) return { genres, services: [] }
+
+  const { data: provs } = await supabase
+    .from('title_providers')
+    .select('provider_name')
+    .in('title_id', titleIds)
+    .eq('country', country)
+    .eq('offer_type', 'flatrate')
+
+  const services = [
+    ...new Set((provs ?? []).map((p: Record<string, any>) => p.provider_name)),
+  ].sort()
+
+  return { genres, services }
+}
+
 export async function startSession(
   watchlistId: string,
   groupId: string | null,
+  filters: DeckFilters = {},
+  country = 'DK',
 ): Promise<string> {
   const { data: session, error } = await supabase
     .from('swipe_sessions')
-    .insert({ watchlist_id: watchlistId, group_id: groupId })
+    .insert({ watchlist_id: watchlistId, group_id: groupId, filters })
     .select('id')
     .single()
 
@@ -56,17 +100,56 @@ export async function startSession(
   try {
     const { data: items, error: itemsErr } = await supabase
       .from('watchlist_items')
-      .select('title_id')
+      .select('title:titles!inner(id, genres, runtime_minutes)')
       .eq('watchlist_id', watchlistId)
     if (itemsErr) throw itemsErr
 
-    const deck = (items ?? []).map((row, i) => ({
+    let candidates = ((items ?? []) as Array<Record<string, any>>).map((r) => r.title)
+
+    if (filters.genres?.length) {
+      candidates = candidates.filter((t) =>
+        (t.genres ?? []).some((g: string) => filters.genres!.includes(g)),
+      )
+    }
+
+    if (filters.maxMinutes) {
+      // A series has no runtime, so a length filter cannot judge it. Keep it
+      // rather than silently dropping every series from the deck.
+      candidates = candidates.filter(
+        (t) => t.runtime_minutes === null || t.runtime_minutes <= filters.maxMinutes!,
+      )
+    }
+
+    if (filters.services?.length && candidates.length) {
+      const { data: provs } = await supabase
+        .from('title_providers')
+        .select('title_id, provider_name')
+        .in(
+          'title_id',
+          candidates.map((t) => t.id),
+        )
+        .eq('country', country)
+        .eq('offer_type', 'flatrate')
+        .in('provider_name', filters.services)
+
+      const available = new Set((provs ?? []).map((p: Record<string, any>) => p.title_id))
+      candidates = candidates.filter((t) => available.has(t.id))
+    }
+
+    const deck = candidates.map((t, i) => ({
       session_id: sessionId,
-      title_id: row.title_id,
+      title_id: t.id,
       position: i,
     }))
 
-    if (!deck.length) throw new Error('empty-watchlist')
+    // Distinguishable from an empty list: the filters were simply too narrow.
+    if (!deck.length) {
+      throw new Error(
+        filters.genres?.length || filters.services?.length || filters.maxMinutes
+          ? 'no-matches'
+          : 'empty-watchlist',
+      )
+    }
 
     const { error: deckErr } = await supabase.from('swipe_candidates').insert(deck)
     if (deckErr) throw deckErr

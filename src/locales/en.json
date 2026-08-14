@@ -42,6 +42,8 @@
     "following": "Following",
     "ratings": "Their ratings",
     "noRatings": "Nothing rated yet.",
+    "noFollowers": "Nobody yet.",
+    "noFollowing": "Not following anyone yet.",
     "find": "Find people",
     "myProfile": "My profile"
   },
@@ -98,6 +100,13 @@
     "openSessions": "Happening now",
     "needTitles": "Add some titles to this list first.",
     "needsGroup": "Share this list with a group to decide together — that's where the others find the session to join.",
+    "narrowIt": "Narrow it down",
+    "filtersOn_one": "{{count}} filter on",
+    "filtersOn_other": "{{count}} filters on",
+    "maxLength": "No longer than (minutes)",
+    "seriesKept": "Series have no runtime, so they are always kept.",
+    "clearFilters": "Clear filters",
+    "noMatches": "Nothing on this list matches those filters.",
     "watching_one": "{{count}} watching",
     "watching_other": "{{count}} watching",
     "unanimous": "both must agree",
@@ -155,7 +164,10 @@
     "search": "Which film or series?",
     "searchPlaceholder": "Search by title…",
     "searching": "Looking…",
-    "type": { "movie": "Film", "tv": "Series" },
+    "type": {
+      "movie": "Film",
+      "tv": "Series"
+    },
     "notThisOne": "Not this one — search again",
     "rating": "Your rating",
     "ratingOptional": "Optional. Tap again to clear.",
@@ -188,9 +200,21 @@
   },
   "theme": {
     "label": "Choose a room",
-    "lobby": { "name": "Lobby", "note": "Warm paper" },
-    "marquee": { "name": "Marquee", "note": "Paper and oxblood" },
-    "velvet": { "name": "Velvet", "note": "Deep red walls" },
-    "night": { "name": "Night", "note": "Lights down" }
+    "lobby": {
+      "name": "Lobby",
+      "note": "Warm paper"
+    },
+    "marquee": {
+      "name": "Marquee",
+      "note": "Paper and oxblood"
+    },
+    "velvet": {
+      "name": "Velvet",
+      "note": "Deep red walls"
+    },
+    "night": {
+      "name": "Night",
+      "note": "Lights down"
+    }
   }
 }

@@ -426,6 +426,23 @@ try {
     .insert({ follower_id: alice.id, followee_id: carol.id })
   check('cannot follow on behalf of someone else', !!forgedErr, forgedErr?.code)
 
+  // The names behind the counts. follows has two foreign keys into profiles,
+  // so this is two queries rather than an embed.
+  const { data: followerEdges } = await dave.client
+    .from('follows')
+    .select('follower_id')
+    .eq('followee_id', bob.id)
+  const followerIds = (followerEdges ?? []).map((e) => e.follower_id)
+  const { data: followerPeople } = await dave.client
+    .from('profiles')
+    .select('id, username')
+    .in('id', followerIds)
+  check(
+    'follower list resolves to usernames',
+    followerPeople?.length === 1 && followerPeople[0].id === alice.id,
+    followerPeople?.[0]?.username,
+  )
+
   const { error: unfollowErr } = await alice.client
     .from('follows')
     .delete()
@@ -453,6 +470,33 @@ try {
     .from('activity')
     .insert({ group_id: groupId, kind: 'rated', title_id: cat.id, rating: 1 })
   check('outsiders cannot post to a group feed', !!daveePostErr, daveePostErr?.code)
+
+  console.log('\n=== swipe deck filters ===')
+  // Filter options must come from the titles actually on the list, or the
+  // controls would offer a genre that empties the deck.
+  const { data: forOptions } = await alice.client
+    .from('watchlist_items')
+    .select('title:titles!inner(id, genres, runtime_minutes)')
+    .eq('watchlist_id', wl.id)
+  const optionRows = (forOptions ?? []).map((r) => r.title)
+  const offeredGenres = [...new Set(optionRows.flatMap((t) => t.genres ?? []))]
+  check('genre options derive from the list', offeredGenres.length > 0, offeredGenres.join(', '))
+
+  const matching = optionRows.filter((t) => (t.genres ?? []).includes(offeredGenres[0]))
+  check('filtering by a real genre keeps titles', matching.length > 0, `${matching.length}`)
+
+  const impossible = optionRows.filter((t) => (t.genres ?? []).includes('NotARealGenre'))
+  check('filtering by an absent genre empties the deck', impossible.length === 0)
+
+  // A series has no runtime; a length filter must keep it rather than
+  // silently dropping every series.
+  const withLimit = optionRows.filter((t) => t.runtime_minutes === null || t.runtime_minutes <= 1)
+  const seriesCount = optionRows.filter((t) => t.runtime_minutes === null).length
+  check(
+    'a length filter keeps titles that have no runtime',
+    withLimit.length >= seriesCount,
+    `${withLimit.length} kept, ${seriesCount} have no runtime`,
+  )
 
   console.log('\n=== peer ratings on a title ===')
   // What the title page shows for "in your groups": a peer's score, read

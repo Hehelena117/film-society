@@ -124,6 +124,56 @@ export async function getProfileRatings(
   })
 }
 
+/**
+ * Who follows this person, or who they follow.
+ *
+ * Two queries rather than an embed: follows has two foreign keys into profiles,
+ * so PostgREST cannot tell which one to join through without disambiguation
+ * that breaks the moment a constraint gets renamed.
+ */
+export async function getFollowList(
+  userId: string,
+  direction: 'followers' | 'following',
+): Promise<PublicProfile[]> {
+  const [selectCol, matchCol] =
+    direction === 'followers' ? ['follower_id', 'followee_id'] : ['followee_id', 'follower_id']
+
+  const { data: edges, error } = await supabase
+    .from('follows')
+    .select(selectCol)
+    .eq(matchCol, userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  const ids = (edges ?? []).map((e: Record<string, any>) => e[selectCol])
+  if (!ids.length) return []
+
+  const { data: people, error: peopleErr } = await supabase
+    .from('profiles')
+    .select('id, username, avatar_url, bio, country')
+    .in('id', ids)
+
+  if (peopleErr) throw peopleErr
+
+  // Preserve the follow order rather than whatever order the id lookup returns.
+  const byId = new Map((people ?? []).map((p: Record<string, any>) => [p.id, p]))
+
+  return ids
+    .map((id) => byId.get(id))
+    .filter((p): p is Record<string, any> => p !== undefined)
+    .map((p) => ({
+      id: p.id,
+      username: p.username,
+      avatarUrl: p.avatar_url,
+      bio: p.bio,
+      country: p.country,
+      titlesWatched: 0,
+      followers: 0,
+      following: 0,
+    }))
+}
+
 export async function isFollowing(userId: string): Promise<boolean> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) return false

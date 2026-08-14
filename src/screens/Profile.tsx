@@ -13,6 +13,7 @@ import {
   type PublicProfile,
   type RatedTitle,
 } from '@/lib/profiles'
+import type { FollowListTarget } from '@/screens/FollowList'
 import type { TitleRef } from '@/screens/TitleDetail'
 
 /**
@@ -26,10 +27,12 @@ export function Profile({
   userId,
   onBack,
   onOpenTitle,
+  onOpenFollows,
 }: {
   userId: string
   onBack?: () => void
   onOpenTitle: (ref: TitleRef) => void
+  onOpenFollows: (target: FollowListTarget) => void
 }) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -121,8 +124,34 @@ export function Profile({
           <dl className="flex justify-around text-center">
             <Stat label={t('me.watched')} value={profile.titlesWatched} />
             <Stat label={t('me.average')} value={average ?? '—'} />
-            <Stat label={t('people.followers')} value={profile.followers} />
-            <Stat label={t('people.following')} value={profile.following} />
+            <Stat
+              label={t('people.followers')}
+              value={profile.followers}
+              onClick={
+                profile.followers > 0
+                  ? () =>
+                      onOpenFollows({
+                        userId,
+                        username: profile.username,
+                        direction: 'followers',
+                      })
+                  : undefined
+              }
+            />
+            <Stat
+              label={t('people.following')}
+              value={profile.following}
+              onClick={
+                profile.following > 0
+                  ? () =>
+                      onOpenFollows({
+                        userId,
+                        username: profile.username,
+                        direction: 'following',
+                      })
+                  : undefined
+              }
+            />
           </dl>
         </div>
 
@@ -186,11 +215,34 @@ export function Profile({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div>
+/** A count with nothing behind it is not worth pressing, so it stays inert. */
+function Stat({
+  label,
+  value,
+  onClick,
+}: {
+  label: string
+  value: string | number
+  onClick?: () => void
+}) {
+  const body = (
+    <>
       <dt className="type-meta text-ink-3">{label}</dt>
-      <dd className="type-title mt-1 text-[1.375rem] text-ink">{value}</dd>
-    </div>
+      <dd
+        className={`type-title mt-1 text-[1.375rem] ${
+          onClick ? 'text-accent underline underline-offset-4' : 'text-ink'
+        }`}
+      >
+        {value}
+      </dd>
+    </>
+  )
+
+  return onClick ? (
+    <button type="button" onClick={onClick} className="text-center">
+      {body}
+    </button>
+  ) : (
+    <div>{body}</div>
   )
 }

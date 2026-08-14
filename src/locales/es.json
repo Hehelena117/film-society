@@ -43,7 +43,9 @@
     "ratings": "Sus puntuaciones",
     "noRatings": "Aún no ha puntuado nada.",
     "find": "Buscar personas",
-    "myProfile": "Mi perfil"
+    "myProfile": "Mi perfil",
+    "noFollowers": "Nadie todavía.",
+    "noFollowing": "Aún no sigue a nadie."
   },
   "feed": {
     "title": "En este grupo",
@@ -111,7 +113,14 @@
     "emptyDeck": "No hay nada que decidir",
     "emptyDeckHint": "Esta sesión no tiene títulos. Empieza una nueva desde una lista con contenido.",
     "itsAMatch": "¡Coincidís!",
-    "done": "Listo"
+    "done": "Listo",
+    "noMatches": "Nada de la lista coincide con esos filtros.",
+    "filtersOn_other": "{{count}} filtros activos",
+    "seriesKept": "Las series no tienen duración, así que siempre se mantienen.",
+    "filtersOn_one": "{{count}} filtro activo",
+    "narrowIt": "Filtrar",
+    "maxLength": "No más de (minutos)",
+    "clearFilters": "Quitar filtros"
   },
   "lists": {
     "title": "Listas",
@@ -155,7 +164,10 @@
     "search": "¿Qué película o serie?",
     "searchPlaceholder": "Buscar por título…",
     "searching": "Buscando…",
-    "type": { "movie": "Película", "tv": "Serie" },
+    "type": {
+      "movie": "Película",
+      "tv": "Serie"
+    },
     "notThisOne": "No es esta — buscar otra vez",
     "rating": "Tu puntuación",
     "ratingOptional": "Opcional. Toca de nuevo para borrar.",
@@ -188,9 +200,21 @@
   },
   "theme": {
     "label": "Elige una sala",
-    "lobby": { "name": "Vestíbulo", "note": "Papel cálido" },
-    "marquee": { "name": "Marquesina", "note": "Papel y sangre de toro" },
-    "velvet": { "name": "Terciopelo", "note": "Paredes rojo oscuro" },
-    "night": { "name": "Noche", "note": "Luces apagadas" }
+    "lobby": {
+      "name": "Vestíbulo",
+      "note": "Papel cálido"
+    },
+    "marquee": {
+      "name": "Marquesina",
+      "note": "Papel y sangre de toro"
+    },
+    "velvet": {
+      "name": "Terciopelo",
+      "note": "Paredes rojo oscuro"
+    },
+    "night": {
+      "name": "Noche",
+      "note": "Luces apagadas"
+    }
   }
 }

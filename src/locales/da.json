@@ -43,7 +43,9 @@
     "ratings": "Deres bedømmelser",
     "noRatings": "Intet bedømt endnu.",
     "find": "Find personer",
-    "myProfile": "Min profil"
+    "myProfile": "Min profil",
+    "noFollowers": "Ingen endnu.",
+    "noFollowing": "Følger ikke nogen endnu."
   },
   "feed": {
     "title": "I denne gruppe",
@@ -111,7 +113,14 @@
     "emptyDeck": "Der er intet at vælge imellem",
     "emptyDeckHint": "Denne session har ingen titler. Start en ny fra en liste med indhold.",
     "itsAMatch": "I er enige",
-    "done": "Færdig"
+    "done": "Færdig",
+    "noMatches": "Intet på listen passer til de filtre.",
+    "filtersOn_other": "{{count}} filtre aktive",
+    "seriesKept": "Serier har ingen spilletid og beholdes altid.",
+    "filtersOn_one": "{{count}} filter aktivt",
+    "narrowIt": "Indsnævr",
+    "maxLength": "Højst (minutter)",
+    "clearFilters": "Ryd filtre"
   },
   "lists": {
     "title": "Se-lister",
@@ -155,7 +164,10 @@
     "search": "Hvilken film eller serie?",
     "searchPlaceholder": "Søg på titel…",
     "searching": "Søger…",
-    "type": { "movie": "Film", "tv": "Serie" },
+    "type": {
+      "movie": "Film",
+      "tv": "Serie"
+    },
     "notThisOne": "Ikke denne — søg igen",
     "rating": "Din bedømmelse",
     "ratingOptional": "Valgfrit. Tryk igen for at rydde.",
@@ -188,9 +200,21 @@
   },
   "theme": {
     "label": "Vælg en sal",
-    "lobby": { "name": "Foyer", "note": "Varmt papir" },
-    "marquee": { "name": "Lysskilt", "note": "Papir og okseblod" },
-    "velvet": { "name": "Fløjl", "note": "Dybrøde vægge" },
-    "night": { "name": "Nat", "note": "Lyset er slukket" }
+    "lobby": {
+      "name": "Foyer",
+      "note": "Varmt papir"
+    },
+    "marquee": {
+      "name": "Lysskilt",
+      "note": "Papir og okseblod"
+    },
+    "velvet": {
+      "name": "Fløjl",
+      "note": "Dybrøde vægge"
+    },
+    "night": {
+      "name": "Nat",
+      "note": "Lyset er slukket"
+    }
   }
 }

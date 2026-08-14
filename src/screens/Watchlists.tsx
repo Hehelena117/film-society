@@ -20,7 +20,7 @@ import {
   type WatchlistItem,
   type WatchlistMember,
 } from '@/lib/watchlists'
-import { startSession } from '@/lib/swipe'
+import { getFilterOptions, startSession } from '@/lib/swipe'
 
 export function Watchlists({
   onStartSwipe,
@@ -130,6 +130,23 @@ export function Watchlists({
   )
 }
 
+function Chip({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={`rounded-full border px-3 py-1.5 text-[0.8125rem] transition-colors ${
+        on
+          ? 'border-velvet-600 bg-velvet-600 text-plate'
+          : 'border-rule text-ink-2 hover:border-brass-600'
+      }`}
+    >
+      {label}
+    </button>
+  )
+}
+
 function NewListForm({
   groups,
   onCancel,
@@ -227,6 +244,8 @@ function WatchlistDetail({
   onOpenTitle: (ref: TitleRef) => void
 }) {
   const { t } = useTranslation()
+  const { profile } = useAuth()
+  const country = profile?.country ?? 'DK'
   const [items, setItems] = useState<WatchlistItem[]>([])
   const [members, setMembers] = useState<WatchlistMember[]>([])
   const [groupId, setGroupId] = useState(list.groupId ?? '')
@@ -236,6 +255,14 @@ function WatchlistDetail({
   const [starting, setStarting] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [options, setOptions] = useState<{ genres: string[]; services: string[] }>({
+    genres: [],
+    services: [],
+  })
+  const [pickedGenres, setPickedGenres] = useState<string[]>([])
+  const [pickedServices, setPickedServices] = useState<string[]>([])
+  const [maxMinutes, setMaxMinutes] = useState('')
 
   // Answers "who can see this?" without anyone having to open the panel.
   const sharingSummary = groupId
@@ -248,13 +275,37 @@ function WatchlistDetail({
     setStarting(true)
     setError(null)
     try {
-      onStartSwipe(await startSession(list.id, groupId || null))
+      onStartSwipe(
+        await startSession(
+          list.id,
+          groupId || null,
+          {
+            genres: pickedGenres,
+            services: pickedServices,
+            maxMinutes: maxMinutes ? Number(maxMinutes) : null,
+          },
+          country,
+        ),
+      )
     } catch (err) {
       const message = errorMessage(err)
-      setError(message === 'empty-watchlist' ? t('swipe.needTitles') : message)
+      setError(
+        message === 'empty-watchlist'
+          ? t('swipe.needTitles')
+          : message === 'no-matches'
+            ? t('swipe.noMatches')
+            : message,
+      )
       setStarting(false)
     }
   }
+
+  function toggle(list: string[], value: string) {
+    return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+  }
+
+  const activeFilterCount =
+    pickedGenres.length + pickedServices.length + (maxMinutes ? 1 : 0)
 
   async function changeGroup(next: string) {
     setGroupId(next)
@@ -294,18 +345,20 @@ function WatchlistDetail({
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [i, m] = await Promise.all([
+      const [i, m, o] = await Promise.all([
         getWatchlistItems(list.id, language),
         getWatchlistMembers(list.id),
+        getFilterOptions(list.id, country),
       ])
       setItems(i)
       setMembers(m)
+      setOptions(o)
     } catch (err) {
       setError(errorMessage(err))
     } finally {
       setLoading(false)
     }
-  }, [list.id, language])
+  }, [list.id, language, country])
 
   useEffect(() => {
     void load()
@@ -339,14 +392,97 @@ function WatchlistDetail({
         {/* ---- Decide together --------------------------------------------- */}
         {items.length > 0 &&
           (groupId ? (
-            <button
-              type="button"
-              onClick={() => void beginSwipe()}
-              disabled={starting}
-              className="type-marquee mb-7 w-full rounded-[2px] bg-velvet-600 py-3.5 text-[14px] text-plate hover:bg-velvet-700 disabled:opacity-60"
-            >
-              {starting ? t('auth.working') : t('swipe.start')}
-            </button>
+            <div className="mb-7">
+              <button
+                type="button"
+                onClick={() => void beginSwipe()}
+                disabled={starting}
+                className="type-marquee w-full rounded-[2px] bg-velvet-600 py-3.5 text-[14px] text-plate hover:bg-velvet-700 disabled:opacity-60"
+              >
+                {starting ? t('auth.working') : t('swipe.start')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFilterOpen((o) => !o)}
+                aria-expanded={filterOpen}
+                className="type-meta mt-2 w-full py-2 text-center text-ink-3 hover:text-ink-2"
+              >
+                {activeFilterCount > 0
+                  ? t('swipe.filtersOn', { count: activeFilterCount })
+                  : t('swipe.narrowIt')}
+              </button>
+
+              {filterOpen && (
+                <div className="rounded-[2px] border border-rule bg-ground-2 p-4">
+                  {options.genres.length > 0 && (
+                    <>
+                      <span className="type-meta mb-2 block text-ink-3">{t('detail.genres')}</span>
+                      <ul className="flex flex-wrap gap-2">
+                        {options.genres.map((g) => (
+                          <li key={g}>
+                            <Chip
+                              label={g}
+                              on={pickedGenres.includes(g)}
+                              onClick={() => setPickedGenres((p) => toggle(p, g))}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  {options.services.length > 0 && (
+                    <>
+                      <span className="type-meta mt-4 mb-2 block text-ink-3">
+                        {t('detail.streaming')}
+                      </span>
+                      <ul className="flex flex-wrap gap-2">
+                        {options.services.map((s) => (
+                          <li key={s}>
+                            <Chip
+                              label={s}
+                              on={pickedServices.includes(s)}
+                              onClick={() => setPickedServices((p) => toggle(p, s))}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  <label className="mt-4 block">
+                    <span className="type-meta mb-2 block text-ink-3">{t('swipe.maxLength')}</span>
+                    <input
+                      type="number"
+                      min={30}
+                      step={15}
+                      value={maxMinutes}
+                      onChange={(e) => setMaxMinutes(e.target.value)}
+                      placeholder="120"
+                      className="w-28 rounded-[2px] border border-rule bg-ground px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+                    />
+                    <span className="mt-1.5 block text-[0.7rem] text-ink-3">
+                      {t('swipe.seriesKept')}
+                    </span>
+                  </label>
+
+                  {activeFilterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPickedGenres([])
+                        setPickedServices([])
+                        setMaxMinutes('')
+                      }}
+                      className="type-meta mt-4 text-ink-3 underline underline-offset-4 hover:text-velvet-500"
+                    >
+                      {t('swipe.clearFilters')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             // Deciding needs a group: that is where the others find the session
             // to join. Offering the button on a private list would open a room

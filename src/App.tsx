@@ -8,6 +8,7 @@ import { BoxOffice } from '@/screens/BoxOffice'
 import { Groups } from '@/screens/Groups'
 import { Lobby } from '@/screens/Lobby'
 import { LogViewing } from '@/screens/LogViewing'
+import { FollowList, type FollowListTarget } from '@/screens/FollowList'
 import { Me } from '@/screens/Me'
 import { People } from '@/screens/People'
 import { Profile } from '@/screens/Profile'
@@ -29,6 +30,7 @@ function Gate() {
   const [swipeSession, setSwipeSession] = useState<string | null>(null)
   const [openTitle, setOpenTitle] = useState<TitleRef | null>(null)
   const [openProfile, setOpenProfile] = useState<string | null>(null)
+  const [openFollows, setOpenFollows] = useState<FollowListTarget | null>(null)
   const [findingPeople, setFindingPeople] = useState(false)
   const [prefill, setPrefill] = useState<TitleRef | null>(null)
   // Remounts the Lobby after a save, so a newly logged film feeds the
@@ -61,12 +63,27 @@ function Gate() {
 
   // Profiles and people search sit above the tabs too, so following someone
   // from a group returns you to the group rather than dumping you on a tab.
+  // Deeper than a profile, so it is checked first.
+  if (openFollows) {
+    return (
+      <FollowList
+        target={openFollows}
+        onBack={() => setOpenFollows(null)}
+        onOpenProfile={(id) => {
+          setOpenFollows(null)
+          setOpenProfile(id)
+        }}
+      />
+    )
+  }
+
   if (openProfile) {
     return (
       <Profile
         userId={openProfile}
         onBack={() => setOpenProfile(null)}
         onOpenTitle={setOpenTitle}
+        onOpenFollows={setOpenFollows}
       />
     )
   }
