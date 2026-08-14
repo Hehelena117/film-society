@@ -1,0 +1,26 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Supabase local state
+supabase/.branches/
+supabase/.temp/
+
+# Capacitor native projects (added when we port to iOS/Android)
+ios/
+android/

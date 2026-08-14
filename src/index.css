@@ -1,0 +1,221 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   FILM SOCIETY — Design tokens
+   Derived from resources/mood-board: oxblood lobby walls, red velvet seating,
+   warm tungsten marquee bulbs, cream marquee plates, black/white tile,
+   sepia celluloid, white script on black-and-white ("The End").
+   ========================================================================== */
+
+@theme {
+  /* --- Surfaces: the dark auditorium ---------------------------------- */
+  --color-ink: #0e0b0c; /* near-black room */
+  --color-ink-soft: #171012; /* raised surface */
+  --color-pitch: #060405; /* deepest black, behind everything */
+
+  /* --- Oxblood: lobby walls ------------------------------------------- */
+  --color-oxblood-900: #2c0a10;
+  --color-oxblood-800: #3a0e16;
+  --color-oxblood-700: #4a1119; /* primary wall */
+  --color-oxblood-600: #5d1720;
+
+  /* --- Velvet: seats + curtains ---------------------------------------- */
+  --color-velvet-700: #7a161d;
+  --color-velvet-600: #8e1b22; /* primary red */
+  --color-velvet-500: #b22a2a; /* lit velvet */
+  --color-velvet-400: #c8453f;
+
+  /* --- Brass & bulbs: the marquee -------------------------------------- */
+  --color-brass-700: #8a6320;
+  --color-brass-600: #c9922e;
+  --color-brass-500: #e8b44a; /* primary gold */
+  --color-bulb: #ffd98a; /* lit filament */
+  --color-bulb-glow: #ffb84d;
+
+  /* --- Cream: marquee plates + paper ------------------------------------ */
+  --color-cream-100: #f2e9d8; /* marquee panel */
+  --color-cream-200: #e2d5bd;
+  --color-cream-300: #c4b39a;
+
+  /* --- Sepia: celluloid ------------------------------------------------- */
+  --color-sepia: #c9a227;
+  --color-nitrate: #6b5836;
+
+  /* --- Type ------------------------------------------------------------- */
+  --font-marquee: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-script: 'Pinyon Script', cursive;
+  --font-title: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* --- Motion ----------------------------------------------------------- */
+  --ease-curtain: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    background-color: var(--color-pitch);
+    color: var(--color-cream-100);
+    font-family: var(--font-body);
+    font-weight: 300;
+    /* iOS: stop rubber-band flashing white behind the lobby */
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Respect users who don't want the bulbs flickering at them. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Textures — the physical cinema
+   ========================================================================== */
+
+/* Celluloid grain, laid over a surface via ::after. An SVG feTurbulence keeps
+   it resolution-independent and costs nothing to download. */
+@utility texture-grain {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+}
+
+/* The oxblood lobby wall, lit unevenly from above. */
+@utility wall-oxblood {
+  background-color: var(--color-oxblood-700);
+  background-image:
+    radial-gradient(
+      120% 60% at 50% -10%,
+      color-mix(in oklab, var(--color-bulb-glow) 18%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-oxblood-600) 0%,
+      var(--color-oxblood-700) 35%,
+      var(--color-oxblood-900) 100%
+    );
+}
+
+/* Black-and-white lobby tile, in perspective, as a floor dado. */
+@utility floor-checker {
+  background-image:
+    linear-gradient(45deg, var(--color-ink) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-ink) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-ink) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-ink) 75%);
+  background-size: 28px 28px;
+  background-position:
+    0 0,
+    0 14px,
+    14px -14px,
+    -14px 0px;
+  background-color: var(--color-cream-200);
+}
+
+/* Vignette: the room falls off into the dark at the edges. */
+@utility vignette {
+  box-shadow:
+    inset 0 0 120px 40px color-mix(in oklab, var(--color-pitch) 85%, transparent),
+    inset 0 0 40px 8px color-mix(in oklab, var(--color-pitch) 40%, transparent);
+}
+
+/* ==========================================================================
+   Marquee bulbs
+   ========================================================================== */
+
+/* A strip of lit bulbs, as on the poster surrounds and the marquee sign.
+   Rendered as a repeating radial-gradient so it scales to any width without
+   a single DOM node per bulb. */
+@utility bulbs-h {
+  background-image: radial-gradient(
+    circle at center,
+    var(--color-bulb) 0%,
+    var(--color-bulb) 22%,
+    color-mix(in oklab, var(--color-bulb-glow) 70%, transparent) 38%,
+    transparent 64%
+  );
+  background-size: 22px 22px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+@utility bulbs-v {
+  background-image: radial-gradient(
+    circle at center,
+    var(--color-bulb) 0%,
+    var(--color-bulb) 22%,
+    color-mix(in oklab, var(--color-bulb-glow) 70%, transparent) 38%,
+    transparent 64%
+  );
+  background-size: 22px 22px;
+  background-repeat: repeat-y;
+  background-position: center;
+}
+
+/* The slow, uneven breathing of old tungsten. */
+@keyframes bulb-breathe {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  40% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.86;
+  }
+}
+
+@utility bulb-breathe {
+  animation: bulb-breathe 4.5s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Typography helpers
+   ========================================================================== */
+
+@utility type-marquee {
+  font-family: var(--font-marquee);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+@utility type-script {
+  font-family: var(--font-script);
+  line-height: 1.1;
+}
+
+@utility type-title {
+  font-family: var(--font-title);
+  line-height: 1.15;
+}

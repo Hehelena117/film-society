@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Film Society",
+    "tagline": "Good films make your life better"
+  },
+  "lobby": {
+    "title": "The Lobby",
+    "subtitle": "Tonight's programme, chosen for you",
+    "nowShowing": "Now showing",
+    "loading": "Threading the projector…",
+    "endOfReel": "That's the reel for now",
+    "because": "Because you rated"
+  },
+  "title": {
+    "runtime": "{{minutes}} min",
+    "seasons_one": "{{count}} season",
+    "seasons_other": "{{count}} seasons",
+    "directedBy": "Directed by {{name}}"
+  },
+  "actions": {
+    "addToWatchlist": "Add to watchlist",
+    "rate": "Rate this",
+    "notInterested": "Not for me"
+  }
+}

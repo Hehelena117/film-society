@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Film Society",
+    "tagline": "Gode film gør dit liv bedre"
+  },
+  "lobby": {
+    "title": "Foyeren",
+    "subtitle": "Aftenens program, valgt til dig",
+    "nowShowing": "Vises nu",
+    "loading": "Sætter filmen op…",
+    "endOfReel": "Det var rullen for nu",
+    "because": "Fordi du gav"
+  },
+  "title": {
+    "runtime": "{{minutes}} min",
+    "seasons_one": "{{count}} sæson",
+    "seasons_other": "{{count}} sæsoner",
+    "directedBy": "Instrueret af {{name}}"
+  },
+  "actions": {
+    "addToWatchlist": "Tilføj til listen",
+    "rate": "Bedøm denne",
+    "notInterested": "Ikke noget for mig"
+  }
+}

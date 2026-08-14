@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "Film Society",
+    "tagline": "Las buenas películas mejoran la vida"
+  },
+  "lobby": {
+    "title": "El Vestíbulo",
+    "subtitle": "El programa de esta noche, elegido para ti",
+    "nowShowing": "En cartelera",
+    "loading": "Cargando el proyector…",
+    "endOfReel": "Fin del rollo por ahora",
+    "because": "Porque valoraste"
+  },
+  "title": {
+    "runtime": "{{minutes}} min",
+    "seasons_one": "{{count}} temporada",
+    "seasons_other": "{{count}} temporadas",
+    "directedBy": "Dirigida por {{name}}"
+  },
+  "actions": {
+    "addToWatchlist": "Añadir a la lista",
+    "rate": "Puntuar",
+    "notInterested": "No es para mí"
+  }
+}
