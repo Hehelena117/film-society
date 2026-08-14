@@ -72,6 +72,7 @@
     "genres": "Genre",
     "cast": "Skuespillere",
     "themes": "Temaer",
+    "peerRatings": "I dine grupper",
     "parental": "Aldersgrænse",
     "rated": "Tilladt for {{rating}} i {{country}}.",
     "noRating": "Ingen aldersgrænse tilgængelig for dit land."
@@ -165,7 +166,11 @@
     "notePlaceholder": "Kun du kan se dette.",
     "privateHint": "Privat — vises aldrig på din profil.",
     "save": "Gem i min log",
-    "saved": "Registreret."
+    "saved": "Registreret.",
+    "alreadyLogged_one": "Du har allerede registreret denne én gang",
+    "alreadyLogged_other": "Du har allerede registreret denne {{count}} gange",
+    "unrated": "ikke bedømt",
+    "rewatchHint": "Gemmer du igen, tilføjes et gensyn — det overskriver ikke ovenstående."
   },
   "auth": {
     "tagline": "Kun for medlemmer. Spørg i billetlugen.",

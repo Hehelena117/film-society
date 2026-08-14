@@ -454,6 +454,29 @@ try {
     .insert({ group_id: groupId, kind: 'rated', title_id: cat.id, rating: 1 })
   check('outsiders cannot post to a group feed', !!daveePostErr, daveePostErr?.code)
 
+  console.log('\n=== peer ratings on a title ===')
+  // What the title page shows for "in your groups": a peer's score, read
+  // through the view. It must carry a rating and nothing else.
+  const { data: peerView, error: peerErr } = await bob.client
+    .from('public_ratings')
+    .select('user_id, rating')
+    .eq('title_id', cat.id)
+    .in('user_id', [alice.id])
+  check("a group member's rating is readable", !peerErr && peerView?.[0]?.rating === 9, peerErr?.message)
+  check(
+    'the view carries no dates',
+    peerView?.[0] !== undefined && !('watched_on' in peerView[0]) && !('created_at' in peerView[0]),
+    Object.keys(peerView?.[0] ?? {}).join(','),
+  )
+
+  // Own history for a title — the rewatch warning in the log form.
+  const { data: ownHistory, error: ownErr } = await alice.client
+    .from('log_entries')
+    .select('id, rating, watched_on')
+    .eq('title_id', cat.id)
+  check('own history for a title', !ownErr && ownHistory?.length === 1, ownErr?.message)
+  check('own history keeps the date', ownHistory?.[0]?.watched_on === '2026-08-01')
+
   console.log('\n=== public profile ===')
   const { data: aliceSeenByDave } = await dave.client
     .from('profiles')

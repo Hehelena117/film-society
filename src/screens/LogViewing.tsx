@@ -6,7 +6,7 @@ import { catalogTitle, searchTitles, type CatalogedTitle, type SearchHit } from 
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
-import { logViewing } from '@/lib/log'
+import { getMyEntriesForTitle, logViewing, type PriorEntry } from '@/lib/log'
 
 /**
  * Log a viewing: find the title, score it out of ten, keep a private note.
@@ -199,7 +199,20 @@ function RatingForm({
   const [watchedOn, setWatchedOn] = useState('')
   const [season, setSeason] = useState('')
   const [busy, setBusy] = useState(false)
+  const [prior, setPrior] = useState<PriorEntry[]>([])
   const noteRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    let active = true
+    getMyEntriesForTitle(title.id)
+      .then((p) => active && setPrior(p))
+      .catch(() => {
+        /* the form still works without this */
+      })
+    return () => {
+      active = false
+    }
+  }, [title.id])
 
   async function save() {
     setBusy(true)
@@ -244,6 +257,37 @@ function RatingForm({
           </button>
         </div>
       </div>
+
+      {/* ---- Already seen? -------------------------------------------------
+          Shown before the controls, not after: it changes what you are about
+          to do. Logging again is a rewatch, which is supported — but it should
+          be a choice rather than a surprise. */}
+      {prior.length > 0 && (
+        <div className="mt-6 rounded-[2px] border border-brass-600/50 bg-ground-2 px-4 py-3.5">
+          <p className="type-meta text-brass-700">
+            {t('log.alreadyLogged', { count: prior.length })}
+          </p>
+          <ul className="mt-2.5 flex flex-col gap-1.5">
+            {prior.map((p) => (
+              <li key={p.id} className="text-[0.8125rem] leading-snug text-ink-2">
+                {[
+                  p.watchedOn ?? new Date(p.createdAt).toISOString().slice(0, 10),
+                  p.seasonNumber ? t('log.seasonN', { n: p.seasonNumber }) : null,
+                  p.rating !== null ? `${p.rating}/10` : t('log.unrated'),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                {p.note && (
+                  <span className="mt-0.5 block border-l-2 border-brass-600/40 pl-2 text-ink-3 italic">
+                    {p.note}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2.5 text-[0.75rem] text-ink-3">{t('log.rewatchHint')}</p>
+        </div>
+      )}
 
       {/* ---- Score out of ten ---------------------------------------------- */}
       <div className="mt-8">

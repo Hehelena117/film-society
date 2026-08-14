@@ -72,6 +72,7 @@
     "genres": "Género",
     "cast": "Reparto",
     "themes": "Temas",
+    "peerRatings": "En tus grupos",
     "parental": "Clasificación por edad",
     "rated": "Clasificada {{rating}} en {{country}}.",
     "noRating": "No hay clasificación por edad para tu país."
@@ -165,7 +166,11 @@
     "notePlaceholder": "Solo tú verás esto.",
     "privateHint": "Privado — nunca aparece en tu perfil.",
     "save": "Guardar en mi registro",
-    "saved": "Registrado."
+    "saved": "Registrado.",
+    "alreadyLogged_one": "Ya la has registrado una vez",
+    "alreadyLogged_other": "Ya la has registrado {{count}} veces",
+    "unrated": "sin puntuar",
+    "rewatchHint": "Guardar otra vez añade un revisionado — no sobrescribe lo anterior."
   },
   "auth": {
     "tagline": "Solo socios. Pregunta en taquilla.",

@@ -72,6 +72,7 @@
     "genres": "Genre",
     "cast": "Cast",
     "themes": "Themes",
+    "peerRatings": "In your groups",
     "parental": "Parental guide",
     "rated": "Rated {{rating}} in {{country}}.",
     "noRating": "No age rating available for your country."
@@ -165,7 +166,11 @@
     "notePlaceholder": "Only you will ever see this.",
     "privateHint": "Private — never shown on your profile.",
     "save": "Save to my log",
-    "saved": "Logged."
+    "saved": "Logged.",
+    "alreadyLogged_one": "You have logged this once already",
+    "alreadyLogged_other": "You have logged this {{count}} times already",
+    "unrated": "not rated",
+    "rewatchHint": "Saving again adds a rewatch — it will not overwrite the above."
   },
   "auth": {
     "tagline": "Members only. Ask at the box office.",

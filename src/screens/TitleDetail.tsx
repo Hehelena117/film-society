@@ -8,6 +8,7 @@ import { catalogTitle, type CatalogedTitle, type Provider } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import type { SupportedLanguage } from '@/lib/i18n'
+import { getMyEntriesForTitle, getPeerRatings, type PeerRating, type PriorEntry } from '@/lib/log'
 
 export interface TitleRef {
   tmdbId: number
@@ -40,6 +41,8 @@ export function TitleDetail({
   const [error, setError] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [playing, setPlaying] = useState(false)
+  const [mine, setMine] = useState<PriorEntry[]>([])
+  const [peers, setPeers] = useState<PeerRating[]>([])
 
   useEffect(() => {
     let active = true
@@ -47,7 +50,19 @@ export function TitleDetail({
     setError(null)
 
     catalogTitle(ref.tmdbId, ref.mediaType, language, profile?.country ?? 'DK')
-      .then((d) => active && setData(d))
+      .then(async (d) => {
+        if (!active) return
+        setData(d)
+        // Only knowable once the title has an internal id, which cataloguing
+        // is what produces.
+        const [m, p] = await Promise.all([
+          getMyEntriesForTitle(d.id).catch(() => []),
+          getPeerRatings(d.id).catch(() => []),
+        ])
+        if (!active) return
+        setMine(m)
+        setPeers(p)
+      })
       .catch((err) => active && setError(errorMessage(err)))
 
     return () => {
@@ -123,6 +138,47 @@ export function TitleDetail({
             )}
           </div>
         </div>
+
+        {/* ---- Your own history with it ------------------------------------ */}
+        {mine.length > 0 && (
+          <div className="mt-5 rounded-[2px] border border-brass-600/50 bg-ground-2 px-4 py-3">
+            <p className="type-meta text-brass-700">
+              {t('log.alreadyLogged', { count: mine.length })}
+            </p>
+            <p className="mt-1.5 text-[0.8125rem] text-ink-2">
+              {mine
+                .map((m) =>
+                  [
+                    m.watchedOn ?? new Date(m.createdAt).toISOString().slice(0, 10),
+                    m.rating !== null ? `${m.rating}/10` : t('log.unrated'),
+                  ].join(' · '),
+                )
+                .join('   |   ')}
+            </p>
+          </div>
+        )}
+
+        {/* ---- What your groups made of it ---------------------------------
+            Read through public_ratings, so this can only ever be a score — a
+            date or a note cannot reach here even by mistake. */}
+        {peers.length > 0 && (
+          <section className="mt-5">
+            <SectionLabel>{t('detail.peerRatings')}</SectionLabel>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {peers.map((p) => (
+                <li
+                  key={p.userId}
+                  className="flex items-center gap-2 rounded-full border border-rule bg-ground-2 py-1.5 pr-2 pl-3"
+                >
+                  <span className="text-[0.8125rem] text-ink">{p.username}</span>
+                  <span className="type-marquee rounded-full bg-velvet-600 px-2 py-0.5 text-[11px] text-plate">
+                    {p.rating}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ---- Actions ----------------------------------------------------- */}
         <div className="mt-6 flex gap-2">

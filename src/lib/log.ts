@@ -120,6 +120,93 @@ export async function getMyLog(language: string, limit = 100): Promise<LoggedEnt
   })
 }
 
+export interface PriorEntry {
+  id: string
+  rating: number | null
+  watchedOn: string | null
+  seasonNumber: number | null
+  createdAt: string
+  note: string | null
+}
+
+/**
+ * What you have already logged for one title.
+ *
+ * Rewatches are the point of the log, but logging something twice by accident
+ * is not — so the rating form says what is already there before you add to it.
+ */
+export async function getMyEntriesForTitle(titleId: number): Promise<PriorEntry[]> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .select('id, rating, watched_on, season_number, created_at, note:entry_notes(body)')
+    .eq('title_id', titleId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return ((data ?? []) as Array<Record<string, any>>).map((row) => ({
+    id: row.id,
+    rating: row.rating,
+    watchedOn: row.watched_on,
+    seasonNumber: row.season_number,
+    createdAt: row.created_at,
+    note: Array.isArray(row.note) ? (row.note[0]?.body ?? null) : (row.note?.body ?? null),
+  }))
+}
+
+export interface PeerRating {
+  userId: string
+  username: string
+  rating: number
+}
+
+/**
+ * What people in your groups made of a title.
+ *
+ * Read through public_ratings, so it can only ever surface a score — never a
+ * date, never a note. Two queries rather than a join: public_ratings is a view
+ * and has no foreign key for PostgREST to embed profiles through.
+ */
+export async function getPeerRatings(titleId: number): Promise<PeerRating[]> {
+  const { data: auth } = await supabase.auth.getUser()
+  const me = auth.user?.id
+  if (!me) return []
+
+  const { data: mine } = await supabase.from('group_members').select('group_id').eq('user_id', me)
+  const groupIds = (mine ?? []).map((g: Record<string, any>) => g.group_id)
+  if (!groupIds.length) return []
+
+  const { data: peers } = await supabase
+    .from('group_members')
+    .select('user_id')
+    .in('group_id', groupIds)
+
+  const peerIds = [...new Set((peers ?? []).map((p: Record<string, any>) => p.user_id))].filter(
+    (id) => id !== me,
+  )
+  if (!peerIds.length) return []
+
+  const { data: ratings, error } = await supabase
+    .from('public_ratings')
+    .select('user_id, rating')
+    .eq('title_id', titleId)
+    .in('user_id', peerIds)
+
+  if (error) throw error
+  if (!ratings?.length) return []
+
+  const { data: names } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', ratings.map((r: Record<string, any>) => r.user_id))
+
+  const byId = new Map((names ?? []).map((n: Record<string, any>) => [n.id, n.username]))
+
+  return (ratings as Array<Record<string, any>>)
+    .map((r) => ({ userId: r.user_id, username: byId.get(r.user_id) ?? '—', rating: r.rating }))
+    .sort((a, b) => b.rating - a.rating)
+}
+
 /** Removes a logged viewing. The note cascades with it. */
 export async function deleteEntry(id: string): Promise<void> {
   const { error } = await supabase.from('log_entries').delete().eq('id', id)
