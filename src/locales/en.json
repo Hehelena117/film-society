@@ -23,6 +23,44 @@
     "rate": "Rate this",
     "notInterested": "Not for me"
   },
+  "nav": {
+    "label": "Main navigation",
+    "back": "Back",
+    "lobby": "Lobby",
+    "log": "+ Log",
+    "lists": "Lists",
+    "groups": "Groups"
+  },
+  "lists": {
+    "title": "Watchlists",
+    "new": "New list",
+    "name": "List name",
+    "shareWith": "Share with",
+    "justMe": "Just me",
+    "create": "Create",
+    "loading": "Loading…",
+    "count_one": "{{count}} title",
+    "count_other": "{{count}} titles",
+    "empty": "No lists yet. Make one for yourself, or share it with a group.",
+    "emptyList": "Nothing here yet.",
+    "remove": "Remove",
+    "delete": "Delete this list"
+  },
+  "groups": {
+    "title": "Groups",
+    "new": "New group",
+    "name": "Group name",
+    "create": "Create",
+    "empty": "No groups yet. Make one and add people by username.",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "admin": "Admin",
+    "addByUsername": "Add someone",
+    "usernamePlaceholder": "Their username",
+    "add": "Add",
+    "remove": "Remove",
+    "leave": "Leave"
+  },
   "log": {
     "title": "Log a viewing",
     "open": "Log a film",

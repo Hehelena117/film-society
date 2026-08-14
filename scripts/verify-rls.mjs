@@ -1,0 +1,209 @@
+/**
+ * Row-level security regression suite.
+ *
+ * Creates throwaway users, exercises every flow under real RLS as those users,
+ * then deletes them. Run it after touching any policy, trigger or migration.
+ *
+ *   SUPABASE_SERVICE_ROLE_KEY=... npm run verify:rls
+ *
+ * The service role key is NOT stored in the repo. Get it from
+ * Project Settings > API, or `npx supabase projects api-keys`.
+ *
+ * Two bugs this suite caught that nothing else did, both surfacing as the same
+ * misleading error — "new row violates row-level security policy":
+ *
+ *   1. groups: RETURNING is evaluated before AFTER-insert triggers fire, so
+ *      the creator was not yet a member when the SELECT policy ran.
+ *   2. watchlists: the SELECT policy re-read its own table by id, and during
+ *      INSERT ... RETURNING that row is invisible to its own snapshot.
+ *
+ * Both pointed at WITH CHECK, which was fine in both cases.
+ */
+
+import { createClient } from '@supabase/supabase-js'
+import { readFileSync } from 'node:fs'
+
+function fromEnvFile(key) {
+  try {
+    const line = readFileSync(new URL('../.env', import.meta.url), 'utf8')
+      .split('\n')
+      .find((l) => l.startsWith(`${key}=`))
+    return line?.slice(key.length + 1).trim()
+  } catch {
+    return undefined
+  }
+}
+
+const URL_ = process.env.VITE_SUPABASE_URL ?? fromEnvFile('VITE_SUPABASE_URL')
+const ANON = process.env.VITE_SUPABASE_ANON_KEY ?? fromEnvFile('VITE_SUPABASE_ANON_KEY')
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!URL_ || !ANON) {
+  console.error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY (.env or environment).')
+  process.exit(1)
+}
+if (!SERVICE) {
+  console.error('Missing SUPABASE_SERVICE_ROLE_KEY. Needed to create and delete test users.')
+  console.error('  $env:SUPABASE_SERVICE_ROLE_KEY="..."; npm run verify:rls')
+  process.exit(1)
+}
+
+const admin = createClient(URL_, SERVICE, { auth: { persistSession: false } })
+
+let pass = 0
+let fail = 0
+const check = (label, ok, detail = '') => {
+  console.log(`${ok ? '  PASS' : '  FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`)
+  ok ? pass++ : fail++
+}
+
+const users = []
+async function makeUser(tag) {
+  const email = `fs-test-${tag}-${Math.floor(Math.random() * 1e9)}@example.com`
+  const password = 'test-password-12345'
+  const username = `test_${tag}_${Math.floor(Math.random() * 1e6)}`
+
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { username },
+  })
+  if (error) throw new Error(`createUser: ${error.message}`)
+  users.push(data.user.id)
+
+  const client = createClient(URL_, ANON, { auth: { persistSession: false } })
+  const { error: signInErr } = await client.auth.signInWithPassword({ email, password })
+  if (signInErr) throw new Error(`signIn: ${signInErr.message}`)
+
+  return { client, id: data.user.id, username }
+}
+
+try {
+  console.log('\n=== profile trigger ===')
+  const alice = await makeUser('alice')
+  const { data: prof } = await alice.client
+    .from('profiles')
+    .select('username')
+    .eq('id', alice.id)
+    .single()
+  check('profile row auto-created', !!prof, prof?.username)
+  check('username taken from metadata', prof?.username === alice.username)
+
+  console.log('\n=== groups ===')
+  const { data: groupId, error: gErr } = await alice.client.rpc('create_group', {
+    group_name: 'Test Family',
+  })
+  check('create group via rpc', !gErr && !!groupId, gErr?.message)
+
+  const { data: gm } = await alice.client
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+  check('creator seated as admin', gm?.[0]?.role === 'admin')
+
+  const { data: myGroups, error: mgErr } = await alice.client
+    .from('group_members')
+    .select('role, group:groups!inner(id, name, members:group_members(count))')
+  check('group list query shape', !mgErr, mgErr?.message)
+  check('member count embeds', myGroups?.[0]?.group?.members?.[0]?.count === 1)
+
+  console.log('\n=== watchlists ===')
+  const { data: wl, error: wlErr } = await alice.client
+    .from('watchlists')
+    .insert({ name: 'Tonight', group_id: groupId })
+    .select('id')
+    .single()
+  check('create watchlist in group', !wlErr, wlErr?.message)
+
+  const { data: lists, error: lErr } = await alice.client
+    .from('watchlists')
+    .select('id, name, group:groups(name), items:watchlist_items(count)')
+  check('watchlist list query shape', !lErr, lErr?.message)
+  check('group name embeds', lists?.[0]?.group?.name === 'Test Family')
+
+  console.log('\n=== catalog + items ===')
+  const { data: cat, error: catErr } = await alice.client.functions.invoke('catalog', {
+    body: { tmdbId: 238, mediaType: 'movie', language: 'en', country: 'DK' },
+  })
+  check('catalog a title', !catErr && !!cat?.id, catErr?.message ?? cat?.name)
+
+  const { error: addErr } = await alice.client
+    .from('watchlist_items')
+    .upsert({ watchlist_id: wl.id, title_id: cat.id }, { onConflict: 'watchlist_id,title_id' })
+  check('add to watchlist', !addErr, addErr?.message)
+
+  const { data: items, error: itErr } = await alice.client
+    .from('watchlist_items')
+    .select('title:titles!inner(id, poster_path)')
+    .eq('watchlist_id', wl.id)
+  check('read watchlist items', !itErr && items?.length === 1, itErr?.message)
+  check('poster present', !!items?.[0]?.title?.poster_path)
+
+  console.log('\n=== logging + privacy ===')
+  const { data: entry, error: eErr } = await alice.client
+    .from('log_entries')
+    .insert({ title_id: cat.id, rating: 9, watched_on: '2026-08-01' })
+    .select('id')
+    .single()
+  check('insert log entry, user_id defaulted', !eErr, eErr?.message)
+
+  const { error: nErr } = await alice.client
+    .from('entry_notes')
+    .insert({ entry_id: entry.id, body: 'private thoughts' })
+  check('insert note, owner derived by trigger', !nErr, nErr?.message)
+
+  const bob = await makeUser('bob')
+
+  const { data: bobEntries } = await bob.client
+    .from('log_entries')
+    .select('id, watched_on')
+    .eq('title_id', cat.id)
+  check('watch dates hidden from others', (bobEntries ?? []).length === 0)
+
+  const { data: bobNotes } = await bob.client.from('entry_notes').select('body')
+  check('notes hidden from others', (bobNotes ?? []).length === 0)
+
+  const { data: bobRatings, error: prErr } = await bob.client
+    .from('public_ratings')
+    .select('rating')
+    .eq('user_id', alice.id)
+  check('ratings visible via view', !prErr && bobRatings?.[0]?.rating === 9, prErr?.message)
+
+  const { data: counts } = await bob.client
+    .from('public_watch_counts')
+    .select('titles_watched')
+    .eq('user_id', alice.id)
+  check('watch count visible via view', counts?.[0]?.titles_watched === 1)
+
+  const { data: bobGroup } = await bob.client.from('groups').select('id').eq('id', groupId)
+  check('groups hidden from non-members', (bobGroup ?? []).length === 0)
+
+  const { data: bobList } = await bob.client.from('watchlists').select('id').eq('id', wl.id)
+  check('group watchlist hidden from non-members', (bobList ?? []).length === 0)
+
+  console.log('\n=== membership ===')
+  const { error: addMemberErr } = await alice.client
+    .from('group_members')
+    .upsert({ group_id: groupId, user_id: bob.id, role: 'member' }, { onConflict: 'group_id,user_id' })
+  check('admin adds a member', !addMemberErr, addMemberErr?.message)
+
+  const { data: bobGroupNow } = await bob.client.from('groups').select('name').eq('id', groupId)
+  check('member now sees the group', bobGroupNow?.[0]?.name === 'Test Family')
+
+  const { data: bobListNow } = await bob.client.from('watchlists').select('name').eq('id', wl.id)
+  check('member now sees the group watchlist', bobListNow?.[0]?.name === 'Tonight')
+
+  const { error: bobWriteErr } = await bob.client
+    .from('watchlist_items')
+    .upsert({ watchlist_id: wl.id, title_id: cat.id }, { onConflict: 'watchlist_id,title_id' })
+  check('member can add to the group list', !bobWriteErr, bobWriteErr?.message)
+} catch (err) {
+  console.log(`\nTHREW: ${err.message}`)
+  fail++
+} finally {
+  for (const id of users) await admin.auth.admin.deleteUser(id)
+  console.log(`\ncleaned up ${users.length} test users`)
+  console.log(`\n${pass} passed, ${fail} failed`)
+  process.exit(fail ? 1 : 0)
+}

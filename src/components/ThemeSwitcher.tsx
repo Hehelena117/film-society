@@ -48,8 +48,9 @@ export function ThemeSwitcher() {
   return (
     <div
       ref={rootRef}
-      className="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      /* bottom-20 keeps it clear of the navigation bar */
+      className="fixed right-4 bottom-20 z-50 flex flex-col items-end gap-2"
+      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {open && (
         <ul

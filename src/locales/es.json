@@ -23,6 +23,44 @@
     "rate": "Puntuar",
     "notInterested": "No es para mí"
   },
+  "nav": {
+    "label": "Navegación principal",
+    "back": "Atrás",
+    "lobby": "Vestíbulo",
+    "log": "+ Registrar",
+    "lists": "Listas",
+    "groups": "Grupos"
+  },
+  "lists": {
+    "title": "Listas",
+    "new": "Nueva lista",
+    "name": "Nombre de la lista",
+    "shareWith": "Compartir con",
+    "justMe": "Solo yo",
+    "create": "Crear",
+    "loading": "Cargando…",
+    "count_one": "{{count}} título",
+    "count_other": "{{count}} títulos",
+    "empty": "Aún no hay listas. Crea una para ti o compártela con un grupo.",
+    "emptyList": "Aquí no hay nada todavía.",
+    "remove": "Quitar",
+    "delete": "Eliminar esta lista"
+  },
+  "groups": {
+    "title": "Grupos",
+    "new": "Nuevo grupo",
+    "name": "Nombre del grupo",
+    "create": "Crear",
+    "empty": "Aún no hay grupos. Crea uno y añade gente por nombre de usuario.",
+    "members_one": "{{count}} miembro",
+    "members_other": "{{count}} miembros",
+    "admin": "Administrador",
+    "addByUsername": "Añadir a alguien",
+    "usernamePlaceholder": "Su nombre de usuario",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "leave": "Salir"
+  },
   "log": {
     "title": "Registrar una visualización",
     "open": "Registrar película",

@@ -23,6 +23,44 @@
     "rate": "Bedøm denne",
     "notInterested": "Ikke noget for mig"
   },
+  "nav": {
+    "label": "Hovednavigation",
+    "back": "Tilbage",
+    "lobby": "Foyer",
+    "log": "+ Log",
+    "lists": "Lister",
+    "groups": "Grupper"
+  },
+  "lists": {
+    "title": "Se-lister",
+    "new": "Ny liste",
+    "name": "Listens navn",
+    "shareWith": "Del med",
+    "justMe": "Kun mig",
+    "create": "Opret",
+    "loading": "Indlæser…",
+    "count_one": "{{count}} titel",
+    "count_other": "{{count}} titler",
+    "empty": "Ingen lister endnu. Lav en til dig selv, eller del den med en gruppe.",
+    "emptyList": "Der er ikke noget her endnu.",
+    "remove": "Fjern",
+    "delete": "Slet denne liste"
+  },
+  "groups": {
+    "title": "Grupper",
+    "new": "Ny gruppe",
+    "name": "Gruppens navn",
+    "create": "Opret",
+    "empty": "Ingen grupper endnu. Lav en, og tilføj folk med brugernavn.",
+    "members_one": "{{count}} medlem",
+    "members_other": "{{count}} medlemmer",
+    "admin": "Administrator",
+    "addByUsername": "Tilføj nogen",
+    "usernamePlaceholder": "Deres brugernavn",
+    "add": "Tilføj",
+    "remove": "Fjern",
+    "leave": "Forlad"
+  },
   "log": {
     "title": "Registrér en visning",
     "open": "Registrér en film",

@@ -807,6 +807,7 @@ export type Database = {
     Functions: {
       can_edit_watchlist: { Args: { wid: string }; Returns: boolean }
       can_read_watchlist: { Args: { wid: string }; Returns: boolean }
+      create_group: { Args: { group_name: string }; Returns: string }
       is_group_admin: { Args: { gid: string }; Returns: boolean }
       is_group_member: { Args: { gid: string }; Returns: boolean }
       is_session_participant: { Args: { sid: string }; Returns: boolean }

@@ -1,24 +1,26 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BottomNav, type View } from '@/components/BottomNav'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { BoxOffice } from '@/screens/BoxOffice'
+import { Groups } from '@/screens/Groups'
 import { Lobby } from '@/screens/Lobby'
 import { LogViewing } from '@/screens/LogViewing'
+import { Watchlists } from '@/screens/Watchlists'
 
 export default function App() {
   return (
     <AuthProvider>
       <Gate />
-      <ThemeSwitcher />
     </AuthProvider>
   )
 }
 
 function Gate() {
   const { session, loading } = useAuth()
-  const [logging, setLogging] = useState(false)
+  const [view, setView] = useState<View>('lobby')
   // Remounts the Lobby after a save, so a newly logged film feeds the
   // recommender straight away rather than on next reload.
   const [lobbyKey, setLobbyKey] = useState(0)
@@ -26,37 +28,23 @@ function Gate() {
   if (loading) return <Curtain />
   if (!session) return <BoxOffice />
 
-  if (logging) {
-    return (
-      <LogViewing
-        onDone={() => {
-          setLogging(false)
-          setLobbyKey((k) => k + 1)
-        }}
-      />
-    )
-  }
-
   return (
     <>
-      <Lobby key={lobbyKey} />
-      <LogButton onClick={() => setLogging(true)} />
-    </>
-  )
-}
+      {view === 'lobby' && <Lobby key={lobbyKey} />}
+      {view === 'lists' && <Watchlists />}
+      {view === 'groups' && <Groups />}
+      {view === 'log' && (
+        <LogViewing
+          onDone={() => {
+            setView('lobby')
+            setLobbyKey((k) => k + 1)
+          }}
+        />
+      )}
 
-/** Sits opposite the theme control so the two never overlap. */
-function LogButton({ onClick }: { onClick: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="type-marquee fixed bottom-4 left-4 z-50 rounded-full bg-velvet-600 px-5 py-3 text-[13px] text-plate shadow-frame transition-colors hover:bg-velvet-700"
-      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      + {t('log.open')}
-    </button>
+      <BottomNav current={view} onNavigate={setView} />
+      <ThemeSwitcher />
+    </>
   )
 }
 
