@@ -26,9 +26,11 @@ const ALLOWED = [
   'configuration',
 ]
 
+// supabase-js attaches x-client-info and apikey on every call; both must be
+// allowed or the browser's preflight fails before the request is sent.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 }
 

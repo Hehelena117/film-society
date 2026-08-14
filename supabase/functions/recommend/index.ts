@@ -45,9 +45,13 @@ const TMDB_LOCALE: Record<string, string> = {
   es: 'es-ES',
 }
 
+// supabase-js attaches x-client-info and apikey on every call. Omitting them
+// here fails the browser's preflight, and the error surfaces as the opaque
+// "Failed to send a request to the Edge Function" — no status, no body,
+// because the request never leaves the browser.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
