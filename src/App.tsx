@@ -9,6 +9,8 @@ import { Groups } from '@/screens/Groups'
 import { Lobby } from '@/screens/Lobby'
 import { LogViewing } from '@/screens/LogViewing'
 import { Me } from '@/screens/Me'
+import { People } from '@/screens/People'
+import { Profile } from '@/screens/Profile'
 import { Swipe } from '@/screens/Swipe'
 import { TitleDetail, type TitleRef } from '@/screens/TitleDetail'
 import { Watchlists } from '@/screens/Watchlists'
@@ -26,6 +28,8 @@ function Gate() {
   const [view, setView] = useState<View>('lobby')
   const [swipeSession, setSwipeSession] = useState<string | null>(null)
   const [openTitle, setOpenTitle] = useState<TitleRef | null>(null)
+  const [openProfile, setOpenProfile] = useState<string | null>(null)
+  const [findingPeople, setFindingPeople] = useState(false)
   const [prefill, setPrefill] = useState<TitleRef | null>(null)
   // Remounts the Lobby after a save, so a newly logged film feeds the
   // recommender straight away rather than on next reload.
@@ -55,6 +59,30 @@ function Gate() {
     )
   }
 
+  // Profiles and people search sit above the tabs too, so following someone
+  // from a group returns you to the group rather than dumping you on a tab.
+  if (openProfile) {
+    return (
+      <Profile
+        userId={openProfile}
+        onBack={() => setOpenProfile(null)}
+        onOpenTitle={setOpenTitle}
+      />
+    )
+  }
+
+  if (findingPeople) {
+    return (
+      <People
+        onBack={() => setFindingPeople(false)}
+        onOpenProfile={(id) => {
+          setFindingPeople(false)
+          setOpenProfile(id)
+        }}
+      />
+    )
+  }
+
   return (
     <>
       {view === 'lobby' && <Lobby key={lobbyKey} onOpenTitle={setOpenTitle} />}
@@ -62,7 +90,13 @@ function Gate() {
         <Watchlists onStartSwipe={setSwipeSession} onOpenTitle={setOpenTitle} />
       )}
       {view === 'groups' && <Groups onJoinSwipe={setSwipeSession} />}
-      {view === 'me' && <Me onOpenTitle={setOpenTitle} />}
+      {view === 'me' && (
+        <Me
+          onOpenTitle={setOpenTitle}
+          onFindPeople={() => setFindingPeople(true)}
+          onOpenProfile={setOpenProfile}
+        />
+      )}
       {view === 'log' && (
         <LogViewing
           prefill={prefill}

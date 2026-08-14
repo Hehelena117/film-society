@@ -32,6 +32,27 @@
     "groups": "Groups",
     "me": "Me"
   },
+  "people": {
+    "title": "People",
+    "search": "Find someone by username",
+    "notFound": "Nobody by that name.",
+    "follow": "Follow",
+    "unfollow": "Following",
+    "followers": "Followers",
+    "following": "Following",
+    "ratings": "Their ratings",
+    "noRatings": "Nothing rated yet.",
+    "find": "Find people",
+    "myProfile": "My profile"
+  },
+  "feed": {
+    "title": "In this group",
+    "empty": "Nothing yet. Rate something and it will show up here.",
+    "rated": "rated {{title}} {{rating}}/10",
+    "added": "added {{title}} to {{list}}",
+    "decided": "settled on {{title}}",
+    "joined": "joined the group"
+  },
   "detail": {
     "title": "Title",
     "votes_one": "{{count}} vote",

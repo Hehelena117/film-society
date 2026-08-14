@@ -32,6 +32,27 @@
     "groups": "Grupos",
     "me": "Yo"
   },
+  "people": {
+    "title": "Personas",
+    "search": "Busca a alguien por nombre de usuario",
+    "notFound": "No hay nadie con ese nombre.",
+    "follow": "Seguir",
+    "unfollow": "Siguiendo",
+    "followers": "Seguidores",
+    "following": "Siguiendo",
+    "ratings": "Sus puntuaciones",
+    "noRatings": "Aún no ha puntuado nada.",
+    "find": "Buscar personas",
+    "myProfile": "Mi perfil"
+  },
+  "feed": {
+    "title": "En este grupo",
+    "empty": "Nada todavía. Puntúa algo y aparecerá aquí.",
+    "rated": "puntuó {{title}} con {{rating}}/10",
+    "added": "añadió {{title}} a {{list}}",
+    "decided": "eligió {{title}}",
+    "joined": "se unió al grupo"
+  },
   "detail": {
     "title": "Título",
     "votes_one": "{{count}} voto",

@@ -1,3 +1,4 @@
+import { announce } from '@/lib/activity'
 import { supabase } from '@/lib/supabase'
 
 export interface LogInput {
@@ -46,6 +47,12 @@ export async function logViewing(input: LogInput): Promise<string> {
       // pretending the whole thing worked.
       throw new Error(`Saved the entry, but the note failed: ${noteErr.message}`)
     }
+  }
+
+  // Tell the groups, if the viewing was scored. An unrated entry is usually
+  // bookkeeping rather than an opinion, and not worth announcing.
+  if (input.rating !== null) {
+    await announce({ kind: 'rated', titleId: input.titleId, rating: input.rating })
   }
 
   return entryId

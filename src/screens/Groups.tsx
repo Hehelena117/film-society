@@ -13,6 +13,7 @@ import {
   type Group,
   type GroupMember,
 } from '@/lib/groups'
+import { getGroupActivity, type ActivityItem } from '@/lib/activity'
 import { getOpenSessions, type OpenSession } from '@/lib/swipe'
 
 export function Groups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) => void }) {
@@ -154,23 +155,30 @@ function GroupDetail({
   onBack: () => void
   onJoinSwipe: (sessionId: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const language = i18n.resolvedLanguage ?? 'en'
   const [members, setMembers] = useState<GroupMember[]>([])
   const [sessions, setSessions] = useState<OpenSession[]>([])
+  const [feed, setFeed] = useState<ActivityItem[]>([])
   const [username, setUsername] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
-      const [m, s] = await Promise.all([getGroupMembers(group.id), getOpenSessions(group.id)])
+      const [m, s, a] = await Promise.all([
+        getGroupMembers(group.id),
+        getOpenSessions(group.id),
+        getGroupActivity(group.id, language),
+      ])
       setMembers(m)
       setSessions(s)
+      setFeed(a)
     } catch (err) {
       setError(errorMessage(err))
     }
-  }, [group.id])
+  }, [group.id, language])
 
   useEffect(() => {
     void load()
@@ -291,6 +299,50 @@ function GroupDetail({
             </li>
           ))}
         </ul>
+
+        {/* ---- The feed, which exists only here ---------------------------- */}
+        <section className="mt-10">
+          <div className="rule-pip mb-4">
+            <span className="type-meta whitespace-nowrap text-ink-3">{t('feed.title')}</span>
+          </div>
+
+          {feed.length === 0 ? (
+            <p className="text-center text-[0.875rem] leading-relaxed text-ink-3">
+              {t('feed.empty')}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {feed.map((item) => (
+                <li key={item.id} className="flex items-center gap-3">
+                  {item.title?.posterUrl ? (
+                    <img
+                      src={item.title.posterUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-14 w-10 shrink-0 rounded-[2px] object-cover"
+                    />
+                  ) : (
+                    <span className="h-14 w-10 shrink-0 rounded-[2px] bg-ground-2" />
+                  )}
+
+                  <p className="text-[0.875rem] leading-snug text-ink-2">
+                    <span className="text-ink">{item.actorName}</span>{' '}
+                    {item.kind === 'rated' && item.title
+                      ? t('feed.rated', { title: item.title.name, rating: item.rating })
+                      : item.kind === 'added_to_list' && item.title
+                        ? t('feed.added', {
+                            title: item.title.name,
+                            list: item.watchlistName ?? '—',
+                          })
+                        : item.kind === 'decided' && item.title
+                          ? t('feed.decided', { title: item.title.name })
+                          : t('feed.joined')}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
     </div>
   )

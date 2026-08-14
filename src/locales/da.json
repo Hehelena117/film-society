@@ -32,6 +32,27 @@
     "groups": "Grupper",
     "me": "Mig"
   },
+  "people": {
+    "title": "Personer",
+    "search": "Find nogen med brugernavn",
+    "notFound": "Ingen med det navn.",
+    "follow": "Følg",
+    "unfollow": "Følger",
+    "followers": "Følgere",
+    "following": "Følger",
+    "ratings": "Deres bedømmelser",
+    "noRatings": "Intet bedømt endnu.",
+    "find": "Find personer",
+    "myProfile": "Min profil"
+  },
+  "feed": {
+    "title": "I denne gruppe",
+    "empty": "Ikke noget endnu. Bedøm en film, så dukker den op her.",
+    "rated": "gav {{title}} {{rating}}/10",
+    "added": "tilføjede {{title}} til {{list}}",
+    "decided": "valgte {{title}}",
+    "joined": "kom med i gruppen"
+  },
   "detail": {
     "title": "Titel",
     "votes_one": "{{count}} stemme",

@@ -8,9 +8,17 @@ import { errorMessage } from '@/lib/errors'
 import { deleteEntry, getMyLog, type LoggedEntry } from '@/lib/log'
 
 /** Your own shelf: everything you have logged, with the notes only you can see. */
-export function Me({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void }) {
+export function Me({
+  onOpenTitle,
+  onFindPeople,
+  onOpenProfile,
+}: {
+  onOpenTitle: (ref: TitleRef) => void
+  onFindPeople: () => void
+  onOpenProfile: (userId: string) => void
+}) {
   const { t, i18n } = useTranslation()
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, user } = useAuth()
   const [entries, setEntries] = useState<LoggedEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +74,23 @@ export function Me({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void }) {
               <dd className="type-title mt-1 text-[1.5rem] text-ink">{average ?? '—'}</dd>
             </div>
           </dl>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={() => user && onOpenProfile(user.id)}
+            className="type-marquee flex-1 rounded-[2px] border border-rule-strong py-3 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            {t('people.myProfile')}
+          </button>
+          <button
+            type="button"
+            onClick={onFindPeople}
+            className="type-marquee flex-1 rounded-[2px] border border-rule-strong py-3 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            {t('people.find')}
+          </button>
         </div>
 
         {error && <p className="mt-5 text-[0.875rem] text-velvet-500">{error}</p>}

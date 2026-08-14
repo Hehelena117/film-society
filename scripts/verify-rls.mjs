@@ -406,6 +406,77 @@ try {
     .from('swipes')
     .insert({ session_id: s2.id, title_id: cat.id, liked: true })
   check('non-participants cannot swipe', !!daveSwipeErr, daveSwipeErr?.message?.slice(0, 60))
+
+  console.log('\n=== following ===')
+  const { error: followErr } = await alice.client
+    .from('follows')
+    .insert({ followee_id: bob.id })
+  check('follow someone', !followErr, followErr?.message)
+
+  const { count: bobFollowers } = await dave.client
+    .from('follows')
+    .select('follower_id', { count: 'exact', head: true })
+    .eq('followee_id', bob.id)
+  check('follower counts are public', bobFollowers === 1, `${bobFollowers}`)
+
+  // follower_id defaults to auth.uid() and WITH CHECK pins it, so this is an
+  // attempt to make someone else follow a third party.
+  const { error: forgedErr } = await dave.client
+    .from('follows')
+    .insert({ follower_id: alice.id, followee_id: carol.id })
+  check('cannot follow on behalf of someone else', !!forgedErr, forgedErr?.code)
+
+  const { error: unfollowErr } = await alice.client
+    .from('follows')
+    .delete()
+    .eq('follower_id', alice.id)
+    .eq('followee_id', bob.id)
+  check('unfollow', !unfollowErr, unfollowErr?.message)
+
+  console.log('\n=== group feed ===')
+  const { error: postErr } = await alice.client
+    .from('activity')
+    .insert({ group_id: groupId, kind: 'rated', title_id: cat.id, rating: 9 })
+  check('post to the feed', !postErr, postErr?.message)
+
+  const { data: bobFeed, error: bobFeedErr } = await bob.client
+    .from('activity')
+    .select('kind, rating, actor:profiles!inner(username)')
+    .eq('group_id', groupId)
+  check('group members read the feed', !bobFeedErr && bobFeed?.length === 1, bobFeedErr?.message)
+  check('feed joins the actor', !!bobFeed?.[0]?.actor?.username)
+
+  const { data: daveFeed } = await dave.client.from('activity').select('id').eq('group_id', groupId)
+  check('the feed is invisible outside the group', (daveFeed ?? []).length === 0)
+
+  const { error: daveePostErr } = await dave.client
+    .from('activity')
+    .insert({ group_id: groupId, kind: 'rated', title_id: cat.id, rating: 1 })
+  check('outsiders cannot post to a group feed', !!daveePostErr, daveePostErr?.code)
+
+  console.log('\n=== public profile ===')
+  const { data: aliceSeenByDave } = await dave.client
+    .from('profiles')
+    .select('username, bio')
+    .eq('id', alice.id)
+    .maybeSingle()
+  check('profiles are public', !!aliceSeenByDave?.username)
+
+  const { error: vandalErr } = await dave.client
+    .from('profiles')
+    .update({ bio: 'hacked' })
+    .eq('id', alice.id)
+  await new Promise((r) => setTimeout(r, 100))
+  const { data: aliceBio } = await alice.client
+    .from('profiles')
+    .select('bio')
+    .eq('id', alice.id)
+    .single()
+  check(
+    'nobody can edit another profile',
+    aliceBio?.bio !== 'hacked',
+    vandalErr?.code ?? `bio is ${aliceBio?.bio}`,
+  )
 } catch (err) {
   console.log(`\nTHREW: ${err.message}`)
   fail++
