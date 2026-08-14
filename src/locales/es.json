@@ -21,5 +21,12 @@
     "addToWatchlist": "Añadir a la lista",
     "rate": "Puntuar",
     "notInterested": "No es para mí"
+  },
+  "theme": {
+    "label": "Elige una sala",
+    "lobby": { "name": "Vestíbulo", "note": "Papel cálido" },
+    "marquee": { "name": "Marquesina", "note": "Papel y sangre de toro" },
+    "velvet": { "name": "Terciopelo", "note": "Paredes rojo oscuro" },
+    "night": { "name": "Noche", "note": "Luces apagadas" }
   }
 }

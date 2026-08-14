@@ -101,6 +101,34 @@ services carry a title, plus a TMDB `/watch` link.
 
 ---
 
+## Themes
+
+All four themes ship as a **user setting**, not a build-time choice.
+
+| id | Name | Ground |
+| --- | --- | --- |
+| `lobby` | Lobby | Warm paper `#f4eddf` |
+| `marquee` | Marquee | Paper ground, oxblood bands |
+| `velvet` | Velvet | Deep red `#2a0a0f`, brass accent |
+| `night` | Night | Near-black `#141013`, velvet red accent |
+
+**Token split.** `ground`, `ink` and `band` swap per theme. `frame`, `plate`
+and `bulb` stay constant, so a poster is presented identically against every
+wall — dark surround, cream marquee plates, warm bulbs. That constant is what
+makes the four read as rooms in one cinema rather than four different apps.
+
+Do not reintroduce a token that means both "text colour" and "frame colour";
+that conflation is what the split exists to prevent.
+
+Themes are `[data-theme]` blocks overriding the custom properties Tailwind v4
+already emits as `var()` references, so switching costs one attribute change —
+no rebuild, no flash. First run follows `prefers-color-scheme` (dark → Velvet).
+
+**To do:** once accounts exist, mirror the choice onto the user's profile row
+so it follows them between devices. Currently `localStorage` only.
+
+---
+
 ## Product rules
 
 - Ratings are whole numbers, 1–10.

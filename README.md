@@ -37,6 +37,7 @@ data so the look can be approved before the rest is built.
 
 - [x] Build environment, TypeScript, Tailwind v4 design tokens
 - [x] The Lobby — infinite-scrolling recommendation poster wall
+- [x] Four themes as a user setting — Lobby, Marquee, Velvet, Night
 - [x] Edge Functions for TMDB + OpenRouter written (not yet deployed)
 - [x] GitHub Pages deployment workflow
 - [ ] Supabase project, schema, auth

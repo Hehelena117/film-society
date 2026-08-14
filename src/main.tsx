@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import App from './App'
-import { applyStoredTheme } from './components/ThemeSwitcher'
+import { applyStoredTheme } from './lib/theme'
 import './lib/i18n'
 import './index.css'
 import './themes.css'

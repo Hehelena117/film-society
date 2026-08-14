@@ -21,5 +21,12 @@
     "addToWatchlist": "Add to watchlist",
     "rate": "Rate this",
     "notInterested": "Not for me"
+  },
+  "theme": {
+    "label": "Choose a room",
+    "lobby": { "name": "Lobby", "note": "Warm paper" },
+    "marquee": { "name": "Marquee", "note": "Paper and oxblood" },
+    "velvet": { "name": "Velvet", "note": "Deep red walls" },
+    "night": { "name": "Night", "note": "Lights down" }
   }
 }
