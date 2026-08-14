@@ -26,7 +26,7 @@ export type Database = {
           watchlist_id: string | null
         }
         Insert: {
-          actor_id: string
+          actor_id?: string
           created_at?: string
           group_id: string
           id?: string
@@ -87,7 +87,7 @@ export type Database = {
           body: string
           entry_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           body?: string
@@ -121,7 +121,7 @@ export type Database = {
         Insert: {
           position?: number
           title_id: number
-          user_id: string
+          user_id?: string
         }
         Update: {
           position?: number
@@ -154,7 +154,7 @@ export type Database = {
         Insert: {
           created_at?: string
           followee_id: string
-          follower_id: string
+          follower_id?: string
         }
         Update: {
           created_at?: string
@@ -225,7 +225,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
-          created_by: string
+          created_by?: string
           id?: string
           name: string
         }
@@ -262,7 +262,7 @@ export type Database = {
           rating?: number | null
           season_number?: number | null
           title_id: number
-          user_id: string
+          user_id?: string
           watched_on?: string | null
         }
         Update: {
@@ -366,7 +366,7 @@ export type Database = {
         Insert: {
           joined_at?: string
           session_id: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           joined_at?: string
@@ -404,7 +404,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string
           decided_at?: string | null
           decided_title_id?: number | null
           filters?: Json
@@ -468,7 +468,7 @@ export type Database = {
           liked: boolean
           session_id: string
           title_id: number
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -736,7 +736,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           name: string
-          owner_id: string
+          owner_id?: string
         }
         Update: {
           created_at?: string

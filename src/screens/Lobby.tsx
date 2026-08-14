@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PosterFrame } from '@/components/PosterFrame'
-import { getMockPage } from '@/data/mockRecommendations'
+import { getRatingSeeds, getRecommendations, type RatingSeed } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
+import type { SupportedLanguage } from '@/lib/i18n'
 import type { Recommendation } from '@/types'
 
 const PAGE_SIZE = 6
@@ -11,47 +13,100 @@ const PAGE_SIZE = 6
  * The Lobby — the recommendation wall.
  *
  * Scrolling walks you down a cinema corridor past bulb-lit poster frames.
- * Recommendations keep loading as long as you keep scrolling; the first six
- * are the day's programme.
+ * Recommendations keep loading as long as you keep scrolling.
  */
 export function Lobby() {
-  const { t } = useTranslation()
-  const [recs, setRecs] = useState<Recommendation[]>(() => getMockPage(0, PAGE_SIZE))
-  const [loading, setLoading] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
-  const pageRef = useRef(0)
-  // Refs, not state: the observer callback must see the current value without
-  // being torn down and rebuilt on every load.
-  const busyRef = useRef(false)
+  const { t, i18n } = useTranslation()
+  const { profile, signOut } = useAuth()
 
-  const loadMore = useCallback(() => {
-    if (busyRef.current) return
+  const [recs, setRecs] = useState<Recommendation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [exhausted, setExhausted] = useState(false)
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const busyRef = useRef(false)
+  // Titles already shown, so each page asks the model for something new.
+  const seenRef = useRef<string[]>([])
+  const seedsRef = useRef<RatingSeed[] | null>(null)
+
+  const language = (i18n.resolvedLanguage ?? 'en') as SupportedLanguage
+
+  const loadMore = useCallback(async () => {
+    if (busyRef.current || exhausted) return
     busyRef.current = true
     setLoading(true)
+    setError(null)
 
-    // Stands in for the recommend Edge Function; see supabase/functions/recommend.
-    window.setTimeout(() => {
-      pageRef.current += 1
-      setRecs((current) => [...current, ...getMockPage(pageRef.current, PAGE_SIZE)])
+    try {
+      // Read the user's own ratings once — they do not change mid-scroll.
+      if (seedsRef.current === null) {
+        seedsRef.current = await getRatingSeeds(language)
+      }
+
+      const batch = await getRecommendations({
+        ratings: seedsRef.current,
+        excludeNames: seenRef.current,
+        filters: {},
+        language,
+        count: PAGE_SIZE,
+      })
+
+      if (!batch.length) {
+        setExhausted(true)
+        return
+      }
+
+      seenRef.current = [...seenRef.current, ...batch.map((b) => b.title.name)]
+
+      setRecs((current) => [
+        ...current,
+        ...batch.map((b) => ({
+          title: {
+            id: `${b.title.mediaType}-${b.title.tmdbId}`,
+            tmdbId: b.title.tmdbId,
+            mediaType: b.title.mediaType,
+            name: b.title.name,
+            year: b.title.year,
+            posterUrl: b.title.posterUrl,
+            runtimeMinutes: null,
+            seasons: null,
+            genres: [],
+            director: null,
+            certification: null,
+          },
+          reason: b.reason,
+        })),
+      ])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
       setLoading(false)
       busyRef.current = false
-    }, 450)
+    }
+  }, [language, exhausted])
+
+  // First page.
+  useEffect(() => {
+    void loadMore()
+    // Deliberately once on mount; loadMore guards itself against re-entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     const el = sentinelRef.current
-    if (!el) return
+    if (!el || exhausted) return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore()
+        if (entries[0].isIntersecting) void loadMore()
       },
-      { rootMargin: '600px' },
+      { rootMargin: '800px' },
     )
 
     observer.observe(el)
     return () => observer.disconnect()
-  }, [loadMore])
+  }, [loadMore, exhausted])
 
   return (
     <div className="min-h-dvh wall-ground texture-wall">
@@ -66,15 +121,27 @@ export function Lobby() {
           </div>
         </div>
 
-        <p className="type-script mt-5 text-[1.65rem] text-band-ink">{t('app.tagline')}</p>
+        <p className="type-script mt-5 text-[1.65rem] text-band-ink">{t('lobby.subtitle')}</p>
+
+        {profile && (
+          <p className="type-meta mt-4 text-band-ink/70">
+            {profile.username}
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="ml-3 underline underline-offset-4 hover:text-band-ink"
+            >
+              {t('auth.signOut')}
+            </button>
+          </p>
+        )}
       </header>
 
-      {/* ---- Tile dado, as along the lobby wall ---------------------------- */}
       <div className="relative z-10 h-7 floor-checker opacity-[0.18]" aria-hidden />
 
       {/* ---- The poster corridor ------------------------------------------- */}
       <main className="relative z-10 px-6 pt-12 pb-24">
-        <div className="rule-pip mb-11" aria-hidden={false}>
+        <div className="rule-pip mb-11">
           <span className="type-meta whitespace-nowrap text-ink-3">{t('lobby.nowShowing')}</span>
         </div>
 
@@ -86,13 +153,24 @@ export function Lobby() {
 
         <div ref={sentinelRef} aria-hidden className="h-px" />
 
-        <p
-          className="type-meta mt-14 text-center text-ink-3/70"
-          role="status"
-          aria-live="polite"
-        >
-          {loading ? t('lobby.loading') : ''}
+        <p className="type-meta mt-14 text-center text-ink-3/70" role="status" aria-live="polite">
+          {error ? '' : loading ? t('lobby.loading') : exhausted ? t('lobby.endOfReel') : ''}
         </p>
+
+        {error && (
+          <div className="mt-10 text-center">
+            <p className="mx-auto max-w-[36ch] text-[0.875rem] leading-relaxed text-velvet-500">
+              {error}
+            </p>
+            <button
+              type="button"
+              onClick={() => void loadMore()}
+              className="type-marquee mt-4 rounded-[2px] bg-velvet-600 px-6 py-2.5 text-[13px] text-plate hover:bg-velvet-700"
+            >
+              {t('lobby.retry')}
+            </button>
+          </div>
+        )}
       </main>
     </div>
   )

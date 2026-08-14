@@ -9,7 +9,8 @@
     "nowShowing": "En cartelera",
     "loading": "Cargando el proyector…",
     "endOfReel": "Fin del rollo por ahora",
-    "because": "Porque valoraste"
+    "because": "Porque valoraste",
+    "retry": "Inténtalo de nuevo"
   },
   "title": {
     "runtime": "{{minutes}} min",
@@ -21,6 +22,25 @@
     "addToWatchlist": "Añadir a la lista",
     "rate": "Puntuar",
     "notInterested": "No es para mí"
+  },
+  "log": {
+    "title": "Registrar una visualización",
+    "open": "Registrar película",
+    "close": "Cerrar",
+    "search": "¿Qué película o serie?",
+    "searchPlaceholder": "Buscar por título…",
+    "searching": "Buscando…",
+    "type": { "movie": "Película", "tv": "Serie" },
+    "notThisOne": "No es esta — buscar otra vez",
+    "rating": "Tu puntuación",
+    "ratingOptional": "Opcional. Toca de nuevo para borrar.",
+    "season": "Temporada",
+    "watchedOn": "Vista el",
+    "note": "Nota privada",
+    "notePlaceholder": "Solo tú verás esto.",
+    "privateHint": "Privado — nunca aparece en tu perfil.",
+    "save": "Guardar en mi registro",
+    "saved": "Registrado."
   },
   "auth": {
     "tagline": "Solo socios. Pregunta en taquilla.",

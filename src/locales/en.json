@@ -9,7 +9,8 @@
     "nowShowing": "Now showing",
     "loading": "Threading the projector…",
     "endOfReel": "That's the reel for now",
-    "because": "Because you rated"
+    "because": "Because you rated",
+    "retry": "Try again"
   },
   "title": {
     "runtime": "{{minutes}} min",
@@ -21,6 +22,25 @@
     "addToWatchlist": "Add to watchlist",
     "rate": "Rate this",
     "notInterested": "Not for me"
+  },
+  "log": {
+    "title": "Log a viewing",
+    "open": "Log a film",
+    "close": "Close",
+    "search": "Which film or series?",
+    "searchPlaceholder": "Search by title…",
+    "searching": "Looking…",
+    "type": { "movie": "Film", "tv": "Series" },
+    "notThisOne": "Not this one — search again",
+    "rating": "Your rating",
+    "ratingOptional": "Optional. Tap again to clear.",
+    "season": "Season",
+    "watchedOn": "Watched on",
+    "note": "Private note",
+    "notePlaceholder": "Only you will ever see this.",
+    "privateHint": "Private — never shown on your profile.",
+    "save": "Save to my log",
+    "saved": "Logged."
   },
   "auth": {
     "tagline": "Members only. Ask at the box office.",

@@ -9,7 +9,8 @@
     "nowShowing": "Vises nu",
     "loading": "Sætter filmen op…",
     "endOfReel": "Det var rullen for nu",
-    "because": "Fordi du gav"
+    "because": "Fordi du gav",
+    "retry": "Prøv igen"
   },
   "title": {
     "runtime": "{{minutes}} min",
@@ -21,6 +22,25 @@
     "addToWatchlist": "Tilføj til listen",
     "rate": "Bedøm denne",
     "notInterested": "Ikke noget for mig"
+  },
+  "log": {
+    "title": "Registrér en visning",
+    "open": "Registrér en film",
+    "close": "Luk",
+    "search": "Hvilken film eller serie?",
+    "searchPlaceholder": "Søg på titel…",
+    "searching": "Søger…",
+    "type": { "movie": "Film", "tv": "Serie" },
+    "notThisOne": "Ikke denne — søg igen",
+    "rating": "Din bedømmelse",
+    "ratingOptional": "Valgfrit. Tryk igen for at rydde.",
+    "season": "Sæson",
+    "watchedOn": "Set den",
+    "note": "Privat note",
+    "notePlaceholder": "Kun du kan se dette.",
+    "privateHint": "Privat — vises aldrig på din profil.",
+    "save": "Gem i min log",
+    "saved": "Registreret."
   },
   "auth": {
     "tagline": "Kun for medlemmer. Spørg i billetlugen.",

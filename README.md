@@ -45,8 +45,8 @@ a real device.
 
 ## Status
 
-**Current milestone: wiring the app to real data.** The Lobby still renders
-mock recommendations; everything behind it is now live.
+**Current milestone: the core loop works.** Sign in, get AI recommendations
+against real TMDB artwork, log what you watch with a rating and a private note.
 
 - [x] Build environment, TypeScript, Tailwind v4 design tokens
 - [x] The Lobby — infinite-scrolling recommendation poster wall
@@ -55,11 +55,10 @@ mock recommendations; everything behind it is now live.
 - [x] Database schema + row-level security — applied and verified live
 - [x] Edge Functions deployed
 - [x] Supabase client + auth provider
-- [ ] `TMDB_API_KEY` and `OPENROUTER_API_KEY` set as Supabase secrets
-- [ ] `.env` created locally
-- [ ] Auth screens
-- [ ] Real TMDB data
-- [ ] Logging, ratings, notes
+- [x] Secrets and `.env` configured
+- [x] Auth — the box office
+- [x] Real TMDB data via the proxy, AI recommendations in the Lobby
+- [x] Logging: search, rate 1–10, private note, season for series
 - [ ] Watchlists, groups, swipe-to-decide
 - [ ] Profiles, follow, group activity feed
 - [ ] TMDB + JustWatch attribution footer *(required before public deploy)*
