@@ -10,12 +10,25 @@ black-and-white tile.
 
 ## Run it on this PC
 
+The project lives at `C:\Users\helen\Projects\film-society`.
+
+**Do not move it into OneDrive.** OneDrive's Files On-Demand converts new
+folders into cloud placeholders (reparse points) while a tool is still writing
+to them. That breaks the Supabase CLI outright — `AlreadyExists:
+FileSystem.makeDirectory` — and causes constant sync churn against
+`node_modules`. GitHub is the backup for this project, and is better suited to
+code than OneDrive is.
+
 ```bash
 npm install
 npm run dev
 ```
 
 Then open <http://localhost:5173>.
+
+On Windows PowerShell, if `npm` or `npx` is blocked with *"running scripts is
+disabled on this system"*, use `npm.cmd` / `npx.cmd`, or allow local scripts
+once with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 The dev server also binds to your LAN, so you can open the same URL on your
 phone (swap `localhost` for your PC's local IP) to check the mobile layout on
@@ -32,17 +45,19 @@ a real device.
 
 ## Status
 
-**Current milestone: design review.** The Lobby screen is built against mock
-data so the look can be approved before the rest is built.
+**Current milestone: wiring the app to real data.** The Lobby still renders
+mock recommendations; everything behind it is now live.
 
 - [x] Build environment, TypeScript, Tailwind v4 design tokens
 - [x] The Lobby — infinite-scrolling recommendation poster wall
 - [x] Four themes as a user setting — Lobby, Marquee, Velvet, Night
-- [x] Edge Functions for TMDB + OpenRouter written (not yet deployed)
 - [x] GitHub Pages deployment workflow
-- [x] Database schema + row-level security written *(not yet run against a database)*
-- [ ] Supabase project created, migrations applied
-- [ ] Auth
+- [x] Database schema + row-level security — applied and verified live
+- [x] Edge Functions deployed
+- [x] Supabase client + auth provider
+- [ ] `TMDB_API_KEY` and `OPENROUTER_API_KEY` set as Supabase secrets
+- [ ] `.env` created locally
+- [ ] Auth screens
 - [ ] Real TMDB data
 - [ ] Logging, ratings, notes
 - [ ] Watchlists, groups, swipe-to-decide
