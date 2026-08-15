@@ -82,6 +82,50 @@ The workflow in `.github/workflows/deploy.yml` publishes on every push to
 
 ---
 
+## 6. Building for iOS and Android
+
+Capacitor is configured and both native projects exist in `android/` and
+`ios/`. Neither can be built yet — that needs tooling this PC does not have.
+
+**Always build with `build:native`, never plain `build`.** The web build
+prefixes assets with `/film-society/` for GitHub Pages; inside a native shell
+they are read from the filesystem, and that prefix gives a white screen on
+device.
+
+```bash
+npm run sync:native     # builds with the right base path, then copies into both projects
+```
+
+### Android — possible on this PC
+
+1. Install [Android Studio](https://developer.android.com/studio) (includes
+   the SDK and a JDK).
+2. `npx cap open android`
+3. Run on an emulator or a connected phone from Android Studio.
+
+To publish: a Google Play developer account is **$25 once**.
+
+### iOS — needs a Mac
+
+Xcode is macOS-only, so an iOS build cannot be produced from Windows at all.
+The `ios/` project is committed and ready; it needs a Mac to open it.
+
+1. On a Mac: `npx cap open ios`
+2. Run on a simulator or device from Xcode.
+
+To publish: an Apple Developer account is **$99/year**.
+
+### After changing any web code
+
+```bash
+npm run sync:native
+```
+
+`cap sync` also reinstalls native plugins, so run it after adding any
+Capacitor plugin rather than just copying assets.
+
+---
+
 ## Checklist
 
 - [ ] `gh auth login` done

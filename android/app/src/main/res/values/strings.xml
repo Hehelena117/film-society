@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Film Society</string>
+    <string name="title_activity_main">Film Society</string>
+    <string name="package_name">com.amokproducts.filmsociety</string>
+    <string name="custom_url_scheme">com.amokproducts.filmsociety</string>
+</resources>

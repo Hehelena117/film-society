@@ -4,8 +4,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // On GitHub Pages the app is served from https://<user>.github.io/film-society/,
-// so assets need that prefix. Locally it is served from the root.
-const base = process.env.GITHUB_ACTIONS ? '/film-society/' : '/'
+// so assets need that prefix. Inside a Capacitor shell they are read from the
+// filesystem root instead, and that prefix would produce a white screen on
+// device — hence the explicit escape hatch rather than reusing the web build.
+const base = process.env.CAPACITOR ? './' : process.env.GITHUB_ACTIONS ? '/film-society/' : '/'
 
 export default defineConfig({
   base,
