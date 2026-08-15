@@ -141,11 +141,6 @@ export function Me({
                         className="h-full w-full object-cover"
                       />
                     )}
-                    {/* Same problem as the watchlist grid: the poster opened
-                        the title page but nothing said so. */}
-                    <span className="type-meta absolute inset-x-0 bottom-0 bg-pitch/75 py-0.5 text-center text-[8px] text-plate">
-                      {t('lists.details')}
-                    </span>
                   </div>
                 </button>
 

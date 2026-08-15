@@ -18,10 +18,12 @@ import { getMyEntriesForTitle, logViewing, type PriorEntry } from '@/lib/log'
 export function LogViewing({
   onDone,
   prefill,
+  onOpenTitle,
 }: {
   onDone: () => void
   /** Set when arriving from a title page, so the search step is skipped. */
   prefill?: { tmdbId: number; mediaType: 'movie' | 'tv' } | null
+  onOpenTitle: (ref: { tmdbId: number; mediaType: 'movie' | 'tv' }) => void
 }) {
   const { t, i18n } = useTranslation()
   const { profile } = useAuth()
@@ -68,14 +70,17 @@ export function LogViewing({
     return () => window.clearTimeout(timer)
   }, [query, language])
 
-  async function choose(hit: SearchHit) {
-    setError(null)
-    try {
-      // Caches the title server-side and hands back our internal id.
-      setChosen(await catalogTitle(hit.tmdbId, hit.mediaType, language, profile?.country ?? 'DK'))
-    } catch (err) {
-      setError(errorMessage(err))
-    }
+  /**
+   * A search result opens the title page, not the rating form.
+   *
+   * Searching for something is not the same as having watched it — you might
+   * be checking the cast, the length, or where it is streaming. Jumping
+   * straight to "rate this" assumed an intent the search had not expressed,
+   * and hid everything the title page knows. Logging is one button away from
+   * there.
+   */
+  function choose(hit: SearchHit) {
+    onOpenTitle({ tmdbId: hit.tmdbId, mediaType: hit.mediaType })
   }
 
   return (
@@ -141,7 +146,7 @@ export function LogViewing({
                 <li key={`${hit.mediaType}-${hit.tmdbId}`}>
                   <button
                     type="button"
-                    onClick={() => void choose(hit)}
+                    onClick={() => choose(hit)}
                     className="flex w-full items-center gap-3 rounded-[2px] border border-rule bg-ground-2 p-2 text-left transition-colors hover:border-brass-600"
                   >
                     <span className="h-[68px] w-[46px] shrink-0 overflow-hidden rounded-[1px] bg-frame">

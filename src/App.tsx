@@ -56,9 +56,6 @@ function Gate() {
   const [findingPeople, setFindingPeople] = useState(false)
   const [editing, setEditing] = useState(false)
   const [prefill, setPrefill] = useState<TitleRef | null>(null)
-  // Remounts the Lobby after a save, so a newly logged film feeds the
-  // recommender straight away rather than on next reload.
-  const [lobbyKey, setLobbyKey] = useState(0)
 
   if (loading) return <Curtain />
   if (!session) {
@@ -149,8 +146,17 @@ function Gate() {
 
   return (
     <>
+      {/* The Lobby stays mounted and is merely hidden, so leaving the tab and
+          coming back does not throw away the wall and fetch a new one. It
+          refreshes when asked to, and not otherwise. Every other screen is
+          cheap to rebuild and unmounts normally. */}
+      <div hidden={view !== 'lobby'}>
+        <Screen>
+          <Lobby onOpenTitle={setOpenTitle} />
+        </Screen>
+      </div>
+
       <Screen>
-        {view === 'lobby' && <Lobby key={lobbyKey} onOpenTitle={setOpenTitle} />}
         {view === 'lists' && (
           <Watchlists onStartSwipe={setSwipeSession} onOpenTitle={setOpenTitle} />
         )}
@@ -166,10 +172,10 @@ function Gate() {
         {view === 'log' && (
           <LogViewing
             prefill={prefill}
+            onOpenTitle={setOpenTitle}
             onDone={() => {
               setPrefill(null)
               setView('lobby')
-              setLobbyKey((k) => k + 1)
             }}
           />
         )}

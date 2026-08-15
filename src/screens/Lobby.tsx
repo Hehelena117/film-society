@@ -140,7 +140,10 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
             // so far, otherwise "show me something else" gets narrower rather
             // than fresher once the history is long.
             forgetShown()
-            seenRef.current = snapshotRef.current?.loggedNames ?? []
+            // Also re-read the log, since this is now the only moment the wall
+            // changes — anything rated since it was built must count.
+            snapshotRef.current = null
+            seenRef.current = []
             setRecs([])
             setExhausted(false)
             void loadMore()

@@ -565,9 +565,8 @@ function WatchlistDetail({
           <ul className="grid grid-cols-3 gap-3">
             {visible.map((item) => (
               <li key={item.titleId}>
-                {/* The poster opened the title page before, but nothing said
-                    so, so nobody found the trailer, cast or streaming behind
-                    it. The label is the fix. */}
+                {/* Whole card is the link — poster and title together, so the
+                    tap target is obvious without a badge over the artwork. */}
                 <button
                   type="button"
                   onClick={() => onOpenTitle({ tmdbId: item.tmdbId, mediaType: item.mediaType })}
@@ -584,9 +583,6 @@ function WatchlistDetail({
                         />
                       )}
                     </div>
-                    <span className="type-meta absolute inset-x-1 bottom-1 bg-pitch/75 py-1 text-center text-[9px] text-plate">
-                      {t('lists.details')}
-                    </span>
                   </div>
                   <p className="mt-1.5 line-clamp-2 text-[0.75rem] leading-tight text-ink group-hover:text-accent">
                     {item.name}
