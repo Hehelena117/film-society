@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BottomNav, type View } from '@/components/BottomNav'
+import { KeepAlive } from '@/components/KeepAlive'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { FollowListTarget } from '@/screens/FollowList'
@@ -66,129 +67,112 @@ function Gate() {
     )
   }
 
-  // A swipe session takes over the screen: navigating away mid-decision would
-  // leave the others waiting on a vote that never arrives.
-  if (swipeSession) {
-    return (
-      <Screen>
-        <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
-      </Screen>
-    )
-  }
-
-  if (editing) {
-    return (
-      <Screen>
-        <EditProfile onBack={() => setEditing(false)} />
-      </Screen>
-    )
-  }
-
-  // Deeper than a profile, so it is checked first.
-  if (openFollows) {
-    return (
-      <Screen>
-        <FollowList
-          target={openFollows}
-          onBack={() => setOpenFollows(null)}
-          onOpenProfile={(id) => {
-            setOpenFollows(null)
-            setOpenProfile(id)
-          }}
-        />
-      </Screen>
-    )
-  }
-
-  if (openProfile) {
-    return (
-      <Screen>
-        <Profile
-          userId={openProfile}
-          onBack={() => setOpenProfile(null)}
-          onOpenTitle={setOpenTitle}
-          onOpenFollows={setOpenFollows}
-        />
-      </Screen>
-    )
-  }
-
-  if (findingPeople) {
-    return (
-      <Screen>
-        <People
-          onBack={() => setFindingPeople(false)}
-          onOpenProfile={(id) => {
-            setFindingPeople(false)
-            setOpenProfile(id)
-          }}
-        />
-      </Screen>
-    )
-  }
-
-  // Title pages layer over whatever you were doing, and hand you back to it.
-  if (openTitle) {
-    return (
-      <Screen>
-        <TitleDetail
-          title={openTitle}
-          onBack={() => setOpenTitle(null)}
-          onLog={(t) => {
-            setPrefill({ tmdbId: t.tmdbId, mediaType: t.mediaType })
-            setOpenTitle(null)
-            setView('log')
-          }}
-        />
-      </Screen>
-    )
-  }
+  /**
+   * Screens that cover everything else.
+   *
+   * These used to be early returns, which unmounted the whole tree — including
+   * the Lobby underneath — so opening a title page and coming back rebuilt the
+   * wall from scratch. Choosing one here instead lets the tab layer stay
+   * mounted below.
+   *
+   * Order is precedence: a swipe session outranks a profile, and the follow
+   * list is opened from a profile so it has to outrank one.
+   */
+  const overlay = swipeSession ? (
+    // A swipe session takes over the screen: navigating away mid-decision
+    // would leave the others waiting on a vote that never arrives.
+    <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
+  ) : editing ? (
+    <EditProfile onBack={() => setEditing(false)} />
+  ) : openFollows ? (
+    <FollowList
+      target={openFollows}
+      onBack={() => setOpenFollows(null)}
+      onOpenProfile={(id) => {
+        setOpenFollows(null)
+        setOpenProfile(id)
+      }}
+    />
+  ) : openProfile ? (
+    <Profile
+      userId={openProfile}
+      onBack={() => setOpenProfile(null)}
+      onOpenTitle={setOpenTitle}
+      onOpenFollows={setOpenFollows}
+    />
+  ) : findingPeople ? (
+    <People
+      onBack={() => setFindingPeople(false)}
+      onOpenProfile={(id) => {
+        setFindingPeople(false)
+        setOpenProfile(id)
+      }}
+    />
+  ) : openTitle ? (
+    <TitleDetail
+      title={openTitle}
+      onBack={() => setOpenTitle(null)}
+      onLog={(t) => {
+        setPrefill({ tmdbId: t.tmdbId, mediaType: t.mediaType })
+        setOpenTitle(null)
+        setView('log')
+      }}
+    />
+  ) : null
 
   return (
     <>
-      {/* The Lobby stays mounted and is merely hidden, so leaving the tab and
-          coming back does not throw away the wall and fetch a new one. It
-          refreshes when asked to, and not otherwise. Every other screen is
+      {/* The Lobby stays mounted for the whole session and is only hidden, so
+          neither switching tabs nor opening a title page throws the wall away.
+          It changes when asked to, and not otherwise. Every other screen is
           cheap to rebuild and unmounts normally. */}
-      <div hidden={view !== 'lobby'}>
+      <KeepAlive active={view === 'lobby' && !overlay}>
         <Screen>
           <Lobby onOpenTitle={setOpenTitle} />
         </Screen>
-      </div>
+      </KeepAlive>
 
-      <Screen>
-        {view === 'lists' && (
-          <Watchlists onStartSwipe={setSwipeSession} onOpenTitle={setOpenTitle} />
-        )}
-        {view === 'groups' && <Groups onJoinSwipe={setSwipeSession} />}
-        {view === 'me' && (
-          <Me
-            onOpenTitle={setOpenTitle}
-            onFindPeople={() => setFindingPeople(true)}
-            onOpenProfile={setOpenProfile}
-            onEditProfile={() => setEditing(true)}
-          />
-        )}
-        {view === 'log' && (
-          <LogViewing
-            prefill={prefill}
-            onOpenTitle={setOpenTitle}
-            onDone={() => {
-              setPrefill(null)
-              setView('lobby')
-            }}
-          />
-        )}
-      </Screen>
+      {overlay && <Screen>{overlay}</Screen>}
 
-      <BottomNav
-        current={view}
-        onNavigate={(next) => {
-          if (next !== 'log') setPrefill(null)
-          setView(next)
-        }}
-      />
-      <ThemeSwitcher />
+      {!overlay && (
+        <Screen>
+          {view === 'lists' && (
+            <Watchlists onStartSwipe={setSwipeSession} onOpenTitle={setOpenTitle} />
+          )}
+          {view === 'groups' && <Groups onJoinSwipe={setSwipeSession} />}
+          {view === 'me' && (
+            <Me
+              onOpenTitle={setOpenTitle}
+              onFindPeople={() => setFindingPeople(true)}
+              onOpenProfile={setOpenProfile}
+              onEditProfile={() => setEditing(true)}
+            />
+          )}
+          {view === 'log' && (
+            <LogViewing
+              prefill={prefill}
+              onOpenTitle={setOpenTitle}
+              onDone={() => {
+                setPrefill(null)
+                setView('lobby')
+              }}
+            />
+          )}
+        </Screen>
+      )}
+
+      {/* An overlay carries its own way back, so the tab bar would only offer
+          a second, more confusing one. */}
+      {!overlay && (
+        <BottomNav
+          current={view}
+          onNavigate={(next) => {
+            if (next !== 'log') setPrefill(null)
+            setView(next)
+          }}
+        />
+      )}
+      {!overlay && <ThemeSwitcher />}
     </>
   )
 }
