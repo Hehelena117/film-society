@@ -216,5 +216,23 @@
       "name": "Nat",
       "note": "Lyset er slukket"
     }
+  },
+  "edit": {
+    "title": "Rediger profil",
+    "open": "Rediger profil",
+    "changeAvatar": "Skift billede",
+    "avatarHint": "JPEG, PNG eller WebP, op til 2 MB.",
+    "bio": "Om dig",
+    "bioPlaceholder": "En linje eller to. Vises på din profil.",
+    "country": "Land",
+    "countryHint": "Bestemmer hvilke aldersgrænser og streamingtjenester du ser.",
+    "language": "Sprog",
+    "lang": {
+      "en": "English",
+      "da": "Dansk",
+      "es": "Español"
+    },
+    "save": "Gem",
+    "saved": "Gemt."
   }
 }

@@ -114,11 +114,23 @@ export function Profile({
       <main className="relative z-10 mx-auto max-w-lg px-6 py-8">
         {error && <p className="mb-5 text-[0.875rem] text-velvet-500">{error}</p>}
 
-        {profile.bio && (
-          <p className="mb-6 text-center text-[0.9375rem] leading-relaxed text-ink-2">
-            {profile.bio}
-          </p>
-        )}
+        <div className="mb-6 flex flex-col items-center">
+          <div className="size-24 overflow-hidden rounded-full border border-rule-strong bg-ground-2">
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="type-script flex h-full items-center justify-center text-3xl text-ink-3">
+                {profile.username[0]?.toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {profile.bio && (
+            <p className="mt-4 max-w-[38ch] text-center text-[0.9375rem] leading-relaxed text-ink-2">
+              {profile.bio}
+            </p>
+          )}
+        </div>
 
         <div className="rounded-[2px] border border-rule bg-ground-2 px-5 py-4">
           <dl className="flex justify-around text-center">

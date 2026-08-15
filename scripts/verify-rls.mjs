@@ -521,6 +521,37 @@ try {
   check('own history for a title', !ownErr && ownHistory?.length === 1, ownErr?.message)
   check('own history keeps the date', ownHistory?.[0]?.watched_on === '2026-08-01')
 
+  console.log('\n=== avatars ===')
+  // Smallest valid PNG. Content does not matter; the path rules do.
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  )
+  const blob = new Blob([png], { type: 'image/png' })
+
+  const { error: ownUploadErr } = await alice.client.storage
+    .from('avatars')
+    .upload(`${alice.id}/avatar.png`, blob, { upsert: true, contentType: 'image/png' })
+  check('upload an avatar to your own folder', !ownUploadErr, ownUploadErr?.message)
+
+  // The whole point of pinning the first folder to auth.uid().
+  const { error: hijackErr } = await alice.client.storage
+    .from('avatars')
+    .upload(`${bob.id}/avatar.png`, blob, { upsert: true, contentType: 'image/png' })
+  check("cannot write into someone else's folder", !!hijackErr, hijackErr?.message?.slice(0, 40))
+
+  const { data: pub } = alice.client.storage.from('avatars').getPublicUrl(`${alice.id}/avatar.png`)
+  const headRes = await fetch(pub.publicUrl)
+  check('avatars are publicly readable', headRes.ok, `${headRes.status}`)
+
+  const { error: avatarSaveErr } = await alice.client
+    .from('profiles')
+    .update({ avatar_url: pub.publicUrl })
+    .eq('id', alice.id)
+  check('avatar url saves to the profile', !avatarSaveErr, avatarSaveErr?.message)
+
+  await alice.client.storage.from('avatars').remove([`${alice.id}/avatar.png`])
+
   console.log('\n=== public profile ===')
   const { data: aliceSeenByDave } = await dave.client
     .from('profiles')

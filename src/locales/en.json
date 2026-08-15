@@ -47,6 +47,20 @@
     "find": "Find people",
     "myProfile": "My profile"
   },
+  "edit": {
+    "title": "Edit profile",
+    "open": "Edit profile",
+    "changeAvatar": "Change picture",
+    "avatarHint": "JPEG, PNG or WebP, up to 2 MB.",
+    "bio": "About you",
+    "bioPlaceholder": "A line or two. Shown on your profile.",
+    "country": "Country",
+    "countryHint": "Sets which age ratings and streaming services you see.",
+    "language": "Language",
+    "lang": { "en": "English", "da": "Dansk", "es": "Español" },
+    "save": "Save",
+    "saved": "Saved."
+  },
   "feed": {
     "title": "In this group",
     "empty": "Nothing yet. Rate something and it will show up here.",

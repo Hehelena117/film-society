@@ -208,7 +208,37 @@ export async function unfollow(userId: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * Uploads an avatar and returns its public URL.
+ *
+ * The path is `<user id>/avatar.<ext>` because storage policy pins the first
+ * folder to the uploader's id — that is what stops one person overwriting
+ * another's. Upsert on a fixed name so replacing an avatar does not leave the
+ * old file behind forever.
+ */
+export async function uploadAvatar(file: File): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Not signed in')
+
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const path = `${auth.user.id}/avatar.${ext}`
+
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, contentType: file.type })
+
+  if (error) throw error
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+
+  // Cache-bust: the path is stable, so browsers would keep showing the old one.
+  const url = `${data.publicUrl}?v=${Date.now()}`
+  await updateMyProfile({ avatar_url: url })
+  return url
+}
+
 export async function updateMyProfile(patch: {
+  avatar_url?: string | null
   bio?: string | null
   country?: string
   language?: string

@@ -66,14 +66,25 @@ export function People({
               <button
                 type="button"
                 onClick={() => onOpenProfile(p.id)}
-                className="w-full rounded-[2px] border border-rule bg-ground-2 px-4 py-3.5 text-left transition-colors hover:border-brass-600"
+                className="flex w-full items-center gap-3 rounded-[2px] border border-rule bg-ground-2 px-4 py-3 text-left transition-colors hover:border-brass-600"
               >
-                <span className="type-title block text-[1.0625rem] text-ink">{p.username}</span>
-                {p.bio && (
-                  <span className="mt-1 line-clamp-1 block text-[0.8125rem] text-ink-3">
-                    {p.bio}
-                  </span>
-                )}
+                <span className="size-10 shrink-0 overflow-hidden rounded-full border border-rule bg-ground">
+                  {p.avatarUrl ? (
+                    <img src={p.avatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="type-script flex h-full items-center justify-center text-ink-3">
+                      {p.username[0]?.toUpperCase()}
+                    </span>
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="type-title block text-[1.0625rem] text-ink">{p.username}</span>
+                  {p.bio && (
+                    <span className="mt-0.5 line-clamp-1 block text-[0.8125rem] text-ink-3">
+                      {p.bio}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           ))}

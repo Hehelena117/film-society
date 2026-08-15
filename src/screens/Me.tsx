@@ -12,10 +12,12 @@ export function Me({
   onOpenTitle,
   onFindPeople,
   onOpenProfile,
+  onEditProfile,
 }: {
   onOpenTitle: (ref: TitleRef) => void
   onFindPeople: () => void
   onOpenProfile: (userId: string) => void
+  onEditProfile: () => void
 }) {
   const { t, i18n } = useTranslation()
   const { profile, signOut, user } = useAuth()
@@ -76,18 +78,25 @@ export function Me({
           </dl>
         </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => user && onOpenProfile(user.id)}
-            className="type-marquee flex-1 rounded-[2px] border border-rule-strong py-3 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+            className="type-marquee rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
           >
             {t('people.myProfile')}
           </button>
           <button
             type="button"
+            onClick={onEditProfile}
+            className="type-marquee rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            {t('edit.open')}
+          </button>
+          <button
+            type="button"
             onClick={onFindPeople}
-            className="type-marquee flex-1 rounded-[2px] border border-rule-strong py-3 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+            className="type-marquee rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
           >
             {t('people.find')}
           </button>

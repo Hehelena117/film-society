@@ -34,6 +34,9 @@ const Profile = lazy(() => import('@/screens/Profile').then((m) => ({ default: m
 const FollowList = lazy(() =>
   import('@/screens/FollowList').then((m) => ({ default: m.FollowList })),
 )
+const EditProfile = lazy(() =>
+  import('@/screens/EditProfile').then((m) => ({ default: m.EditProfile })),
+)
 
 export default function App() {
   return (
@@ -51,6 +54,7 @@ function Gate() {
   const [openProfile, setOpenProfile] = useState<string | null>(null)
   const [openFollows, setOpenFollows] = useState<FollowListTarget | null>(null)
   const [findingPeople, setFindingPeople] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [prefill, setPrefill] = useState<TitleRef | null>(null)
   // Remounts the Lobby after a save, so a newly logged film feeds the
   // recommender straight away rather than on next reload.
@@ -71,6 +75,14 @@ function Gate() {
     return (
       <Screen>
         <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
+      </Screen>
+    )
+  }
+
+  if (editing) {
+    return (
+      <Screen>
+        <EditProfile onBack={() => setEditing(false)} />
       </Screen>
     )
   }
@@ -148,6 +160,7 @@ function Gate() {
             onOpenTitle={setOpenTitle}
             onFindPeople={() => setFindingPeople(true)}
             onOpenProfile={setOpenProfile}
+            onEditProfile={() => setEditing(true)}
           />
         )}
         {view === 'log' && (

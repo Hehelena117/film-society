@@ -216,5 +216,23 @@
       "name": "Noche",
       "note": "Luces apagadas"
     }
+  },
+  "edit": {
+    "title": "Editar perfil",
+    "open": "Editar perfil",
+    "changeAvatar": "Cambiar foto",
+    "avatarHint": "JPEG, PNG o WebP, hasta 2 MB.",
+    "bio": "Sobre ti",
+    "bioPlaceholder": "Una línea o dos. Aparece en tu perfil.",
+    "country": "País",
+    "countryHint": "Determina qué clasificaciones y servicios de streaming ves.",
+    "language": "Idioma",
+    "lang": {
+      "en": "English",
+      "da": "Dansk",
+      "es": "Español"
+    },
+    "save": "Guardar",
+    "saved": "Guardado."
   }
 }
