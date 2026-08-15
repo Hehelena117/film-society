@@ -141,7 +141,9 @@
     "newNamed": "Navn på ny liste",
     "alsoPeople": "Eller del med én person",
     "sharedWith": "Delt med",
-    "aGroup": "En gruppe"
+    "aGroup": "En gruppe",
+    "details": "Detaljer",
+    "showing": "Viser {{shown}} af {{total}}"
   },
   "groups": {
     "title": "Grupper",

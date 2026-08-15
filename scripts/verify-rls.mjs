@@ -471,6 +471,39 @@ try {
     .insert({ group_id: groupId, kind: 'rated', title_id: cat.id, rating: 1 })
   check('outsiders cannot post to a group feed', !!daveePostErr, daveePostErr?.code)
 
+  console.log('\n=== watchlist browsing data ===')
+  // A list now shows genres and streaming services inline, so it must read
+  // both in the shape the screen uses.
+  const { data: browseRows, error: browseErr } = await alice.client
+    .from('watchlist_items')
+    .select(
+      'title:titles!inner(id, tmdb_id, media_type, year, poster_path, runtime_minutes, genres)',
+    )
+    .eq('watchlist_id', wl.id)
+  check('list items carry genres and runtime', !browseErr, browseErr?.message)
+  check(
+    'genres are populated',
+    (browseRows ?? []).some((r) => (r.title.genres ?? []).length > 0),
+    (browseRows ?? []).flatMap((r) => r.title.genres ?? []).join(', '),
+  )
+
+  // One query for the whole list, not one per title.
+  const { data: listProvs, error: provErr } = await alice.client
+    .from('title_providers')
+    .select('title_id, provider_name')
+    .in(
+      'title_id',
+      (browseRows ?? []).map((r) => r.title.id),
+    )
+    .eq('country', 'DK')
+    .eq('offer_type', 'flatrate')
+  check('streaming services readable for a whole list', !provErr, provErr?.message)
+  check(
+    'at least one service came back',
+    (listProvs ?? []).length > 0,
+    [...new Set((listProvs ?? []).map((p) => p.provider_name))].join(', '),
+  )
+
   console.log('\n=== swipe deck filters ===')
   // Filter options must come from the titles actually on the list, or the
   // controls would offer a genre that empties the deck.

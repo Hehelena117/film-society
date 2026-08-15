@@ -159,7 +159,9 @@
     "newNamed": "New list name",
     "alsoPeople": "Or share with one person",
     "sharedWith": "Shared with",
-    "aGroup": "A group"
+    "aGroup": "A group",
+    "details": "Details",
+    "showing": "Showing {{shown}} of {{total}}"
   },
   "groups": {
     "title": "Groups",

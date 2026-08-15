@@ -141,7 +141,9 @@
     "newNamed": "Nombre de la nueva lista",
     "alsoPeople": "O comparte con una persona",
     "sharedWith": "Compartida con",
-    "aGroup": "Un grupo"
+    "aGroup": "Un grupo",
+    "details": "Detalles",
+    "showing": "Mostrando {{shown}} de {{total}}"
   },
   "groups": {
     "title": "Grupos",

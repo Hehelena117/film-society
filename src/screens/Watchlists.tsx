@@ -307,6 +307,21 @@ function WatchlistDetail({
   const activeFilterCount =
     pickedGenres.length + pickedServices.length + (maxMinutes ? 1 : 0)
 
+  /**
+   * The same picks that narrow a swipe deck also narrow what is on screen, so
+   * choosing a filter shows you what you are about to decide between rather
+   * than sending you in blind.
+   */
+  const visible = items.filter((item) => {
+    if (pickedGenres.length && !item.genres.some((g) => pickedGenres.includes(g))) return false
+    if (pickedServices.length && !item.services.some((s) => pickedServices.includes(s))) return false
+    // Series have no runtime, so a length filter cannot judge them — keep them.
+    if (maxMinutes && item.runtimeMinutes !== null && item.runtimeMinutes > Number(maxMinutes)) {
+      return false
+    }
+    return true
+  })
+
   async function changeGroup(next: string) {
     setGroupId(next)
     setError(null)
@@ -346,7 +361,7 @@ function WatchlistDetail({
     setLoading(true)
     try {
       const [i, m, o] = await Promise.all([
-        getWatchlistItems(list.id, language),
+        getWatchlistItems(list.id, language, country),
         getWatchlistMembers(list.id),
         getFilterOptions(list.id, country),
       ])
@@ -492,35 +507,98 @@ function WatchlistDetail({
             </p>
           ))}
 
+        {/* ---- Browse filters ---------------------------------------------
+            Not a separate control from the swipe filters on purpose: choosing
+            one narrows what is on screen as well as what a session would
+            offer, so you can see what you are about to decide between. */}
+        {!loading && items.length > 0 && (options.genres.length > 0 || options.services.length > 0) && (
+          <div className="mb-5">
+            <div className="flex flex-wrap gap-2">
+              {options.genres.map((g) => (
+                <Chip
+                  key={`g-${g}`}
+                  label={g}
+                  on={pickedGenres.includes(g)}
+                  onClick={() => setPickedGenres((p) => toggle(p, g))}
+                />
+              ))}
+              {options.services.map((s) => (
+                <Chip
+                  key={`s-${s}`}
+                  label={s}
+                  on={pickedServices.includes(s)}
+                  onClick={() => setPickedServices((p) => toggle(p, s))}
+                />
+              ))}
+            </div>
+
+            {activeFilterCount > 0 && (
+              <p className="type-meta mt-3 text-ink-3">
+                {t('lists.showing', { shown: visible.length, total: items.length })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPickedGenres([])
+                    setPickedServices([])
+                    setMaxMinutes('')
+                  }}
+                  className="ml-3 underline underline-offset-4 hover:text-velvet-500"
+                >
+                  {t('swipe.clearFilters')}
+                </button>
+              </p>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <p className="type-meta text-center text-ink-3/70">{t('lists.loading')}</p>
         ) : items.length === 0 ? (
           <p className="mt-8 text-center text-[0.875rem] leading-relaxed text-ink-3">
             {t('lists.emptyList')}
           </p>
+        ) : visible.length === 0 ? (
+          <p className="mt-8 text-center text-[0.875rem] leading-relaxed text-ink-3">
+            {t('swipe.noMatches')}
+          </p>
         ) : (
           <ul className="grid grid-cols-3 gap-3">
-            {items.map((item) => (
-              <li key={item.titleId} className="group">
+            {visible.map((item) => (
+              <li key={item.titleId}>
+                {/* The poster opened the title page before, but nothing said
+                    so, so nobody found the trailer, cast or streaming behind
+                    it. The label is the fix. */}
                 <button
                   type="button"
                   onClick={() => onOpenTitle({ tmdbId: item.tmdbId, mediaType: item.mediaType })}
-                  className="block w-full overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift"
+                  className="group block w-full text-left"
                 >
-                  <div className="aspect-2/3 overflow-hidden bg-pitch">
-                    {item.posterUrl && (
-                      <img
-                        src={item.posterUrl}
-                        alt={item.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    )}
+                  <div className="relative overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift">
+                    <div className="aspect-2/3 overflow-hidden bg-pitch">
+                      {item.posterUrl && (
+                        <img
+                          src={item.posterUrl}
+                          alt={item.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <span className="type-meta absolute inset-x-1 bottom-1 bg-pitch/75 py-1 text-center text-[9px] text-plate">
+                      {t('lists.details')}
+                    </span>
                   </div>
+                  <p className="mt-1.5 line-clamp-2 text-[0.75rem] leading-tight text-ink group-hover:text-accent">
+                    {item.name}
+                  </p>
                 </button>
-                <p className="mt-1.5 line-clamp-2 text-[0.75rem] leading-tight text-ink">
-                  {item.name}
-                </p>
+
+                {item.services.length > 0 && (
+                  <p className="type-meta mt-1 line-clamp-1 text-[9px] text-ink-3">
+                    {item.services.join(' · ')}
+                  </p>
+                )}
+
                 <button
                   type="button"
                   onClick={() => void remove(item.titleId)}

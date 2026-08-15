@@ -18,6 +18,10 @@ export interface WatchlistItem {
   year: number | null
   posterUrl: string | null
   addedBy: string | null
+  runtimeMinutes: number | null
+  genres: string[]
+  /** Subscription services carrying it in the viewer's country. */
+  services: string[]
 }
 
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w342'
@@ -131,11 +135,12 @@ export async function removeWatchlistMember(watchlistId: string, userId: string)
 export async function getWatchlistItems(
   watchlistId: string,
   language: string,
+  country = 'DK',
 ): Promise<WatchlistItem[]> {
   const { data, error } = await supabase
     .from('watchlist_items')
     .select(
-      'added_by, title:titles!inner(id, tmdb_id, media_type, year, poster_path, ' +
+      'added_by, title:titles!inner(id, tmdb_id, media_type, year, poster_path, runtime_minutes, genres, ' +
         'translations:title_translations(name, language))',
     )
     .eq('watchlist_id', watchlistId)
@@ -143,7 +148,28 @@ export async function getWatchlistItems(
 
   if (error) throw error
 
-  return ((data ?? []) as Array<Record<string, any>>).map((row) => {
+  const rows = (data ?? []) as Array<Record<string, any>>
+  const titleIds = rows.map((r) => r.title.id)
+
+  // One query for the whole list rather than one per title — a list of thirty
+  // would otherwise be thirty round trips to render a filter bar.
+  const services = new Map<number, string[]>()
+  if (titleIds.length) {
+    const { data: provs } = await supabase
+      .from('title_providers')
+      .select('title_id, provider_name')
+      .in('title_id', titleIds)
+      .eq('country', country)
+      .eq('offer_type', 'flatrate')
+
+    for (const p of (provs ?? []) as Array<Record<string, any>>) {
+      const list = services.get(p.title_id) ?? []
+      if (!list.includes(p.provider_name)) list.push(p.provider_name)
+      services.set(p.title_id, list)
+    }
+  }
+
+  return rows.map((row) => {
     const translations = row.title?.translations ?? []
     const name =
       translations.find((t: Record<string, unknown>) => t.language === language)?.name ??
@@ -158,6 +184,9 @@ export async function getWatchlistItems(
       year: row.title.year,
       posterUrl: row.title.poster_path ? `${POSTER_BASE}${row.title.poster_path}` : null,
       addedBy: row.added_by,
+      runtimeMinutes: row.title.runtime_minutes,
+      genres: row.title.genres ?? [],
+      services: services.get(row.title.id) ?? [],
     }
   })
 }
