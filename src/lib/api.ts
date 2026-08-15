@@ -119,36 +119,54 @@ export async function catalogTitle(
   return data
 }
 
+export interface LogSnapshot {
+  /** Every scored title, high and low. Low scores are signal too. */
+  ratings: RatingSeed[]
+  /** Everything logged at all, scored or not — never recommend these back. */
+  loggedNames: string[]
+}
+
 /**
- * The user's own highly-rated titles, for seeding the recommender.
+ * The user's own log, for seeding the recommender.
  *
- * Only name, year and score are read — and only these ever reach the model.
+ * Reads every entry, not just the well-liked ones. Sending only scores of 7+
+ * meant rating something 5 changed the input not at all, so the wall came back
+ * identical and looked broken. A low score is information — it says what to
+ * steer away from — and it also guarantees the input differs after every
+ * rating, which is what makes the refresh visible.
+ *
+ * Only name, year and score are read, and only these ever reach the model.
  * See docs/DECISIONS.md, "AI firewall".
  */
-export async function getRatingSeeds(language: SupportedLanguage): Promise<RatingSeed[]> {
+export async function getLogSnapshot(language: SupportedLanguage): Promise<LogSnapshot> {
   const { data, error } = await supabase
     .from('log_entries')
     .select('rating, title:titles!inner(year, translations:title_translations(name, language))')
-    .not('rating', 'is', null)
-    .order('rating', { ascending: false })
-    .limit(60)
+    .order('created_at', { ascending: false })
+    .limit(200)
 
   if (error) {
-    console.error('Could not read ratings', error)
-    return []
+    console.error('Could not read log', error)
+    return { ratings: [], loggedNames: [] }
   }
 
-  const seeds: RatingSeed[] = []
+  const ratings: RatingSeed[] = []
+  const loggedNames = new Set<string>()
+
   for (const row of (data ?? []) as Array<Record<string, any>>) {
     const translations = row.title?.translations ?? []
     const name =
       translations.find((t: Record<string, unknown>) => t.language === language)?.name ??
       translations[0]?.name
-    if (name && row.title?.year && row.rating) {
-      seeds.push({ name, year: row.title.year, score: row.rating })
+    if (!name) continue
+
+    loggedNames.add(name)
+    if (row.rating !== null && row.title?.year) {
+      ratings.push({ name, year: row.title.year, score: row.rating })
     }
   }
-  return seeds
+
+  return { ratings, loggedNames: [...loggedNames] }
 }
 
 export async function getRecommendations(opts: {

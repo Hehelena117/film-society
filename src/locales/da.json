@@ -10,7 +10,8 @@
     "loading": "Sætter filmen op…",
     "endOfReel": "Det var rullen for nu",
     "because": "Fordi du gav",
-    "retry": "Prøv igen"
+    "retry": "Prøv igen",
+    "reshuffle": "Vis mig noget andet"
   },
   "title": {
     "runtime": "{{minutes}} min",

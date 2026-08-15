@@ -101,6 +101,15 @@ async function askModel(
     .map((r) => `${r.name} (${r.year}) — rated ${r.score}/10`)
     .join('\n')
 
+  // What they disliked is as useful as what they liked, and it is the reason a
+  // low rating now visibly changes the wall.
+  const disliked = body.ratings
+    .filter((r) => r.score <= 4)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 20)
+    .map((r) => `${r.name} (${r.year}) — rated ${r.score}/10`)
+    .join('\n')
+
   const filters = [
     body.filters.genres?.length ? `Genres: ${body.filters.genres.join(', ')}` : null,
     body.filters.services?.length ? `Available on: ${body.filters.services.join(', ')}` : null,
@@ -111,10 +120,14 @@ async function askModel(
   const prompt = [
     `A user rated these films and series highly:`,
     liked || '(no ratings yet — suggest widely admired films)',
+    disliked ? `\nThey did NOT enjoy these — steer away from what they share:\n${disliked}` : '',
     filters ? `\nThey want:\n${filters}` : '',
-    body.excludeNames.length ? `\nDo not suggest: ${body.excludeNames.join(', ')}` : '',
-    `\nSuggest ${count} titles they have not listed. For each, give a one-sentence`,
-    `reason that refers to their actual ratings where possible.`,
+    body.excludeNames.length
+      ? `\nAlready seen or already suggested — do not offer any of these:\n${body.excludeNames.slice(0, 200).join(', ')}`
+      : '',
+    `\nSuggest ${count} titles that appear nowhere above. Vary era, country and`,
+    `register rather than offering the most obvious canon every time.`,
+    `For each, give a one-sentence reason referring to their actual ratings.`,
     `Reply as JSON only: {"suggestions":[{"name":"","year":0,"reason":""}]}`,
   ].join('\n')
 
@@ -129,6 +142,9 @@ async function askModel(
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       max_tokens: 1500,
+      // Loosened deliberately. At a low temperature the same log produced the
+      // same wall every time, which read as a broken refresh.
+      temperature: 0.9,
     }),
   })
 
@@ -174,6 +190,23 @@ async function resolveOnTmdb(name: string, year: number, locale: string) {
     candidates.find((r: Record<string, unknown>) => yearOf(r) === year) ??
     candidates.find((r: Record<string, unknown>) => Math.abs(yearOf(r) - year) <= 1) ??
     candidates[0]
+
+  // A loose year match plus a warm temperature occasionally produces a title
+  // that does not exist, and falling back to TMDB's first result then shows a
+  // completely unrelated film with a confident reason attached. Better to
+  // return fewer honest suggestions than a confident wrong one.
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, '')
+      .trim()
+
+  const asked = norm(name)
+  const got = norm(String(hit.title ?? hit.name ?? ''))
+  const closeEnough =
+    got.includes(asked) || asked.includes(got) || Math.abs(yearOf(hit) - year) <= 1
+
+  if (!closeEnough) return null
 
   return {
     tmdbId: hit.id,

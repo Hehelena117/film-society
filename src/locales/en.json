@@ -10,7 +10,8 @@
     "loading": "Threading the projector…",
     "endOfReel": "That's the reel for now",
     "because": "Because you rated",
-    "retry": "Try again"
+    "retry": "Try again",
+    "reshuffle": "Show me something else"
   },
   "title": {
     "runtime": "{{minutes}} min",
@@ -57,7 +58,11 @@
     "country": "Country",
     "countryHint": "Sets which age ratings and streaming services you see.",
     "language": "Language",
-    "lang": { "en": "English", "da": "Dansk", "es": "Español" },
+    "lang": {
+      "en": "English",
+      "da": "Dansk",
+      "es": "Español"
+    },
     "save": "Save",
     "saved": "Saved."
   },

@@ -10,7 +10,8 @@
     "loading": "Cargando el proyector…",
     "endOfReel": "Fin del rollo por ahora",
     "because": "Porque valoraste",
-    "retry": "Inténtalo de nuevo"
+    "retry": "Inténtalo de nuevo",
+    "reshuffle": "Muéstrame otra cosa"
   },
   "title": {
     "runtime": "{{minutes}} min",

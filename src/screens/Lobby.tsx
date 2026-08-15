@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 
 import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
-import { getRatingSeeds, getRecommendations, type RatingSeed } from '@/lib/api'
+import { getLogSnapshot, getRecommendations, type LogSnapshot } from '@/lib/api'
+import { forgetShown, getShown, rememberShown } from '@/lib/shown'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
@@ -30,9 +31,11 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
 
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const busyRef = useRef(false)
-  // Titles already shown, so each page asks the model for something new.
-  const seenRef = useRef<string[]>([])
-  const seedsRef = useRef<RatingSeed[] | null>(null)
+  // Seeded from localStorage, so a new visit does not re-offer last visit's
+  // wall. Everything already logged goes in too — being recommended a film you
+  // have already rated is the clearest possible sign of not being listened to.
+  const seenRef = useRef<string[]>(getShown())
+  const snapshotRef = useRef<LogSnapshot | null>(null)
 
   const language = (i18n.resolvedLanguage ?? 'en') as SupportedLanguage
 
@@ -43,13 +46,14 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
     setError(null)
 
     try {
-      // Read the user's own ratings once — they do not change mid-scroll.
-      if (seedsRef.current === null) {
-        seedsRef.current = await getRatingSeeds(language)
+      // Read the log once — it does not change mid-scroll.
+      if (snapshotRef.current === null) {
+        snapshotRef.current = await getLogSnapshot(language)
+        seenRef.current = [...new Set([...seenRef.current, ...snapshotRef.current.loggedNames])]
       }
 
       const batch = await getRecommendations({
-        ratings: seedsRef.current,
+        ratings: snapshotRef.current.ratings,
         excludeNames: seenRef.current,
         filters: {},
         language,
@@ -61,7 +65,9 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
         return
       }
 
-      seenRef.current = [...seenRef.current, ...batch.map((b) => b.title.name)]
+      const names = batch.map((b) => b.title.name)
+      seenRef.current = [...seenRef.current, ...names]
+      rememberShown(names)
 
       setRecs((current) => [
         ...current,
@@ -126,6 +132,24 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
         </div>
 
         <p className="type-script mt-5 text-[1.65rem] text-band-ink">{t('lobby.subtitle')}</p>
+
+        <button
+          type="button"
+          onClick={() => {
+            // A deliberate reshuffle: drop the memory of what has been offered
+            // so far, otherwise "show me something else" gets narrower rather
+            // than fresher once the history is long.
+            forgetShown()
+            seenRef.current = snapshotRef.current?.loggedNames ?? []
+            setRecs([])
+            setExhausted(false)
+            void loadMore()
+          }}
+          disabled={loading}
+          className="type-meta mt-4 rounded-full border border-band-ink/30 px-4 py-2 text-band-ink/80 transition-colors hover:border-band-ink/60 hover:text-band-ink disabled:opacity-50"
+        >
+          {t('lobby.reshuffle')}
+        </button>
 
         {profile && (
           <p className="type-meta mt-4 text-band-ink/70">
