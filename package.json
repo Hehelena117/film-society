@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "verify:rls": "node scripts/verify-rls.mjs",
+    "verify:lobby": "node scripts/verify-lobby.mjs",
     "build:native": "cross-env CAPACITOR=1 npm run build",
     "sync:native": "npm run build:native && cap sync"
   },
@@ -31,6 +32,7 @@
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
     "cross-env": "^10.1.0",
+    "playwright": "^1.62.1",
     "supabase": "^2.114.0",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3",

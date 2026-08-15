@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
 import { getLogSnapshot, getRecommendations, type LogSnapshot } from '@/lib/api'
-import { forgetShown, getShown, rememberShown } from '@/lib/shown'
+import { getShown, rememberShown } from '@/lib/shown'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
@@ -66,7 +66,10 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
       }
 
       const names = batch.map((b) => b.title.name)
-      seenRef.current = [...seenRef.current, ...names]
+      // Capped so the prompt cannot grow without bound over a long session.
+      // Oldest out, so the wall eventually comes back round to things rather
+      // than exhausting itself.
+      seenRef.current = [...new Set([...seenRef.current, ...names])].slice(-150)
       rememberShown(names)
 
       setRecs((current) => [
@@ -136,14 +139,14 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
         <button
           type="button"
           onClick={() => {
-            // A deliberate reshuffle: drop the memory of what has been offered
-            // so far, otherwise "show me something else" gets narrower rather
-            // than fresher once the history is long.
-            forgetShown()
-            // Also re-read the log, since this is now the only moment the wall
-            // changes — anything rated since it was built must count.
+            // Keep everything already offered in the exclusion list. Clearing
+            // it — which is what this used to do — sends the model an
+            // identical prompt and gets the identical wall back, which is the
+            // one thing this button must not do.
+            //
+            // Re-read the log though, so anything rated since the wall was
+            // built counts: this is now the only moment it changes.
             snapshotRef.current = null
-            seenRef.current = []
             setRecs([])
             setExhausted(false)
             void loadMore()
