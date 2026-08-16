@@ -9,6 +9,7 @@
     "nowShowing": "En cartelera",
     "loading": "Cargando el proyector…",
     "endOfReel": "Fin del rollo por ahora",
+    "noneCame": "Esta vez no volvió nada. Puede que al proyeccionista solo le haga falta otro intento.",
     "because": "Porque valoraste",
     "retry": "Inténtalo de nuevo",
     "reshuffle": "Muéstrame otra cosa"
@@ -22,7 +23,12 @@
   "actions": {
     "addToWatchlist": "Añadir a la lista",
     "rate": "Puntuar",
-    "notInterested": "No es para mí"
+    "notInterested": "No es para mí",
+    "moreLikeThis": "Más como esta",
+    "moreLikeThisOn": "Más como esta ✓",
+    "notForMe": "No es para mí",
+    "notForMeOn": "No es para mí ✓",
+    "wontShowAgain": "No se volverá a recomendar"
   },
   "nav": {
     "label": "Navegación principal",

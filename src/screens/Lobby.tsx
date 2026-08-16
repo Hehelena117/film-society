@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
 import { getLogSnapshot, getRecommendations, type LogSnapshot } from '@/lib/api'
+import { getMyFeedback, setFeedback, type FeedbackEntry, type Verdict } from '@/lib/feedback'
 import { getShown, rememberShown } from '@/lib/shown'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
@@ -28,6 +29,8 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
   const [error, setError] = useState<string | null>(null)
   const [exhausted, setExhausted] = useState(false)
   const [adding, setAdding] = useState<AddTarget | null>(null)
+  // Keyed by `${mediaType}-${tmdbId}`, matching Recommendation.title.id.
+  const [verdicts, setVerdicts] = useState<Record<string, Verdict>>({})
 
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const busyRef = useRef(false)
@@ -36,6 +39,12 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
   // have already rated is the clearest possible sign of not being listened to.
   const seenRef = useRef<string[]>(getShown())
   const snapshotRef = useRef<LogSnapshot | null>(null)
+  // Read once and kept current locally. A verdict must survive a reload — "never
+  // show me this again" that forgets by tomorrow is worse than no button at all.
+  const feedbackRef = useRef<FeedbackEntry[]>([])
+  // How many posters are actually up. Mirrors recs.length so loadMore can read
+  // it without taking recs as a dependency and rebuilding itself on every page.
+  const countRef = useRef(0)
 
   const language = (i18n.resolvedLanguage ?? 'en') as SupportedLanguage
   // Off unless the profile explicitly says otherwise — including while the
@@ -53,19 +62,45 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
       if (snapshotRef.current === null) {
         snapshotRef.current = await getLogSnapshot(language, useNotes)
         seenRef.current = [...new Set([...seenRef.current, ...snapshotRef.current.loggedNames])]
+        feedbackRef.current = await getMyFeedback()
+        setVerdicts(
+          Object.fromEntries(
+            feedbackRef.current.map((f) => [`${f.mediaType}-${f.tmdbId}`, f.verdict]),
+          ),
+        )
       }
+
+      const rejected = feedbackRef.current.filter((f) => f.verdict === 'less')
 
       const batch = await getRecommendations({
         ratings: snapshotRef.current.ratings,
         notes: snapshotRef.current.notes,
-        excludeNames: seenRef.current,
+        feedback: {
+          more: feedbackRef.current
+            .filter((f) => f.verdict === 'more')
+            .map((f) => ({ name: f.name, year: f.year })),
+          less: rejected.map((f) => ({ name: f.name, year: f.year })),
+        },
+        // Belt and braces. The prompt is told not to offer these, but a model
+        // is not a filter — the exclusion list is what actually guarantees a
+        // turned-down title cannot come back.
+        // Turned-down titles go first: the function trims this list at 200, and
+        // these are the ones that must never be dropped from it.
+        excludeNames: [...new Set([...rejected.map((f) => f.name), ...seenRef.current])],
         filters: {},
         language,
         count: PAGE_SIZE,
       })
 
       if (!batch.length) {
-        setExhausted(true)
+        // An empty batch usually means the wall is genuinely out of ideas. A
+        // single failed model call looks exactly the same from here though, and
+        // when that happens on the first page the result is an empty wall
+        // announcing you have seen everything — which is both wrong and a dead
+        // end. With nothing up yet, offer the retry instead. Observed happening
+        // for real while testing, not a hypothetical.
+        if (countRef.current === 0) setError(t('lobby.noneCame'))
+        else setExhausted(true)
         return
       }
 
@@ -75,6 +110,7 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
       // than exhausting itself.
       seenRef.current = [...new Set([...seenRef.current, ...names])].slice(-150)
       rememberShown(names)
+      countRef.current += batch.length
 
       setRecs((current) => [
         ...current,
@@ -104,7 +140,57 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
     // Turning notes on mid-session does not rebuild the wall by itself — the
     // snapshot is already taken and the wall changes only when asked. Pressing
     // "show me something else" nulls the snapshot and picks the notes up.
-  }, [language, exhausted, useNotes])
+  }, [language, exhausted, useNotes, t])
+
+  /**
+   * Records a verdict.
+   *
+   * The button reflects the press immediately and the write follows, because a
+   * button that waits on a round trip before moving feels broken on a phone.
+   * If the write fails the button goes back to where it was — better a control
+   * that visibly refuses than one that lies.
+   */
+  const judge = useCallback(
+    async (rec: Recommendation, next: Verdict | null) => {
+      const { title } = rec
+      if (!title.tmdbId) return
+      const key = `${title.mediaType}-${title.tmdbId}`
+      const previous = verdicts[key] ?? null
+
+      setVerdicts((current) => {
+        const copy = { ...current }
+        if (next === null) delete copy[key]
+        else copy[key] = next
+        return copy
+      })
+
+      const entry = {
+        tmdbId: title.tmdbId,
+        mediaType: title.mediaType,
+        name: title.name,
+        year: title.year ?? null,
+      }
+      feedbackRef.current = [
+        ...feedbackRef.current.filter(
+          (f) => !(f.tmdbId === title.tmdbId && f.mediaType === title.mediaType),
+        ),
+        ...(next ? [{ ...entry, verdict: next }] : []),
+      ]
+
+      try {
+        await setFeedback(entry, next)
+      } catch (err) {
+        setVerdicts((current) => {
+          const copy = { ...current }
+          if (previous === null) delete copy[key]
+          else copy[key] = previous
+          return copy
+        })
+        setError(errorMessage(err))
+      }
+    },
+    [verdicts],
+  )
 
   // First page.
   useEffect(() => {
@@ -154,6 +240,7 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
             // Re-read the log though, so anything rated since the wall was
             // built counts: this is now the only moment it changes.
             snapshotRef.current = null
+            countRef.current = 0
             setRecs([])
             setExhausted(false)
             void loadMore()
@@ -209,6 +296,10 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
                         mediaType: rec.title.mediaType,
                       })
                   : undefined
+              }
+              verdict={verdicts[rec.title.id] ?? null}
+              onVerdict={
+                rec.title.tmdbId ? (next) => void judge(rec, next) : undefined
               }
             />
           ))}

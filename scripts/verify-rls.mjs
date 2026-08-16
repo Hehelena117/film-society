@@ -554,6 +554,56 @@ try {
   check('own history for a title', !ownErr && ownHistory?.length === 1, ownErr?.message)
   check('own history keeps the date', ownHistory?.[0]?.watched_on === '2026-08-01')
 
+  console.log('\n=== recommendation feedback ===')
+  // A private instruction to the recommender, about films the user has usually
+  // not even seen. Nobody else has any business reading it.
+  const verdict = {
+    user_id: alice.id,
+    tmdb_id: 999999,
+    media_type: 'movie',
+    name: 'A Film Alice Turned Down',
+    year: 1975,
+    verdict: 'less',
+  }
+  const { error: fbErr } = await alice.client
+    .from('recommendation_feedback')
+    .upsert(verdict, { onConflict: 'user_id,tmdb_id,media_type' })
+  check('record a verdict', !fbErr, fbErr?.message)
+
+  // PostgREST does not fire column DEFAULTs on the upsert path — the trap that
+  // once broke watchlists. user_id is passed explicitly for exactly that
+  // reason, so check it actually landed.
+  const { data: mine } = await alice.client
+    .from('recommendation_feedback')
+    .select('user_id, verdict')
+    .eq('tmdb_id', 999999)
+  check('the verdict has an owner', mine?.[0]?.user_id === alice.id, `${mine?.[0]?.user_id}`)
+
+  const { data: peek } = await bob.client
+    .from('recommendation_feedback')
+    .select('name')
+    .eq('tmdb_id', 999999)
+  check('nobody else can read it', (peek ?? []).length === 0, `${peek?.length ?? 0} row(s)`)
+
+  const { error: forgeErr } = await bob.client
+    .from('recommendation_feedback')
+    .insert({ ...verdict, tmdb_id: 999998 })
+  check('cannot record a verdict for someone else', !!forgeErr, forgeErr?.message?.slice(0, 45))
+
+  // Changing your mind replaces the verdict rather than stacking a second one.
+  await alice.client
+    .from('recommendation_feedback')
+    .upsert({ ...verdict, verdict: 'more' }, { onConflict: 'user_id,tmdb_id,media_type' })
+  const { data: changed } = await alice.client
+    .from('recommendation_feedback')
+    .select('verdict')
+    .eq('tmdb_id', 999999)
+  check(
+    'changing your mind replaces it',
+    changed?.length === 1 && changed[0].verdict === 'more',
+    `${changed?.length} row(s), ${changed?.[0]?.verdict}`,
+  )
+
   console.log('\n=== avatars ===')
   // Smallest valid PNG. Content does not matter; the path rules do.
   const png = Buffer.from(

@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+
+import type { Verdict } from '@/lib/feedback'
 import type { Recommendation } from '@/types'
 
 /** Deterministic hue per title, so each fallback poster reads as its own artwork. */
@@ -20,14 +22,24 @@ export function PosterFrame({
   rec,
   onAddToList,
   onOpen,
+  verdict,
+  onVerdict,
 }: {
   rec: Recommendation
   onAddToList?: () => void
   onOpen?: () => void
+  /** The standing verdict for this title, if any. */
+  verdict?: Verdict | null
+  /** Pressing the button already showing wants clears it — nothing is one-way. */
+  onVerdict?: (next: Verdict | null) => void
 }) {
   const { t } = useTranslation()
   const { title } = rec
   const hue = hueFor(title.name)
+  // Turned down, but still on the wall until it is next rebuilt. Vanishing on
+  // the tap would be a refresh the user did not ask for, and would leave no way
+  // back from a mistap.
+  const rejected = verdict === 'less'
 
   const meta = [
     title.mediaType === 'tv' && title.seasons
@@ -38,7 +50,11 @@ export function PosterFrame({
   ].filter(Boolean)
 
   return (
-    <article className="mx-auto w-full max-w-[22rem]">
+    <article
+      className={`mx-auto w-full max-w-[22rem] transition-opacity duration-500 ${
+        rejected ? 'opacity-40' : ''
+      }`}
+    >
       {/* ---- The lit frame ------------------------------------------------ */}
       <div className="relative rounded-[3px] bg-frame p-2 shadow-frame">
         {/* Bulb perimeter. Each side is offset so they never breathe in sync. */}
@@ -109,17 +125,85 @@ export function PosterFrame({
           {rec.reason}
         </p>
 
+        {/* ---- Steering the wall ------------------------------------------
+            Two verdicts rather than a rating: these are films you have usually
+            not seen, so "more like this" is an instruction, not an opinion. */}
+        {onVerdict && (
+          <div className="mt-5 flex items-center justify-center gap-2.5">
+            <VerdictButton
+              active={verdict === 'more'}
+              label={t('actions.moreLikeThis')}
+              activeLabel={t('actions.moreLikeThisOn')}
+              tone="brass"
+              onClick={() => onVerdict(verdict === 'more' ? null : 'more')}
+            />
+            <VerdictButton
+              active={rejected}
+              label={t('actions.notForMe')}
+              activeLabel={t('actions.notForMeOn')}
+              tone="velvet"
+              onClick={() => onVerdict(rejected ? null : 'less')}
+            />
+          </div>
+        )}
+
+        {rejected && (
+          <p className="type-meta mt-3 text-velvet-500" role="status">
+            {t('actions.wontShowAgain')}
+          </p>
+        )}
+
         {onAddToList && (
           <button
             type="button"
             onClick={onAddToList}
-            className="type-marquee mt-5 rounded-full border border-rule-strong px-5 py-2.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+            className="type-marquee mt-4 rounded-full border border-rule-strong px-5 py-2.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
           >
             + {t('actions.addToWatchlist')}
           </button>
         )}
       </div>
     </article>
+  )
+}
+
+/**
+ * One of the two verdicts.
+ *
+ * Both stay visible once pressed, and pressing again clears — a wall you can
+ * only push in one direction is one a mistap ruins permanently.
+ */
+function VerdictButton({
+  active,
+  label,
+  activeLabel,
+  tone,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  activeLabel: string
+  tone: 'brass' | 'velvet'
+  onClick: () => void
+}) {
+  const activeStyle =
+    tone === 'brass'
+      ? 'border-brass-600 bg-brass-600/15 text-ink'
+      : 'border-velvet-500 bg-velvet-500/10 text-velvet-500'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`type-marquee rounded-full border px-4 py-2 text-[11px] transition-colors ${
+        active
+          ? activeStyle
+          : 'border-rule-strong text-ink-3 hover:border-brass-600 hover:text-ink-2'
+      }`}
+    >
+      {active ? activeLabel : label}
+    </button>
   )
 }
 

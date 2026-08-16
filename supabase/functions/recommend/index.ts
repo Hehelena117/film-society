@@ -51,9 +51,21 @@ interface UserNote {
   body: string
 }
 
+/**
+ * A verdict the user pressed on the wall itself.
+ *
+ * Distinct from a rating: it is about a film they have usually not seen, so it
+ * says "more of this" or "never this", not "this was good".
+ */
+interface UserVerdict {
+  name: string
+  year: number | null
+}
+
 interface RecommendRequest {
   ratings: UserRating[]
   notes?: UserNote[]
+  feedback?: { more?: UserVerdict[]; less?: UserVerdict[] }
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: 'en' | 'da' | 'es'
@@ -148,6 +160,18 @@ async function askModel(
     })
     .join('\n')
 
+  // Pressed on the wall itself. These are the most direct instruction the user
+  // can give — they are aimed at this feature rather than at their watch log —
+  // so they are stated last among the taste signals and stated firmly.
+  const asList = (items: UserVerdict[] | undefined, cap: number) =>
+    (items ?? [])
+      .slice(-cap)
+      .map((v) => `${v.name}${v.year ? ` (${v.year})` : ''}`)
+      .join('\n')
+
+  const wantMore = asList(body.feedback?.more, 40)
+  const wantLess = asList(body.feedback?.less, 40)
+
   const filters = [
     body.filters.genres?.length ? `Genres: ${body.filters.genres.join(', ')}` : null,
     body.filters.services?.length ? `Available on: ${body.filters.services.join(', ')}` : null,
@@ -165,6 +189,17 @@ async function askModel(
         ` much. If a note praises or complains about something specific — the` +
         ` pacing, the ending, an actor, how it was shot — treat that as the` +
         ` strongest signal you have:\n${notes}`
+      : '',
+    wantMore
+      ? `\nOn the recommendation wall they pressed "more like this" — they have` +
+        ` not necessarily seen these, they are telling you what to aim at. This` +
+        ` is the most direct instruction they can give, so let it shape the` +
+        ` batch more than anything above:\n${wantMore}`
+      : '',
+    wantLess
+      ? `\nThey pressed "not for me" on these. Never offer them, and steer well` +
+        ` clear of what they have in common — if several share a genre, a tone` +
+        ` or an era, that is the thing they are rejecting:\n${wantLess}`
       : '',
     filters ? `\nThey want:\n${filters}` : '',
     body.excludeNames.length

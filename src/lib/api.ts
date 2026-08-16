@@ -228,6 +228,11 @@ export async function getRecommendations(opts: {
   ratings: RatingSeed[]
   /** Only ever non-empty when the user has opted in. */
   notes?: NoteSeed[]
+  /** What they pressed on the wall itself. Not ratings — see lib/feedback.ts. */
+  feedback?: {
+    more?: Array<{ name: string; year: number | null }>
+    less?: Array<{ name: string; year: number | null }>
+  }
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: SupportedLanguage

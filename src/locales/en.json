@@ -9,6 +9,7 @@
     "nowShowing": "Now showing",
     "loading": "Threading the projector…",
     "endOfReel": "That's the reel for now",
+    "noneCame": "Nothing came back this time. The projectionist may just need another go.",
     "because": "Because you rated",
     "retry": "Try again",
     "reshuffle": "Show me something else"
@@ -22,7 +23,12 @@
   "actions": {
     "addToWatchlist": "Add to watchlist",
     "rate": "Rate this",
-    "notInterested": "Not for me"
+    "notInterested": "Not for me",
+    "moreLikeThis": "More like this",
+    "moreLikeThisOn": "More like this ✓",
+    "notForMe": "Not for me",
+    "notForMeOn": "Not for me ✓",
+    "wontShowAgain": "Won't be recommended again"
   },
   "nav": {
     "label": "Main navigation",
