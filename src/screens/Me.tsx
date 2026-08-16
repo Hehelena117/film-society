@@ -5,7 +5,9 @@ import { ScreenHeader } from '@/components/ScreenHeader'
 import type { TitleRef } from '@/screens/TitleDetail'
 import { useAuth } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
+import { groupLog, isLogGrouping, LOG_GROUPINGS, type LogGrouping } from '@/lib/groupLog'
 import { deleteEntry, getMyLog, type LoggedEntry } from '@/lib/log'
+import { updateMyProfile } from '@/lib/profiles'
 
 /** Your own shelf: everything you have logged, with the notes only you can see. */
 export function Me({
@@ -20,13 +22,18 @@ export function Me({
   onEditProfile: () => void
 }) {
   const { t, i18n } = useTranslation()
-  const { profile, signOut, user } = useAuth()
+  const { profile, signOut, user, refreshProfile } = useAuth()
   const [entries, setEntries] = useState<LoggedEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   // Which row is open. One at a time: the log is meant to be scannable, and a
   // screen of expanded rows is the wall of text this replaced.
   const [openEntry, setOpenEntry] = useState<string | null>(null)
+  // Held locally as well as on the profile so the log restacks on the tap
+  // rather than after a round trip. The write follows.
+  const [grouping, setGrouping] = useState<LogGrouping>(() =>
+    isLogGrouping(profile?.log_grouping) ? profile.log_grouping : 'month',
+  )
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -69,33 +76,21 @@ export function Me({
    * where it is not — an entry with no date still has to sit somewhere, and the
    * day you wrote it down is the honest fallback.
    */
-  const months = useMemo(() => {
-    const format = new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'en', {
-      month: 'long',
-      year: 'numeric',
-    })
+  const groups = useMemo(
+    () => groupLog(entries, grouping, i18n.resolvedLanguage ?? 'en', t),
+    [entries, grouping, i18n.resolvedLanguage, t],
+  )
 
-    // Sorted by the date the months are keyed on, not the one the query
-    // happened to order by. getMyLog returns newest-LOGGED first, so logging a
-    // film you saw years ago put it at the top of the list under its own old
-    // heading — which meant months out of order and, because only neighbours
-    // are merged below, the same month appearing more than once.
-    //
-    // Both fields compare correctly as text: watched_on is YYYY-MM-DD and
-    // created_at is an ISO timestamp that starts the same way.
-    const on = (e: LoggedEntry) => e.watchedOn ?? e.createdAt.slice(0, 10)
-    const sorted = [...entries].sort((a, b) => on(b).localeCompare(on(a)))
-
-    const groups: Array<{ key: string; label: string; entries: LoggedEntry[] }> = []
-    for (const entry of sorted) {
-      const when = new Date(on(entry))
-      const key = `${when.getFullYear()}-${when.getMonth()}`
-      const last = groups[groups.length - 1]
-      if (last?.key === key) last.entries.push(entry)
-      else groups.push({ key, label: format.format(when), entries: [entry] })
-    }
-    return groups
-  }, [entries, i18n.resolvedLanguage])
+  function regroup(next: LogGrouping) {
+    const previous = grouping
+    setGrouping(next)
+    // A display preference is not worth an error banner if it fails to save —
+    // but it is worth putting the control back where it was, so the choice on
+    // screen is never one that will not survive a reload.
+    updateMyProfile({ log_grouping: next })
+      .then(refreshProfile)
+      .catch(() => setGrouping(previous))
+  }
 
   return (
     <div className="min-h-dvh wall-ground texture-wall pb-28">
@@ -146,9 +141,36 @@ export function Me({
 
         {error && <p className="mt-5 text-[0.875rem] text-velvet-500">{error}</p>}
 
-        <div className="rule-pip my-8">
+        <div className="rule-pip mt-8 mb-4">
           <span className="type-meta whitespace-nowrap text-ink-3">{t('me.log')}</span>
         </div>
+
+        {/* How you want the log stacked. Sits on the log rather than in
+            settings: it is a way of looking at this screen, and you want to
+            see what it does the moment you press it. */}
+        {entries.length > 0 && (
+          <div
+            className="mb-5 flex flex-wrap items-center justify-center gap-1.5"
+            role="group"
+            aria-label={t('me.groupBy')}
+          >
+            {LOG_GROUPINGS.map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => regroup(mode)}
+                aria-pressed={grouping === mode}
+                className={`type-marquee rounded-full border px-3 py-1.5 text-[11px] transition-colors ${
+                  grouping === mode
+                    ? 'border-brass-600 bg-brass-600/15 text-ink'
+                    : 'border-rule-strong text-ink-3 hover:border-brass-600 hover:text-ink-2'
+                }`}
+              >
+                {t(`me.grouping.${mode}`)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <p className="type-meta text-center text-ink-3/70">{t('lists.loading')}</p>
@@ -157,19 +179,21 @@ export function Me({
             {t('me.empty')}
           </p>
         ) : (
-          months.map((month) => (
-            <section key={month.key} className="mb-8">
+          groups.map((group) => (
+            <section key={group.key} className="mb-8">
               {/* No box around the group. A bordered card per month, dividers
                   inside it and a border on every row was four frames deep and
                   read as clutter — the heading and a hairline are enough to
-                  say where one month ends. */}
-              <div className="mb-1 flex items-baseline gap-3 border-b border-rule pb-2">
-                <h3 className="type-marquee text-[14px] text-ink">{month.label}</h3>
-                <span className="type-meta ml-auto text-ink-3">{month.entries.length}</span>
-              </div>
+                  say where one group ends. */}
+              {group.label !== null && (
+                <div className="mb-1 flex items-baseline gap-3 border-b border-rule pb-2">
+                  <h3 className="type-marquee text-[14px] text-ink">{group.label}</h3>
+                  <span className="type-meta ml-auto text-ink-3">{group.entries.length}</span>
+                </div>
+              )}
 
               <ul className="flex flex-col divide-y divide-rule/60">
-                {month.entries.map((entry) => (
+                {group.entries.map((entry) => (
                   <LogRow
                     key={entry.id}
                     entry={entry}

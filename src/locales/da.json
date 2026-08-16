@@ -98,7 +98,18 @@
     "log": "Din log",
     "empty": "Der er ikke registreret noget endnu. Brug + Log for at tilføje den første.",
     "noDate": "Ingen dato",
-    "delete": "Slet"
+    "delete": "Slet",
+    "groupBy": "Gruppér efter",
+    "notRated": "Ikke bedømt",
+    "unknownYear": "Årstal ukendt",
+    "decade": "{{decade}}'erne",
+    "grouping": {
+      "month": "Måned",
+      "year": "År",
+      "rating": "Bedømmelse",
+      "decade": "Årti",
+      "none": "Ingenting"
+    }
   },
   "swipe": {
     "title": "Beslut sammen",

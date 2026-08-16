@@ -98,7 +98,18 @@
     "log": "Tu registro",
     "empty": "Aún no has registrado nada. Usa + Registrar para añadir el primero.",
     "noDate": "Sin fecha",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "groupBy": "Agrupar por",
+    "notRated": "Sin puntuar",
+    "unknownYear": "Año desconocido",
+    "decade": "Años {{decade}}",
+    "grouping": {
+      "month": "Mes",
+      "year": "Año",
+      "rating": "Puntuación",
+      "decade": "Década",
+      "none": "Nada"
+    }
   },
   "swipe": {
     "title": "Decidir juntos",

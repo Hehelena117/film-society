@@ -13,6 +13,8 @@ export interface Profile {
   theme: string
   /** Opt-in, default false. Governs whether note text may reach the recommender. */
   use_notes_for_recommendations: boolean
+  /** How this user stacks their own log. See lib/groupLog.ts. */
+  log_grouping: string
 }
 
 interface AuthValue {
@@ -114,7 +116,8 @@ async function loadProfile(id: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, username, avatar_url, bio, country, language, theme, use_notes_for_recommendations',
+      'id, username, avatar_url, bio, country, language, theme, ' +
+        'use_notes_for_recommendations, log_grouping',
     )
     .eq('id', id)
     .maybeSingle()

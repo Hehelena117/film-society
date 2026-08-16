@@ -118,7 +118,18 @@
     "log": "Your log",
     "empty": "Nothing logged yet. Use + Log to add the first one.",
     "noDate": "No date",
-    "delete": "Delete"
+    "delete": "Delete",
+    "groupBy": "Group by",
+    "notRated": "Not rated",
+    "unknownYear": "Year unknown",
+    "decade": "{{decade}}s",
+    "grouping": {
+      "month": "Month",
+      "year": "Year",
+      "rating": "Rating",
+      "decade": "Decade",
+      "none": "Nothing"
+    }
   },
   "swipe": {
     "title": "Decide together",

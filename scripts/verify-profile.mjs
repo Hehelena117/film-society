@@ -110,7 +110,7 @@ try {
   await page.getByLabel(/email/i).fill(email)
   await page.getByLabel(/password/i).fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
-  await page.locator('article h2:visible').first().waitFor({ timeout: 90_000 })
+  await page.locator('nav button:visible', { hasText: /^me$/i }).first().waitFor({ timeout: 60_000 })
 
   // ---- the log: months and folded notes -----------------------------------
   await page.locator('nav button:visible', { hasText: /^me$/i }).first().click()
@@ -161,6 +161,60 @@ try {
   )
 
   const logHeight = await page.evaluate(() => document.body.scrollHeight)
+
+  // ---- grouping: every mode, and does the choice stick? -------------------
+  const pill = (name) =>
+    page.locator('[aria-label="Group by"] button:visible', { hasText: new RegExp(`^${name}$`, 'i') })
+  const heads = () =>
+    page.locator('main section h3:visible').allInnerTexts().then((h) => h.map((x) => x.trim()))
+
+  await pill('Year').click()
+  await page.waitForTimeout(900)
+  check('by year', JSON.stringify(await heads()) === JSON.stringify(['2026']), (await heads()).join(' | '))
+
+  await pill('Rating').click()
+  await page.waitForTimeout(900)
+  const byRating = await heads()
+  check(
+    'by rating, best first',
+    JSON.stringify(byRating) === JSON.stringify(['10', '9', '8', '7', '6', '5', '4']),
+    byRating.join(' | '),
+  )
+
+  await pill('Decade').click()
+  await page.waitForTimeout(900)
+  const byDecade = await heads()
+  const decades = byDecade.map((d) => Number(d.replace(/\D/g, '')))
+  check(
+    'by decade, newest first',
+    byDecade.every((d) => /^\d{4}S$/i.test(d)) &&
+      decades.every((d, i) => i === 0 || decades[i - 1] > d),
+    byDecade.join(' | '),
+  )
+  check('decades do not repeat', new Set(byDecade).size === byDecade.length)
+
+  await pill('Nothing').click()
+  await page.waitForTimeout(900)
+  check('grouped by nothing has no headings', (await heads()).length === 0)
+  check(
+    'and still lists everything',
+    (await page.locator('main li:visible').count()) === SEED.length,
+  )
+
+  // Chosen on this screen, so it has to survive leaving it.
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await page.locator('nav button:visible', { hasText: /^me$/i }).first().waitFor({ timeout: 60_000 })
+  await page.locator('nav button:visible', { hasText: /^me$/i }).first().click()
+  await page.locator('text=/your log/i').first().waitFor({ timeout: 30_000 })
+  await page.waitForTimeout(1200)
+  check(
+    'the choice survives a reload',
+    (await pill('Nothing').getAttribute('aria-pressed')) === 'true',
+    `headings: ${(await heads()).length}`,
+  )
+
+  await pill('Month').click()
+  await page.waitForTimeout(900)
 
   // ---- the profile: shelves ------------------------------------------------
   await page.locator('button:visible', { hasText: /my profile/i }).first().click()
@@ -241,7 +295,7 @@ try {
   // A reload lands on the Lobby — navigation lives in state, not the URL — so
   // walk back to the profile rather than assuming the screen survived.
   await page.reload({ waitUntil: 'domcontentloaded' })
-  await page.locator('article h2:visible').first().waitFor({ timeout: 90_000 })
+  await page.locator('nav button:visible', { hasText: /^me$/i }).first().waitFor({ timeout: 60_000 })
   await page.locator('nav button:visible', { hasText: /^me$/i }).first().click()
   await page.locator('button:visible', { hasText: /my profile/i }).first().click()
   await page.locator('text=/see all/i').first().waitFor({ timeout: 30_000 })

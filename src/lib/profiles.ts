@@ -250,6 +250,7 @@ export async function updateMyProfile(patch: {
   country?: string
   language?: string
   use_notes_for_recommendations?: boolean
+  log_grouping?: string
 }): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('Not signed in')
