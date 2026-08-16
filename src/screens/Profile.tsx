@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import { Shelf } from '@/components/Shelf'
 import { useAuth } from '@/lib/auth'
 import { errorMessage } from '@/lib/errors'
 import {
@@ -11,8 +12,8 @@ import {
   isFollowing,
   unfollow,
   type PublicProfile,
-  type RatedTitle,
 } from '@/lib/profiles'
+import type { RatedTitle } from '@/lib/profiles'
 import type { FollowListTarget } from '@/screens/FollowList'
 import type { TitleRef } from '@/screens/TitleDetail'
 
@@ -28,11 +29,13 @@ export function Profile({
   onBack,
   onOpenTitle,
   onOpenFollows,
+  onOpenCollection,
 }: {
   userId: string
   onBack?: () => void
   onOpenTitle: (ref: TitleRef) => void
   onOpenFollows: (target: FollowListTarget) => void
+  onOpenCollection: (target: { userId: string; username: string }) => void
 }) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -66,6 +69,23 @@ export function Profile({
   useEffect(() => {
     void load()
   }, [load])
+
+  /**
+   * One shelf per score, best first. Scores nothing was given are left out.
+   *
+   * Grouped here rather than in the query: the profile already holds every
+   * rating, so a request per shelf would be ten round trips to rearrange data
+   * that is already in hand.
+   */
+  const shelves = useMemo(() => {
+    const byScore = new Map<number, RatedTitle[]>()
+    for (const r of ratings) {
+      const shelf = byScore.get(r.rating)
+      if (shelf) shelf.push(r)
+      else byScore.set(r.rating, [r])
+    }
+    return [...byScore.entries()].sort((a, b) => b[0] - a[0])
+  }, [ratings])
 
   async function toggleFollow() {
     setBusy(true)
@@ -191,36 +211,19 @@ export function Profile({
             {isMe ? t('me.empty') : t('people.noRatings')}
           </p>
         ) : (
-          <ul className="grid grid-cols-3 gap-3">
-            {ratings.map((r) => (
-              <li key={r.titleId}>
-                <button
-                  type="button"
-                  onClick={() => onOpenTitle({ tmdbId: r.tmdbId, mediaType: r.mediaType })}
-                  className="block w-full"
-                >
-                  <div className="relative overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift">
-                    <div className="aspect-2/3 overflow-hidden bg-pitch">
-                      {r.posterUrl && (
-                        <img
-                          src={r.posterUrl}
-                          alt={r.name}
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <span className="type-marquee absolute right-1.5 bottom-1.5 rounded-[2px] bg-velvet-600 px-1.5 py-0.5 text-[11px] text-plate">
-                      {r.rating}
-                    </span>
-                  </div>
-                  <p className="mt-1.5 line-clamp-2 text-left text-[0.7rem] leading-tight text-ink">
-                    {r.name}
-                  </p>
-                </button>
-              </li>
+          <>
+            {shelves.map(([score, titles]) => (
+              <Shelf key={score} score={score} titles={titles} onOpenTitle={onOpenTitle} />
             ))}
-          </ul>
+
+            <button
+              type="button"
+              onClick={() => onOpenCollection({ userId, username: profile.username })}
+              className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+            >
+              {t('collection.seeAll', { count: ratings.length })}
+            </button>
+          </>
         )}
       </main>
     </div>

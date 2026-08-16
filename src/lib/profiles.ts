@@ -87,11 +87,18 @@ export async function getProfile(userId: string): Promise<PublicProfile | null> 
   }
 }
 
-/** Someone's ratings, newest-rated first. Read through the public view. */
+/**
+ * Someone's ratings, highest first. Read through the public view.
+ *
+ * The whole set rather than a page of it: the profile sorts these into a shelf
+ * per score and prints a count on each, and a count taken from a truncated list
+ * is a wrong count. 400 is a generous ceiling for a personal film log — past
+ * that the shelves stay honest about what they hold, they just stop growing.
+ */
 export async function getProfileRatings(
   userId: string,
   language: string,
-  limit = 60,
+  limit = 400,
 ): Promise<RatedTitle[]> {
   const { data, error } = await supabase
     .from('public_ratings')

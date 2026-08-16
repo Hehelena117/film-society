@@ -245,5 +245,18 @@
     "useNotesHint": "Dine noter siger langt mere om en film end en karakter gør, så foyeren kan læse dem, når den vælger, hvad du skal se. Slår du dette til, sendes teksten i dine noter til den AI, der bygger din væg. Andre ser dem aldrig — hverken før eller efter.",
     "save": "Gem",
     "saved": "Gemt."
+  },
+  "collection": {
+    "seeAll": "Se alle {{count}}",
+    "search": "Søg i dine film",
+    "noMatch": "Ingen med det navn.",
+    "sort": {
+      "rating": "Højeste",
+      "name": "A–Å",
+      "year": "Nyeste"
+    }
+  },
+  "profile": {
+    "outOfTen": "{{score}} ud af ti"
   }
 }

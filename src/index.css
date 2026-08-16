@@ -321,3 +321,27 @@
     background: linear-gradient(90deg, var(--color-rule-strong), transparent);
   }
 }
+
+/* A shelf of posters, scrolled sideways.
+   The native scrollbar is hidden: it cuts across the bottom of the frames and
+   reads as damage rather than furniture. The fade at the right-hand edge is
+   what says the shelf continues, and it is applied to the same element so it
+   cannot drift out of alignment with the scroller. */
+@utility shelf-scroll {
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Softens the right-hand edge so a shelf reads as continuing off the page
+   rather than being cut off by it. Applied only to shelves that actually
+   overflow — a shelf of three posters gets no fade, because there is nothing
+   there to fade. */
+@utility shelf-fade {
+  mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
+}

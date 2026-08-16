@@ -5,6 +5,7 @@ import { BottomNav, type View } from '@/components/BottomNav'
 import { KeepAlive } from '@/components/KeepAlive'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import type { CollectionTarget } from '@/screens/Collection'
 import type { FollowListTarget } from '@/screens/FollowList'
 import type { TitleRef } from '@/screens/TitleDetail'
 
@@ -38,6 +39,9 @@ const FollowList = lazy(() =>
 const EditProfile = lazy(() =>
   import('@/screens/EditProfile').then((m) => ({ default: m.EditProfile })),
 )
+const Collection = lazy(() =>
+  import('@/screens/Collection').then((m) => ({ default: m.Collection })),
+)
 
 export default function App() {
   return (
@@ -54,6 +58,7 @@ function Gate() {
   const [openTitle, setOpenTitle] = useState<TitleRef | null>(null)
   const [openProfile, setOpenProfile] = useState<string | null>(null)
   const [openFollows, setOpenFollows] = useState<FollowListTarget | null>(null)
+  const [openCollection, setOpenCollection] = useState<CollectionTarget | null>(null)
   const [findingPeople, setFindingPeople] = useState(false)
   const [editing, setEditing] = useState(false)
   const [prefill, setPrefill] = useState<TitleRef | null>(null)
@@ -75,13 +80,35 @@ function Gate() {
    * wall from scratch. Choosing one here instead lets the tab layer stay
    * mounted below.
    *
-   * Order is precedence: a swipe session outranks a profile, and the follow
-   * list is opened from a profile so it has to outrank one.
+   * Order is precedence, and it is the order things were opened in: whatever
+   * you opened last is what you should be looking at.
+   *
+   * A title page therefore outranks everything but a swipe session. It used to
+   * sit at the bottom, which meant a poster tapped on a profile set openTitle
+   * and changed nothing on screen, because the profile below still won — the
+   * films on a profile were simply dead to the touch. Found by a browser test
+   * tapping one; no amount of reading this chain had caught it.
    */
   const overlay = swipeSession ? (
     // A swipe session takes over the screen: navigating away mid-decision
     // would leave the others waiting on a vote that never arrives.
     <Swipe sessionId={swipeSession} onExit={() => setSwipeSession(null)} />
+  ) : openTitle ? (
+    <TitleDetail
+      title={openTitle}
+      onBack={() => setOpenTitle(null)}
+      onLog={(t) => {
+        setPrefill({ tmdbId: t.tmdbId, mediaType: t.mediaType })
+        // Everything the title page was opened over has to go too, or leaving
+        // for the log form lands you back on the profile you came through.
+        setOpenTitle(null)
+        setOpenProfile(null)
+        setOpenCollection(null)
+        setOpenFollows(null)
+        setFindingPeople(false)
+        setView('log')
+      }}
+    />
   ) : editing ? (
     <EditProfile onBack={() => setEditing(false)} />
   ) : openFollows ? (
@@ -93,12 +120,19 @@ function Gate() {
         setOpenProfile(id)
       }}
     />
+  ) : openCollection ? (
+    <Collection
+      target={openCollection}
+      onBack={() => setOpenCollection(null)}
+      onOpenTitle={setOpenTitle}
+    />
   ) : openProfile ? (
     <Profile
       userId={openProfile}
       onBack={() => setOpenProfile(null)}
       onOpenTitle={setOpenTitle}
       onOpenFollows={setOpenFollows}
+      onOpenCollection={setOpenCollection}
     />
   ) : findingPeople ? (
     <People
@@ -106,16 +140,6 @@ function Gate() {
       onOpenProfile={(id) => {
         setFindingPeople(false)
         setOpenProfile(id)
-      }}
-    />
-  ) : openTitle ? (
-    <TitleDetail
-      title={openTitle}
-      onBack={() => setOpenTitle(null)}
-      onLog={(t) => {
-        setPrefill({ tmdbId: t.tmdbId, mediaType: t.mediaType })
-        setOpenTitle(null)
-        setView('log')
       }}
     />
   ) : null

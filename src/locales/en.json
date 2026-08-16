@@ -245,5 +245,18 @@
       "name": "Night",
       "note": "Lights down"
     }
+  },
+  "collection": {
+    "seeAll": "See all {{count}}",
+    "search": "Search your films",
+    "noMatch": "Nothing by that name.",
+    "sort": {
+      "rating": "Highest",
+      "name": "A–Z",
+      "year": "Newest"
+    }
+  },
+  "profile": {
+    "outOfTen": "{{score}} out of ten"
   }
 }
