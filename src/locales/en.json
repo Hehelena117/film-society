@@ -63,6 +63,8 @@
       "da": "Dansk",
       "es": "Español"
     },
+    "useNotes": "Use my notes to improve recommendations",
+    "useNotesHint": "Your notes say far more about a film than a score does, so the lobby can read them when choosing what to show you. Turning this on sends the text of your notes to the AI that builds your wall. Other people never see them either way.",
     "save": "Save",
     "saved": "Saved."
   },

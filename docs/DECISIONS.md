@@ -39,6 +39,7 @@ strictly out of the model, so that TMDB is only ever a display layer.
 
 ```
         ┌─ user's own ratings (title, year, score 1–10) ─┐
+        │  user's own notes (opt-in only — see below)    │
         │  user's own filters (genre, streaming service) │
         └────────────────────────┬───────────────────────┘
                                  │   ← ONLY this crosses into the model
@@ -57,20 +58,46 @@ strictly out of the model, so that TMDB is only ever a display layer.
 **Never sent to the model:** TMDB overviews, keywords, cast lists, crew, poster
 URLs, TMDB IDs, or any other field returned by the TMDB API.
 
-**Sent to the model:** only the user's own title/year/rating triples and the
-filters they picked in the UI.
+**Sent to the model:** only the user's own title/year/rating triples, the
+filters they picked in the UI, and — if they have opted in — their own notes.
 
 Enforced in `supabase/functions/recommend/index.ts`.
+
+### Notes are a second, separate promise
+
+Notes are user-authored, so sending them does not breach the TMDB firewall.
+They carry a different obligation instead.
+
+`entry_notes` is the only table in the schema with **no read path but its
+owner's** — that is what "notes are always private" means. It means private
+from other *users*. Sending a note to the recommender also puts it in front of
+the model provider, which is a promise nobody made, so it is **opt-in and off
+by default**:
+
+- `profiles.use_notes_for_recommendations`, `not null default false`
+- the client sends notes only when that column is true; `getLogSnapshot`'s
+  `includeNotes` parameter defaults to `false` at every layer, so a caller that
+  forgets to ask sends nothing rather than everything
+- the settings screen states plainly that the text goes to the AI
+- the note never appears in the response, in logs, or in storage — prompt only
+- newest 30 notes, trimmed to 400 characters each, capped again server-side
+
+Why bother: a score says *how much*, a note says *what about it*. "Rated 9" and
+"rated 9, and the reason was the silence" point at completely different films.
+Measured, not assumed — see `npm run verify:notes`, which drives a browser and
+reads the actual POST body. The same account with one 9/10 rating returns crime
+epics with the setting off and Jeanne Dielman with it on.
 
 ### Residual risk
 
 "In connection with" is broad. This architecture is defensible but not
 risk-free, and it does **not** solve the commercial-use prohibition.
 
-**Outstanding action for the repo owner:** contact TMDB via
-<https://www.themoviedb.org/api-for-business> for a written agreement covering
-AI use and commercial use **before public launch**. Until that exists, this app
-must not be monetised.
+This was previously written here as blocking a public launch. That was an
+overstatement: the terms restrict **commercial** use, and a free app is not
+that. If the owner later decides to charge for Film Society, that is the point
+at which <https://www.themoviedb.org/api-for-business> becomes worth contacting.
+Decided; not to be relitigated.
 
 ---
 

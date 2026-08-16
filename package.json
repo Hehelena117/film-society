@@ -10,6 +10,7 @@
     "typecheck": "tsc -b --noEmit",
     "verify:rls": "node scripts/verify-rls.mjs",
     "verify:lobby": "node scripts/verify-lobby.mjs",
+    "verify:notes": "node scripts/verify-notes.mjs",
     "build:native": "cross-env CAPACITOR=1 npm run build",
     "sync:native": "npm run build:native && cap sync"
   },

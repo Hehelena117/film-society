@@ -235,6 +235,8 @@
       "da": "Dansk",
       "es": "Español"
     },
+    "useNotes": "Usar mis notas para mejorar las recomendaciones",
+    "useNotesHint": "Tus notas dicen mucho más sobre una película que una puntuación, así que el vestíbulo puede leerlas al elegir qué mostrarte. Si activas esto, el texto de tus notas se envía a la IA que construye tu muro. Las demás personas nunca las ven, en ningún caso.",
     "save": "Guardar",
     "saved": "Guardado."
   }

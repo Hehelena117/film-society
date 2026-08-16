@@ -8,9 +8,13 @@
  *
  * TMDB's terms prohibit using their API "in connection with" an AI application.
  * Our mitigation is that TMDB content NEVER reaches the model. The model sees
- * only the user's own ratings and their own filter choices, and answers from
- * its own knowledge of cinema. TMDB is then used purely to resolve the returned
- * titles into posters and metadata for DISPLAY.
+ * only what the user wrote themselves — their ratings, their notes, their
+ * filter choices — and answers from its own knowledge of cinema. TMDB is then
+ * used purely to resolve the returned titles into posters and metadata for
+ * DISPLAY.
+ *
+ * Note text is user-authored, so it does not breach the firewall. It carries a
+ * separate obligation instead: see UserNote below.
  *
  * If you find yourself putting a TMDB `overview`, `keywords`, `credits`, or
  * `poster_path` into `messages`, stop — that breaks the firewall.
@@ -31,13 +35,34 @@ interface UserRating {
   score: number // 1–10
 }
 
+/**
+ * A note the user wrote. Their own words — not TMDB content, so the firewall
+ * above is untouched by this.
+ *
+ * It is, however, the most private thing the app holds: entry_notes has no
+ * read path but its owner's. It only arrives here because that user turned on
+ * `use_notes_for_recommendations`, and it must not be logged, stored, or
+ * returned in the response. It goes into the prompt and nowhere else.
+ */
+interface UserNote {
+  name: string
+  year: number | null
+  score: number | null
+  body: string
+}
+
 interface RecommendRequest {
   ratings: UserRating[]
+  notes?: UserNote[]
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: 'en' | 'da' | 'es'
   count?: number
 }
+
+/** Belt and braces against a client sending a whole 4000-character note. */
+const MAX_NOTES = 30
+const MAX_NOTE_CHARS = 400
 
 const TMDB_LOCALE: Record<string, string> = {
   en: 'en-US',
@@ -110,6 +135,19 @@ async function askModel(
     .map((r) => `${r.name} (${r.year}) — rated ${r.score}/10`)
     .join('\n')
 
+  // A score says how much; a note says what about it. "Rated 9" and "rated 9,
+  // and the reason was the silence" point at quite different next films, so
+  // notes are given more weight than the numbers they sit beside.
+  const notes = (body.notes ?? [])
+    .slice(0, MAX_NOTES)
+    .filter((n) => n.body?.trim())
+    .map((n) => {
+      const scored = n.score !== null ? `, rated ${n.score}/10` : ''
+      const year = n.year ? ` (${n.year})` : ''
+      return `${n.name}${year}${scored}: "${n.body.trim().slice(0, MAX_NOTE_CHARS)}"`
+    })
+    .join('\n')
+
   const filters = [
     body.filters.genres?.length ? `Genres: ${body.filters.genres.join(', ')}` : null,
     body.filters.services?.length ? `Available on: ${body.filters.services.join(', ')}` : null,
@@ -121,6 +159,13 @@ async function askModel(
     `A user rated these films and series highly:`,
     liked || '(no ratings yet — suggest widely admired films)',
     disliked ? `\nThey did NOT enjoy these — steer away from what they share:\n${disliked}` : '',
+    notes
+      ? `\nThey also wrote these notes in their own words. Weigh these ABOVE the` +
+        ` scores: a note says what they responded to, where a score only says how` +
+        ` much. If a note praises or complains about something specific — the` +
+        ` pacing, the ending, an actor, how it was shot — treat that as the` +
+        ` strongest signal you have:\n${notes}`
+      : '',
     filters ? `\nThey want:\n${filters}` : '',
     body.excludeNames.length
       ? `\nAlready seen or already suggested — do not offer any of these:\n${body.excludeNames.slice(0, 200).join(', ')}`
@@ -128,8 +173,14 @@ async function askModel(
     `\nSuggest ${count} titles that appear nowhere above. Vary era, country and`,
     `register rather than offering the most obvious canon every time.`,
     `For each, give a one-sentence reason referring to their actual ratings.`,
+    notes
+      ? `Where a note explains the choice, say so and quote a few of their own` +
+        ` words back — that is how they can tell their notes were read.`
+      : '',
     `Reply as JSON only: {"suggestions":[{"name":"","year":0,"reason":""}]}`,
-  ].join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',

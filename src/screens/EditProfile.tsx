@@ -17,6 +17,7 @@ export function EditProfile({ onBack }: { onBack: () => void }) {
   const [bio, setBio] = useState(profile?.bio ?? '')
   const [country, setCountry] = useState(profile?.country ?? 'DK')
   const [language, setLanguage] = useState(profile?.language ?? 'en')
+  const [useNotes, setUseNotes] = useState(profile?.use_notes_for_recommendations ?? false)
   const [avatar, setAvatar] = useState(profile?.avatar_url ?? null)
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -42,7 +43,12 @@ export function EditProfile({ onBack }: { onBack: () => void }) {
     setError(null)
     setSaved(false)
     try {
-      await updateMyProfile({ bio: bio.trim() || null, country, language })
+      await updateMyProfile({
+        bio: bio.trim() || null,
+        country,
+        language,
+        use_notes_for_recommendations: useNotes,
+      })
       // Country changes which certifications and providers we fetch, and
       // language changes which translation — so apply it immediately rather
       // than waiting for a reload.
@@ -140,6 +146,26 @@ export function EditProfile({ onBack }: { onBack: () => void }) {
             ))}
           </select>
         </label>
+
+        {/* ---- Notes → recommendations ------------------------------------
+            The one setting here that hands data to someone else, so it says
+            plainly what it does. Off until switched on, never the reverse. */}
+        <div className="mt-8 rounded-[2px] border border-rule bg-ground-2 px-4 py-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={useNotes}
+              onChange={(e) => setUseNotes(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-velvet-600"
+            />
+            <span>
+              <span className="type-meta block text-ink">{t('edit.useNotes')}</span>
+              <span className="mt-1.5 block text-[0.75rem] leading-relaxed text-ink-3">
+                {t('edit.useNotesHint')}
+              </span>
+            </span>
+          </label>
+        </div>
 
         <button
           type="button"

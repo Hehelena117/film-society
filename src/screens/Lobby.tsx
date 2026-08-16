@@ -38,6 +38,9 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
   const snapshotRef = useRef<LogSnapshot | null>(null)
 
   const language = (i18n.resolvedLanguage ?? 'en') as SupportedLanguage
+  // Off unless the profile explicitly says otherwise — including while the
+  // profile is still loading, so a slow load cannot send notes by accident.
+  const useNotes = profile?.use_notes_for_recommendations === true
 
   const loadMore = useCallback(async () => {
     if (busyRef.current || exhausted) return
@@ -48,12 +51,13 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
     try {
       // Read the log once — it does not change mid-scroll.
       if (snapshotRef.current === null) {
-        snapshotRef.current = await getLogSnapshot(language)
+        snapshotRef.current = await getLogSnapshot(language, useNotes)
         seenRef.current = [...new Set([...seenRef.current, ...snapshotRef.current.loggedNames])]
       }
 
       const batch = await getRecommendations({
         ratings: snapshotRef.current.ratings,
+        notes: snapshotRef.current.notes,
         excludeNames: seenRef.current,
         filters: {},
         language,
@@ -97,7 +101,10 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
       setLoading(false)
       busyRef.current = false
     }
-  }, [language, exhausted])
+    // Turning notes on mid-session does not rebuild the wall by itself — the
+    // snapshot is already taken and the wall changes only when asked. Pressing
+    // "show me something else" nulls the snapshot and picks the notes up.
+  }, [language, exhausted, useNotes])
 
   // First page.
   useEffect(() => {

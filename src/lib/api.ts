@@ -119,12 +119,38 @@ export async function catalogTitle(
   return data
 }
 
+/**
+ * A note the user wrote, shaped for the recommender.
+ *
+ * Only ever built when profiles.use_notes_for_recommendations is true.
+ */
+export interface NoteSeed {
+  name: string
+  year: number | null
+  /** A note on an unrated entry is still an opinion, so the score is optional. */
+  score: number | null
+  body: string
+}
+
 export interface LogSnapshot {
   /** Every scored title, high and low. Low scores are signal too. */
   ratings: RatingSeed[]
   /** Everything logged at all, scored or not — never recommend these back. */
   loggedNames: string[]
+  /** Empty unless the user has opted in. */
+  notes: NoteSeed[]
 }
+
+/**
+ * How many notes, and how much of each, may go to the model.
+ *
+ * A note may be 4000 characters. Thirty of those would be most of the prompt
+ * and would drown the ratings, so the newest few are sent and each is trimmed
+ * to its opening — which is where people say what they thought, before they
+ * start recounting the plot.
+ */
+const MAX_NOTES = 30
+const MAX_NOTE_CHARS = 400
 
 /**
  * The user's own log, for seeding the recommender.
@@ -135,22 +161,38 @@ export interface LogSnapshot {
  * steer away from — and it also guarantees the input differs after every
  * rating, which is what makes the refresh visible.
  *
- * Only name, year and score are read, and only these ever reach the model.
- * See docs/DECISIONS.md, "AI firewall".
+ * Names, years and scores are user-authored, not TMDB content, so sending them
+ * keeps the AI firewall intact. See docs/DECISIONS.md.
+ *
+ * `includeNotes` must come from profiles.use_notes_for_recommendations and
+ * nothing else. Notes are the one thing here the user has to hand over
+ * deliberately: they are unreadable by any other user, and sending them means
+ * the text reaches the model provider. Default to false at every layer, so a
+ * caller that forgets to ask sends nothing rather than everything.
  */
-export async function getLogSnapshot(language: SupportedLanguage): Promise<LogSnapshot> {
+export async function getLogSnapshot(
+  language: SupportedLanguage,
+  includeNotes = false,
+): Promise<LogSnapshot> {
+  // log_entries is owner-only since 20260814000004 — this returns the caller's
+  // own entries and nobody else's. entry_notes is owner-only too, so the embed
+  // below cannot pick up another person's note even if the join let it try.
   const { data, error } = await supabase
     .from('log_entries')
-    .select('rating, title:titles!inner(year, translations:title_translations(name, language))')
+    .select(
+      'rating, title:titles!inner(year, translations:title_translations(name, language))' +
+        (includeNotes ? ', note:entry_notes(body)' : ''),
+    )
     .order('created_at', { ascending: false })
     .limit(200)
 
   if (error) {
     console.error('Could not read log', error)
-    return { ratings: [], loggedNames: [] }
+    return { ratings: [], loggedNames: [], notes: [] }
   }
 
   const ratings: RatingSeed[] = []
+  const notes: NoteSeed[] = []
   const loggedNames = new Set<string>()
 
   for (const row of (data ?? []) as Array<Record<string, any>>) {
@@ -164,13 +206,28 @@ export async function getLogSnapshot(language: SupportedLanguage): Promise<LogSn
     if (row.rating !== null && row.title?.year) {
       ratings.push({ name, year: row.title.year, score: row.rating })
     }
+
+    if (includeNotes && notes.length < MAX_NOTES) {
+      // entry_notes is one-to-one, but PostgREST embeds it as an array.
+      const body = Array.isArray(row.note) ? row.note[0]?.body : row.note?.body
+      if (typeof body === 'string' && body.trim()) {
+        notes.push({
+          name,
+          year: row.title?.year ?? null,
+          score: row.rating,
+          body: body.trim().slice(0, MAX_NOTE_CHARS),
+        })
+      }
+    }
   }
 
-  return { ratings, loggedNames: [...loggedNames] }
+  return { ratings, loggedNames: [...loggedNames], notes }
 }
 
 export async function getRecommendations(opts: {
   ratings: RatingSeed[]
+  /** Only ever non-empty when the user has opted in. */
+  notes?: NoteSeed[]
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: SupportedLanguage

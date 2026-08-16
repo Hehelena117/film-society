@@ -11,6 +11,8 @@ export interface Profile {
   country: string
   language: string
   theme: string
+  /** Opt-in, default false. Governs whether note text may reach the recommender. */
+  use_notes_for_recommendations: boolean
 }
 
 interface AuthValue {
@@ -111,7 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 async function loadProfile(id: string): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, avatar_url, bio, country, language, theme')
+    .select(
+      'id, username, avatar_url, bio, country, language, theme, use_notes_for_recommendations',
+    )
     .eq('id', id)
     .maybeSingle()
 
