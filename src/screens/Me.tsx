@@ -75,9 +75,20 @@ export function Me({
       year: 'numeric',
     })
 
+    // Sorted by the date the months are keyed on, not the one the query
+    // happened to order by. getMyLog returns newest-LOGGED first, so logging a
+    // film you saw years ago put it at the top of the list under its own old
+    // heading — which meant months out of order and, because only neighbours
+    // are merged below, the same month appearing more than once.
+    //
+    // Both fields compare correctly as text: watched_on is YYYY-MM-DD and
+    // created_at is an ISO timestamp that starts the same way.
+    const on = (e: LoggedEntry) => e.watchedOn ?? e.createdAt.slice(0, 10)
+    const sorted = [...entries].sort((a, b) => on(b).localeCompare(on(a)))
+
     const groups: Array<{ key: string; label: string; entries: LoggedEntry[] }> = []
-    for (const entry of entries) {
-      const when = new Date(entry.watchedOn ?? entry.createdAt)
+    for (const entry of sorted) {
+      const when = new Date(on(entry))
       const key = `${when.getFullYear()}-${when.getMonth()}`
       const last = groups[groups.length - 1]
       if (last?.key === key) last.entries.push(entry)
@@ -147,13 +158,17 @@ export function Me({
           </p>
         ) : (
           months.map((month) => (
-            <section key={month.key} className="mb-7">
-              <div className="mb-2.5 flex items-baseline justify-between gap-3">
+            <section key={month.key} className="mb-8">
+              {/* No box around the group. A bordered card per month, dividers
+                  inside it and a border on every row was four frames deep and
+                  read as clutter — the heading and a hairline are enough to
+                  say where one month ends. */}
+              <div className="mb-1 flex items-baseline gap-3 border-b border-rule pb-2">
                 <h3 className="type-marquee text-[14px] text-ink">{month.label}</h3>
-                <span className="type-meta text-ink-3">{month.entries.length}</span>
+                <span className="type-meta ml-auto text-ink-3">{month.entries.length}</span>
               </div>
 
-              <ul className="flex flex-col divide-y divide-rule rounded-[2px] border border-rule bg-ground-2">
+              <ul className="flex flex-col divide-y divide-rule/60">
                 {month.entries.map((entry) => (
                   <LogRow
                     key={entry.id}
@@ -208,18 +223,34 @@ function LogRow({
   onOpenTitle: () => void
   onDelete: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+
+  // The month is already written above the row, so repeating "2026-08-11" on
+  // every line was noise in a date format nobody reads aloud. Weekday and day
+  // is what makes a log read as a diary.
+  // Composed from two formatters rather than asking for both at once: given
+  // weekday and day together, Intl returns "19 Wed", which is not how anyone
+  // says it. Each part is still localised, only the order is ours.
+  const day = entry.watchedOn
+    ? (() => {
+        const lang = i18n.resolvedLanguage ?? 'en'
+        const on = new Date(entry.watchedOn)
+        const weekday = new Intl.DateTimeFormat(lang, { weekday: 'short' }).format(on)
+        return `${weekday} ${new Intl.DateTimeFormat(lang, { day: 'numeric' }).format(on)}`
+      })()
+    : t('me.noDate')
 
   const meta = [
+    day,
+    entry.title.year,
     entry.seasonNumber && t('log.seasonN', { n: entry.seasonNumber }),
-    entry.watchedOn ?? t('me.noDate'),
   ]
     .filter(Boolean)
     .join(' · ')
 
   return (
     <li>
-      <div className="flex items-center gap-3 p-2.5">
+      <div className="flex items-center gap-3 py-2.5">
         <button
           type="button"
           onClick={onOpenTitle}
@@ -244,27 +275,32 @@ function LogRow({
           aria-expanded={open}
           className="min-w-0 flex-1 text-left"
         >
+          {/* The year has moved down to the meta line: it was competing with
+              the title for the same width and cutting it mid-word. */}
           <p className="type-title truncate text-[0.9375rem] leading-tight text-ink">
             {entry.title.name}
-            {entry.title.year && <span className="text-ink-3"> ({entry.title.year})</span>}
           </p>
-          <p className="type-meta mt-1 truncate text-ink-3">
-            {meta}
-            {entry.note && !open && (
-              <span className="text-ink-3/80"> · {entry.note}</span>
-            )}
-          </p>
+          <p className="type-meta mt-1 truncate text-ink-3">{meta}</p>
+
+          {/* Sentence case, not type-meta. That utility uppercases, so every
+              note previewed as SHOUTING and read like a label rather than
+              something someone wrote. */}
+          {entry.note && !open && (
+            <p className="mt-1 truncate text-[0.75rem] leading-snug text-ink-3/90 italic">
+              {entry.note}
+            </p>
+          )}
         </button>
 
         {entry.rating !== null && (
-          <span className="type-marquee shrink-0 rounded-[2px] bg-velvet-600 px-2 py-1 text-[12px] text-plate">
+          <span className="type-marquee shrink-0 rounded-[2px] border border-velvet-600/40 px-1.5 py-0.5 text-[12px] text-velvet-600">
             {entry.rating}
           </span>
         )}
       </div>
 
       {open && (
-        <div className="px-2.5 pb-3 pl-[4.25rem]">
+        <div className="pb-3 pl-[3.5rem]">
           {entry.note && (
             <p className="border-l-2 border-brass-600/40 pl-3 text-[0.8125rem] leading-relaxed text-ink-2 italic">
               {entry.note}

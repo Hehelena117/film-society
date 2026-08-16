@@ -63,6 +63,10 @@ const SEED = [
 // to add four rows for them; the shelf just gets longer sideways.
 const MORE = [11, 105, 218, 601, 620, 78, 289, 597, 862, 12, 585, 274]
 
+/** The rendered text of one log row, matched by the film on it. */
+const rowsText = (page, pattern) =>
+  page.locator('main li:visible').filter({ hasText: pattern }).first().innerText()
+
 const email = `fs-prof-${Math.floor(Math.random() * 1e9)}@example.com`
 const password = 'test-password-12345'
 const username = `prof_${Math.floor(Math.random() * 1e6)}`
@@ -118,6 +122,27 @@ try {
     .filter({ hasText: /2026/ })
     .allInnerTexts()
   check('the log is grouped by month', monthHeads.length === 3, monthHeads.join(' | '))
+
+  // The seed is inserted newest-watched FIRST, so created_at order is the exact
+  // reverse of watched_on order. Grouping by one while sorting by the other put
+  // the months backwards — and because only neighbouring rows merge, a month
+  // could appear twice. The old check counted three headings and was happy.
+  check(
+    'months run newest first',
+    JSON.stringify(monthHeads.map((m) => m.trim())) ===
+      JSON.stringify(['AUGUST 2026', 'JULY 2026', 'JUNE 2026']),
+    monthHeads.join(' | '),
+  )
+  check('no month appears twice', new Set(monthHeads).size === monthHeads.length)
+
+  const fightClub = await rowsText(page, /Fight Club/i)
+  // type-meta uppercases, so a note styled with it previews as SHOUTING.
+  check(
+    'the note preview keeps its own case',
+    fightClub.includes('The soap plot is the best of it.'),
+    fightClub.replace(/\s+/g, ' ').trim(),
+  )
+  check('no raw ISO dates on a row', !/\d{4}-\d{2}-\d{2}/.test(fightClub))
 
   const rows = page.locator('main li:visible')
   check('every viewing is listed', (await rows.count()) === SEED.length, `${await rows.count()}`)
