@@ -52,7 +52,11 @@
     "find": "Buscar personas",
     "myProfile": "Mi perfil",
     "noFollowers": "Nadie todavía.",
-    "noFollowing": "Aún no sigue a nadie."
+    "noFollowing": "Aún no sigue a nadie.",
+    "inYourGroups": "En tus grupos",
+    "noSuggestions": "Cuando entres en un grupo, sus miembros aparecerán aquí y no tendrás que buscarlos.",
+    "newMembers": "Nuevos miembros",
+    "noNewMembers": "Todavía no se ha unido nadie más."
   },
   "feed": {
     "title": "En este grupo",
@@ -109,7 +113,8 @@
       "rating": "Puntuación",
       "decade": "Década",
       "none": "Nada"
-    }
+    },
+    "toBooks": "Ir a Book Society"
   },
   "swipe": {
     "title": "Decidir juntos",
@@ -202,10 +207,14 @@
     "alreadyLogged_one": "Ya la has registrado una vez",
     "alreadyLogged_other": "Ya la has registrado {{count}} veces",
     "unrated": "sin puntuar",
-    "rewatchHint": "Guardar otra vez añade un revisionado — no sobrescribe lo anterior."
+    "rewatchHint": "Guardar otra vez añade un revisionado — no sobrescribe lo anterior.",
+    "onYourLists": "En tus listas",
+    "noSaved": "Aún no has guardado nada. Añade una película a una lista y te esperará aquí.",
+    "seenBefore": "Ya vistas",
+    "seenBeforeHint": "para volver a verla"
   },
   "auth": {
-    "tagline": "Solo socios. Pregunta en taquilla.",
+    "tagline": "Solo socios. Las dos puertas están aquí dentro.",
     "signIn": "Iniciar sesión",
     "signUp": "Hazte socio",
     "email": "Correo electrónico",
@@ -235,6 +244,22 @@
     "night": {
       "name": "Noche",
       "note": "Luces apagadas"
+    },
+    "bookshop": {
+      "name": "Librería",
+      "note": "Fachada verde"
+    },
+    "readingroom": {
+      "name": "Sala de lectura",
+      "note": "Azul marino y lámparas"
+    },
+    "paperback": {
+      "name": "Bolsillo",
+      "note": "Amarillo al sol"
+    },
+    "latenight": {
+      "name": "De madrugada",
+      "note": "Cuando los demás duermen"
     }
   },
   "edit": {
@@ -269,5 +294,97 @@
   },
   "profile": {
     "outOfTen": "{{score}} sobre diez"
+  },
+  "chooser": {
+    "welcome": "Buenas noches",
+    "subtitle": "¿Por dónde esta noche?",
+    "film": "Film Society",
+    "filmNote": "Lo que has visto, lo que verás y cómo decidirlo con los demás.",
+    "book": "Book Society",
+    "bookNote": "Lo que has leído, lo que tienes a medias y lo que leerás.",
+    "switchHint": "Puedes pasar al otro lado cuando quieras. Esto solo se pregunta una vez.",
+    "frontDoor": "Ver las dos puertas",
+    "back": "Quedarme donde estaba"
+  },
+  "book": {
+    "name": "Book Society",
+    "pages_one": "{{count}} página",
+    "pages_other": "{{count}} páginas",
+    "seriesN": "{{series}}, libro {{n}}",
+    "finished": "Leídos",
+    "empty": "Aún no hay nada. Usa + Log para añadir el primero.",
+    "toFilm": "Ir a Film Society",
+    "nav": {
+      "label": "Navegación principal",
+      "shelf": "Estante",
+      "reading": "Leyendo",
+      "log": "+ Log",
+      "me": "Yo",
+      "lists": "Listas",
+      "groups": "Grupos"
+    },
+    "shelf": {
+      "subtitle": "Elegido para ti, sacado del estante",
+      "onTheShelf": "En el estante",
+      "loading": "Alcanzando el estante…",
+      "endOfShelf": "Eso es todo por ahora",
+      "noneCame": "Esta vez no volvió nada. Puede que haya que preguntar otra vez.",
+      "reshuffle": "Muéstrame otra cosa"
+    },
+    "detail": {
+      "title": "Libro",
+      "logIt": "Registrar esta lectura",
+      "about": "Sobre el libro",
+      "subjects": "Temas"
+    },
+    "progress": {
+      "title": "Por dónde vas",
+      "notStarted": "Sin empezar. Márcalo como en curso y te esperará en tu estante.",
+      "start": "Empezar a leer",
+      "stop": "Dejar de leer",
+      "hint": "Aproximado vale. Nadie lo comprueba."
+    },
+    "reading": {
+      "title": "Leyendo ahora"
+    },
+    "stats": {
+      "read": "Libros",
+      "entries": "Lecturas"
+    },
+    "log": {
+      "title": "Registrar una lectura",
+      "search": "¿Qué libro?",
+      "searchPlaceholder": "Busca por título o autor…",
+      "notThisOne": "Este no — busca otra vez",
+      "finishedOn": "Terminado el",
+      "save": "Guardar en mi estante",
+      "reading": "Tienes a medias",
+      "readingHint": "termina uno",
+      "readBefore": "Leídos antes",
+      "nothingStarted": "Nada en curso. Abre un libro y márcalo como en curso."
+    },
+    "rating": "{{score}} sobre 5 · {{count}} lectores",
+    "lists": {
+      "title": "Listas de lectura",
+      "new": "Nueva lista",
+      "name": "Nombre de la lista",
+      "shareWith": "Compartir con",
+      "empty": "Aún no hay listas. Crea una para ti o compártela con un grupo.",
+      "delete": "Eliminar esta lista",
+      "noGroupsYet": "Crea antes un grupo de lectura y aparecerá aquí."
+    },
+    "groups": {
+      "title": "Grupos de lectura",
+      "new": "Nuevo grupo",
+      "empty": "Aún no hay grupos. Crea uno y añade gente por nombre de usuario."
+    },
+    "swipe": {
+      "title": "Decidir juntos",
+      "start": "Decidir juntos",
+      "needsGroup": "Comparte esta lista con un grupo para decidir juntos — ahí es donde la encuentran los demás.",
+      "agreed": "Estáis de acuerdo",
+      "waitingHint": "Has visto todos los libros. Esperando a los demás."
+    },
+    "unavailable": "El catálogo no responde ahora mismo. Es cosa de Open Library, no tuya — inténtalo dentro de un minuto."
   }
 }

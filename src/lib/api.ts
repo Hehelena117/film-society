@@ -233,6 +233,8 @@ export async function getRecommendations(opts: {
     more?: Array<{ name: string; year: number | null }>
     less?: Array<{ name: string; year: number | null }>
   }
+  /** Books they loved. The one bridge between the two halves. */
+  crossover?: Array<{ title: string; author: string | null; score: number }>
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: SupportedLanguage
@@ -244,4 +246,38 @@ export async function getRecommendations(opts: {
 
   if (error) throw error
   return data?.recommendations ?? []
+}
+
+/**
+ * Your film ratings, for the BOOK side's recommender.
+ *
+ * The mirror of getBookRatingsForCrossover. Titles and scores only: notes are
+ * opt-in per side and never cross, whichever switch happens to be on.
+ */
+export async function getFilmRatingsForCrossover(
+  language: SupportedLanguage,
+  limit = 30,
+): Promise<Array<{ name: string; year: number | null; score: number }>> {
+  const { data, error } = await supabase
+    .from('log_entries')
+    .select('rating, title:titles!inner(year, translations:title_translations(name, language))')
+    .not('rating', 'is', null)
+    .gte('rating', 7)
+    .order('rating', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Could not read film ratings for crossover', error)
+    return []
+  }
+
+  const out: Array<{ name: string; year: number | null; score: number }> = []
+  for (const row of (data ?? []) as Array<Record<string, any>>) {
+    const translations = row.title?.translations ?? []
+    const name =
+      translations.find((t: Record<string, unknown>) => t.language === language)?.name ??
+      translations[0]?.name
+    if (name) out.push({ name, year: row.title?.year ?? null, score: row.rating })
+  }
+  return out
 }

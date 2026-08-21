@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import type { Side } from '@/lib/side'
 
 export interface Group {
   id: string
@@ -19,16 +20,20 @@ export interface GroupMember {
  * Groups are named collections of people, in the WhatsApp sense. "Family" is
  * not a special concept — it is a group somebody called Family.
  *
- * RLS restricts this to groups the caller belongs to.
+ * RLS restricts this to groups the caller belongs to, and  restricts
+ * it to the half being looked at. Without that filter a book group would turn
+ * up on the film side and vice versa — the tables are shared deliberately, so
+ * the separation has to be asked for at every read.
  */
-export async function getMyGroups(): Promise<Group[]> {
+export async function getMyGroups(side: Side = 'film'): Promise<Group[]> {
   const { data: auth } = await supabase.auth.getUser()
   const uid = auth.user?.id
   if (!uid) return []
 
   const { data, error } = await supabase
     .from('group_members')
-    .select('role, group:groups!inner(id, name, avatar_url, members:group_members(count))')
+    .select('role, group:groups!inner(id, name, avatar_url, side, members:group_members(count))')
+    .eq('group.side', side)
     // Without this the query returns one row per MEMBER, not per group: RLS
     // lets you read every membership row of a group you belong to, so a group
     // of three appeared in the list three times.
@@ -54,8 +59,11 @@ export async function getMyGroups(): Promise<Group[]> {
  * groups SELECT policy filters the row out and PostgREST reports it as a
  * WITH CHECK violation. See migration 20260814000006.
  */
-export async function createGroup(name: string): Promise<string> {
-  const { data, error } = await supabase.rpc('create_group', { group_name: name })
+export async function createGroup(name: string, side: Side = 'film'): Promise<string> {
+  const { data, error } = await supabase.rpc('create_group', {
+    group_name: name,
+    group_side: side,
+  })
   if (error) throw error
   return data as string
 }

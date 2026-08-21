@@ -62,10 +62,31 @@ interface UserVerdict {
   year: number | null
 }
 
+/**
+ * A book the reader loved, crossing over from the other half.
+ *
+ * The single deliberate bridge between two sealed sides. Titles and scores
+ * only — never notes. Notes are opt-in per side, and consent given for books
+ * is not consent for films.
+ *
+ * Used more sparingly here than in the other direction. Someone on the film
+ * side has a full film log to draw on and came here to be told about films;
+ * someone starting the book side has barely any reading logged and a large
+ * watch history, so films are far more useful to them than books are here.
+ */
+const CROSSOVER_LIMIT = 1
+
+interface CrossoverBook {
+  title: string
+  author: string | null
+  score: number
+}
+
 interface RecommendRequest {
   ratings: UserRating[]
   notes?: UserNote[]
   feedback?: { more?: UserVerdict[]; less?: UserVerdict[] }
+  crossover?: CrossoverBook[]
   excludeNames: string[]
   filters: { genres?: string[]; services?: string[] }
   language: 'en' | 'da' | 'es'
@@ -172,6 +193,15 @@ async function askModel(
   const wantMore = asList(body.feedback?.more, 40)
   const wantLess = asList(body.feedback?.less, 40)
 
+  // Only books they really liked, and only a few of them: this is meant to
+  // colour the occasional suggestion, not turn the film wall into a reading
+  // list with posters.
+  const fromBooks = (body.crossover ?? [])
+    .filter((b) => b.score >= 8)
+    .slice(0, 12)
+    .map((b) => `${b.title}${b.author ? ` by ${b.author}` : ''} — ${b.score}/10`)
+    .join('\n')
+
   const filters = [
     body.filters.genres?.length ? `Genres: ${body.filters.genres.join(', ')}` : null,
     body.filters.services?.length ? `Available on: ${body.filters.services.join(', ')}` : null,
@@ -200,6 +230,15 @@ async function askModel(
       ? `\nThey pressed "not for me" on these. Never offer them, and steer well` +
         ` clear of what they have in common — if several share a genre, a tone` +
         ` or an era, that is the thing they are rejecting:\n${wantLess}`
+      : '',
+    fromBooks
+      ? `\nThey also READ these and thought highly of them:\n${fromBooks}\n` +
+        `For AT MOST ${CROSSOVER_LIMIT} of your suggestions — never more — you may` +
+        ` justify a film by one of these books rather than by their film ratings.` +
+        ` When you do, say so plainly, in the form "Because you enjoyed <book>,` +
+        ` you might like this". Only where the connection is real: a strained one` +
+        ` is worse than none, and every other suggestion should come from what` +
+        ` they watch.`
       : '',
     filters ? `\nThey want:\n${filters}` : '',
     body.excludeNames.length

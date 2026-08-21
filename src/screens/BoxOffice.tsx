@@ -7,10 +7,13 @@ import { errorMessage } from '@/lib/errors'
 type Mode = 'signIn' | 'signUp'
 
 /**
- * The box office — sign in and sign up.
+ * The front door — sign in and sign up, for both halves at once.
  *
- * Same bulb-lit frame as the poster surrounds in the Lobby, so the first
- * screen already teaches the visual language of the rest of the app.
+ * It used to wear the film side's name, which stopped being true the moment
+ * one account opened onto two societies: someone signing up to keep a reading
+ * log was being greeted by a cinema. There is no third name to fall back on —
+ * that was decided deliberately — so the entrance carries both, joined by an
+ * ampersand, which is also the plainest way to say what is behind the door.
  */
 export function BoxOffice() {
   const { t } = useTranslation()
@@ -47,29 +50,60 @@ export function BoxOffice() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center wall-ground texture-wall px-6 py-12">
-      {/* ---- Marquee ------------------------------------------------------ */}
-      <div className="relative mb-3 rounded-[3px] bg-frame px-1.5 py-1.5 shadow-frame">
-        <div className="pointer-events-none absolute inset-x-3 top-[3px] h-2 bulbs-h bulb-breathe" />
-        <div className="pointer-events-none absolute inset-x-3 bottom-[3px] h-2 bulbs-h bulb-breathe bulb-offset-2" />
-        <div className="bg-linear-to-b from-plate to-plate-2 px-8 py-3.5">
-          <h1 className="type-marquee text-[2rem] text-velvet-600">{t('app.name')}</h1>
+    <div
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-12"
+      style={{ backgroundColor: '#1a1416' }}
+    >
+      {/* One warm lamp over the entrance. A globe light hangs in the cinema
+          foyer and in the bookshop window alike, so it belongs to both — where
+          a strip of marquee bulbs belongs only to one. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-72"
+        style={{
+          backgroundImage:
+            'radial-gradient(60% 100% at 50% 0%, rgb(255 228 168 / 0.22) 0%, transparent 70%)',
+        }}
+      />
+
+      {/* ---- The name plate over the door -------------------------------- */}
+      <div
+        className="relative mb-3 rounded-[3px] p-[5px]"
+        style={{ backgroundColor: '#2a211d', boxShadow: '0 20px 44px -18px rgb(0 0 0 / 0.75)' }}
+      >
+        <div className="flex flex-col items-center bg-linear-to-b from-[#f4eddf] to-[#e6d9c2] px-9 py-4">
+          <h1 className="type-marquee text-[1.7rem] leading-none text-[#5d1720]">{t('app.name')}</h1>
+          <span className="type-script my-0.5 text-[1.35rem] leading-none text-[#8a6320]">
+            &amp;
+          </span>
+          <span className="type-marquee text-[1.7rem] leading-none text-[#41513c]">
+            {t('book.name')}
+          </span>
         </div>
+
+        {/* The brass rail under the plate — bar rail and cinema fitting both. */}
+        <div className="mt-[5px] h-[3px] brass-rail" aria-hidden />
       </div>
 
-      <p className="type-script mb-9 text-[1.5rem] text-ink-2">{t('auth.tagline')}</p>
+      <p className="type-script mb-8 text-center text-[1.45rem] text-[#c2b8a5]">
+        {t('auth.tagline')}
+      </p>
 
-      {/* ---- The ticket window -------------------------------------------- */}
+      {/* ---- The desk ------------------------------------------------------
+          Plain panelled wood rather than a bulb-lit ticket window: the point
+          of this screen is that you have not chosen a side yet, so nothing on
+          it should be furniture from one of them. */}
       <form
         onSubmit={onSubmit}
-        className="relative w-full max-w-[21rem] rounded-[3px] bg-frame p-2 shadow-frame"
+        className="relative w-full max-w-[21rem] rounded-[3px] p-2"
+        style={{ backgroundColor: '#2a211d', boxShadow: '0 20px 44px -18px rgb(0 0 0 / 0.75)' }}
       >
-        <div className="pointer-events-none absolute inset-y-3 left-[3px] w-2 bulbs-v bulb-breathe bulb-offset-1" />
-        <div className="pointer-events-none absolute inset-y-3 right-[3px] w-2 bulbs-v bulb-breathe bulb-offset-3" />
-
-        <div className="rounded-[2px] bg-ground px-6 py-7 ring-1 ring-brass-600/40">
+        <div
+          className="rounded-[2px] px-6 py-7 ring-1 ring-[#c9922e]/40"
+          style={{ backgroundColor: '#f4eddf' }}
+        >
           <div className="rule-pip mb-6">
-            <span className="type-meta whitespace-nowrap text-ink-3">
+            <span className="type-meta whitespace-nowrap" style={{ color: '#7a6d70' }}>
               {t(mode === 'signIn' ? 'auth.signIn' : 'auth.signUp')}
             </span>
           </div>
@@ -110,12 +144,12 @@ export function BoxOffice() {
           </div>
 
           {error && (
-            <p role="alert" className="mt-4 text-[0.8125rem] leading-snug text-velvet-500">
+            <p role="alert" className="mt-4 text-[0.8125rem] leading-snug" style={{ color: '#b22a2a' }}>
               {error}
             </p>
           )}
           {notice && (
-            <p role="status" className="mt-4 text-[0.8125rem] leading-snug text-ink-2">
+            <p role="status" className="mt-4 text-[0.8125rem] leading-snug" style={{ color: '#4a3f42' }}>
               {notice}
             </p>
           )}
@@ -123,7 +157,8 @@ export function BoxOffice() {
           <button
             type="submit"
             disabled={busy}
-            className="type-marquee mt-6 w-full rounded-[2px] bg-velvet-600 py-3.5 text-[15px] text-plate transition-colors hover:bg-velvet-700 disabled:opacity-60"
+            className="type-marquee mt-6 w-full rounded-[2px] py-3.5 text-[15px] transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ backgroundColor: '#2a211d', color: '#f4eddf' }}
           >
             {busy ? t('auth.working') : t(mode === 'signIn' ? 'auth.signIn' : 'auth.signUp')}
           </button>
@@ -135,7 +170,8 @@ export function BoxOffice() {
               setError(null)
               setNotice(null)
             }}
-            className="mt-4 w-full text-[0.8125rem] text-ink-3 underline underline-offset-4 hover:text-ink-2"
+            className="mt-4 w-full text-[0.8125rem] underline underline-offset-4"
+            style={{ color: '#7a6d70' }}
           >
             {t(mode === 'signIn' ? 'auth.noAccount' : 'auth.haveAccount')}
           </button>
@@ -161,15 +197,16 @@ interface FieldProps {
 function Field({ label, hint, value, onChange, type = 'text', ...rest }: FieldProps) {
   return (
     <label className="block">
-      <span className="type-meta mb-1.5 block text-ink-3">{label}</span>
+      <span className="type-meta mb-1.5 block" style={{ color: '#7a6d70' }}>{label}</span>
       <input
         {...rest}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[2px] border border-rule bg-ground-2 px-3 py-2.5 text-[0.9375rem] text-ink outline-none transition-colors focus:border-brass-600 focus:ring-1 focus:ring-brass-600/50"
+        className="w-full rounded-[2px] border px-3 py-2.5 text-[0.9375rem] outline-none transition-colors focus:border-[#c9922e] focus:ring-1 focus:ring-[#c9922e]/50"
+        style={{ borderColor: '#dbcdb2', backgroundColor: '#ebe0cb', color: '#1a1416' }}
       />
-      {hint && <span className="mt-1 block text-[0.7rem] text-ink-3">{hint}</span>}
+      {hint && <span className="mt-1 block text-[0.7rem]" style={{ color: '#7a6d70' }}>{hint}</span>}
     </label>
   )
 }

@@ -15,6 +15,10 @@ export interface Profile {
   use_notes_for_recommendations: boolean
   /** How this user stacks their own log. See lib/groupLog.ts. */
   log_grouping: string
+  /** Which half they were last in. Null until the chooser has been answered. */
+  last_side: string | null
+  /** Opt-in, and separate from the film-side switch. */
+  use_book_notes_for_recommendations: boolean
 }
 
 interface AuthValue {
@@ -117,7 +121,7 @@ async function loadProfile(id: string): Promise<Profile | null> {
     .from('profiles')
     .select(
       'id, username, avatar_url, bio, country, language, theme, ' +
-        'use_notes_for_recommendations, log_grouping',
+        'use_notes_for_recommendations, log_grouping, last_side, use_book_notes_for_recommendations',
     )
     .eq('id', id)
     .maybeSingle()

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getTheme, setTheme, THEMES, type ThemeId } from '@/lib/theme'
+import type { Side } from '@/lib/side'
+import { getTheme, setTheme, themesFor, type ThemeId } from '@/lib/theme'
 
 /**
  * Lets the viewer pick which room they are sitting in.
@@ -9,16 +10,21 @@ import { getTheme, setTheme, THEMES, type ThemeId } from '@/lib/theme'
  * Lives in a floating control for now. Once there is a profile screen this
  * should move into it — but the choice stays the user's either way.
  */
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ side }: { side: Side }) {
   const { t } = useTranslation()
-  const [theme, setThemeState] = useState<ThemeId>(getTheme)
+  const THEMES = themesFor(side)
+  const [theme, setThemeState] = useState<ThemeId>(() => getTheme(side))
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
-    setTheme(theme)
-  }, [theme])
+    setTheme(side, theme)
+  }, [side, theme])
+
+  useEffect(() => {
+    setThemeState(getTheme(side))
+  }, [side])
 
   // Close on Escape or on a click outside, returning focus to the trigger.
   useEffect(() => {
@@ -113,7 +119,7 @@ function Swatch({
   option,
   small = false,
 }: {
-  option: (typeof THEMES)[number]
+  option: { id: ThemeId; swatch: string; dot: string }
   small?: boolean
 }) {
   return (

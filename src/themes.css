@@ -103,3 +103,112 @@
   --shadow-frame: 0 22px 50px -18px rgb(0 0 0 / 0.85), 0 6px 16px -6px rgb(0 0 0 / 0.55);
   --shadow-plate: 0 1px 3px rgb(0 0 0 / 0.5);
 }
+
+/* ==========================================================================
+   BOOK SOCIETY — Theme variants
+
+   Derived from resources/mood-board/book app: the green painted shopfront,
+   warm globe lamps, dark wood and brass, marble and hexagonal tile, walls of
+   spines. Palette from the Pantone sheet in that folder — Reseda, Chive,
+   Powder Blue, 2965 C, Cocoa, Coconut Milk, Pastel Yellow, Red Inferno.
+
+   Same token names as the film themes so every component works on both sides;
+   only the values differ. What is a lit poster frame over there is a shelf
+   here, and FRAME is the wood of it rather than the black of a cinema.
+   ========================================================================== */
+
+/* --- 1. Bookshop — the green shopfront, warm paper ----------------------- */
+[data-theme='bookshop'] {
+  --color-ground: #f0ede5; /* Coconut Milk */
+  --color-ground-2: #e4e0d3;
+  --color-rule: #cfd2c2;
+  --color-rule-strong: #a1ad92; /* Reseda */
+
+  --color-ink: #1f2419;
+  --color-ink-2: #45503c;
+  --color-ink-3: #78826d;
+
+  --color-band: #a1ad92;
+  --color-band-ink: #1f2419;
+
+  --color-frame: #594536; /* Cocoa — the shelf itself */
+  --color-accent: #4a5240; /* Chive */
+
+  --texture-blend: multiply;
+  --texture-opacity: 0.26;
+  --glow-top: 36%;
+  --shadow-frame: 0 18px 40px -16px rgb(41 46 33 / 0.42), 0 4px 12px -4px rgb(41 46 33 / 0.18);
+  --shadow-plate: 0 1px 2px rgb(74 82 64 / 0.1);
+}
+
+/* --- 2. Reading room — navy and powder blue, lamps on ------------------- */
+[data-theme='readingroom'] {
+  --color-ground: #eef1f3;
+  --color-ground-2: #dfe6ea;
+  --color-rule: #c4d0d8;
+  --color-rule-strong: #94b2c4; /* Powder Blue */
+
+  --color-ink: #00263e; /* 2965 C */
+  --color-ink-2: #234a63;
+  --color-ink-3: #5d7d92;
+
+  --color-band: #00263e;
+  --color-band-ink: #eef1f3;
+
+  --color-frame: #002f4b;
+  --color-accent: #4e0000; /* Red Inferno, used sparingly */
+
+  --texture-blend: multiply;
+  --texture-opacity: 0.2;
+  --glow-top: 30%;
+  --shadow-frame: 0 18px 40px -16px rgb(0 38 62 / 0.45), 0 4px 12px -4px rgb(0 38 62 / 0.2);
+  --shadow-plate: 0 1px 2px rgb(0 38 62 / 0.12);
+}
+
+/* --- 3. Paperback — pastel yellow and cocoa, a cheap sunlit edition ------ */
+[data-theme='paperback'] {
+  --color-ground: #f7f1dc;
+  --color-ground-2: #f2e6b1; /* Pastel Yellow */
+  --color-rule: #ddcf9f;
+  --color-rule-strong: #b9a271;
+
+  --color-ink: #3a2c22;
+  --color-ink-2: #594536; /* Cocoa */
+  --color-ink-3: #8a7561;
+
+  --color-band: #594536;
+  --color-band-ink: #f7f1dc;
+
+  --color-frame: #3a2c22;
+  --color-accent: #8a5a2b;
+
+  --texture-blend: multiply;
+  --texture-opacity: 0.3;
+  --glow-top: 44%;
+  --shadow-frame: 0 18px 40px -16px rgb(58 44 34 / 0.4), 0 4px 12px -4px rgb(58 44 34 / 0.18);
+  --shadow-plate: 0 1px 2px rgb(58 44 34 / 0.1);
+}
+
+/* --- 4. Late night — reading after everyone else has gone to bed --------- */
+[data-theme='latenight'] {
+  --color-ground: #14120f;
+  --color-ground-2: #1e1a16;
+  --color-rule: #35302a;
+  --color-rule-strong: #4e463c;
+
+  --color-ink: #ece5d6;
+  --color-ink-2: #c2b8a5;
+  --color-ink-3: #8d8375;
+
+  --color-band: #1e1a16;
+  --color-band-ink: #ece5d6;
+
+  --color-frame: #0d0b09;
+  --color-accent: #a1ad92; /* Reseda, the one cool note in the dark */
+
+  --texture-blend: overlay;
+  --texture-opacity: 0.16;
+  --glow-top: 14%;
+  --shadow-frame: 0 18px 40px -16px rgb(0 0 0 / 0.7), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+  --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.35);
+}

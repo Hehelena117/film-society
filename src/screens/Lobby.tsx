@@ -5,6 +5,7 @@ import { AddToList, type AddTarget } from '@/components/AddToList'
 import { PosterFrame } from '@/components/PosterFrame'
 import { getLogSnapshot, getRecommendations, type LogSnapshot } from '@/lib/api'
 import { getMyFeedback, setFeedback, type FeedbackEntry, type Verdict } from '@/lib/feedback'
+import { getBookRatingsForCrossover } from '@/lib/books'
 import { getShown, rememberShown } from '@/lib/shown'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
@@ -39,6 +40,8 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
   // have already rated is the clearest possible sign of not being listened to.
   const seenRef = useRef<string[]>(getShown())
   const snapshotRef = useRef<LogSnapshot | null>(null)
+  // Books they loved, read once with the snapshot.
+  const crossoverRef = useRef<Array<{ title: string; author: string | null; score: number }>>([])
   // Read once and kept current locally. A verdict must survive a reload — "never
   // show me this again" that forgets by tomorrow is worse than no button at all.
   const feedbackRef = useRef<FeedbackEntry[]>([])
@@ -63,6 +66,7 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
         snapshotRef.current = await getLogSnapshot(language, useNotes)
         seenRef.current = [...new Set([...seenRef.current, ...snapshotRef.current.loggedNames])]
         feedbackRef.current = await getMyFeedback()
+        crossoverRef.current = await getBookRatingsForCrossover()
         setVerdicts(
           Object.fromEntries(
             feedbackRef.current.map((f) => [`${f.mediaType}-${f.tmdbId}`, f.verdict]),
@@ -75,6 +79,7 @@ export function Lobby({ onOpenTitle }: { onOpenTitle: (ref: TitleRef) => void })
       const batch = await getRecommendations({
         ratings: snapshotRef.current.ratings,
         notes: snapshotRef.current.notes,
+        crossover: crossoverRef.current,
         feedback: {
           more: feedbackRef.current
             .filter((f) => f.verdict === 'more')

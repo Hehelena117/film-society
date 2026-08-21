@@ -52,7 +52,11 @@
     "noFollowers": "Nobody yet.",
     "noFollowing": "Not following anyone yet.",
     "find": "Find people",
-    "myProfile": "My profile"
+    "myProfile": "My profile",
+    "inYourGroups": "In your groups",
+    "noSuggestions": "Once you are in a group, the people in it show up here so you do not have to look them up.",
+    "newMembers": "New members",
+    "noNewMembers": "Nobody else has joined yet."
   },
   "edit": {
     "title": "Edit profile",
@@ -129,7 +133,8 @@
       "rating": "Rating",
       "decade": "Decade",
       "none": "Nothing"
-    }
+    },
+    "toBooks": "Go to Book Society"
   },
   "swipe": {
     "title": "Decide together",
@@ -222,10 +227,14 @@
     "alreadyLogged_one": "You have logged this once already",
     "alreadyLogged_other": "You have logged this {{count}} times already",
     "unrated": "not rated",
-    "rewatchHint": "Saving again adds a rewatch — it will not overwrite the above."
+    "rewatchHint": "Saving again adds a rewatch — it will not overwrite the above.",
+    "onYourLists": "On your lists",
+    "noSaved": "Nothing saved yet. Add a film to a list and it will wait for you here.",
+    "seenBefore": "Seen before",
+    "seenBeforeHint": "for a rewatch"
   },
   "auth": {
-    "tagline": "Members only. Ask at the box office.",
+    "tagline": "Members only. Both doors are through here.",
     "signIn": "Sign in",
     "signUp": "Join",
     "email": "Email",
@@ -255,6 +264,22 @@
     "night": {
       "name": "Night",
       "note": "Lights down"
+    },
+    "bookshop": {
+      "name": "Bookshop",
+      "note": "Green shopfront"
+    },
+    "readingroom": {
+      "name": "Reading room",
+      "note": "Navy and lamplight"
+    },
+    "paperback": {
+      "name": "Paperback",
+      "note": "Sunlit yellow"
+    },
+    "latenight": {
+      "name": "Late night",
+      "note": "After everyone else"
     }
   },
   "collection": {
@@ -269,5 +294,97 @@
   },
   "profile": {
     "outOfTen": "{{score}} out of ten"
+  },
+  "chooser": {
+    "welcome": "Good evening",
+    "subtitle": "Which way tonight?",
+    "film": "Film Society",
+    "filmNote": "What you have watched, what to watch next, and deciding with other people.",
+    "book": "Book Society",
+    "bookNote": "What you have read, what you are in the middle of, and what to read next.",
+    "switchHint": "You can walk through to the other side whenever you like. This only asks once.",
+    "frontDoor": "Show both doors",
+    "back": "Stay where I was"
+  },
+  "book": {
+    "name": "Book Society",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "seriesN": "{{series}}, book {{n}}",
+    "finished": "Finished",
+    "empty": "Nothing logged yet. Use + Log to add the first one.",
+    "toFilm": "Go to Film Society",
+    "nav": {
+      "label": "Main navigation",
+      "shelf": "Shelf",
+      "reading": "Reading",
+      "log": "+ Log",
+      "me": "Me",
+      "lists": "Lists",
+      "groups": "Groups"
+    },
+    "shelf": {
+      "subtitle": "Chosen for you, off the shelf",
+      "onTheShelf": "On the shelf",
+      "loading": "Reaching along the shelf…",
+      "endOfShelf": "That is the shelf for now",
+      "noneCame": "Nothing came back this time. The shop may just need asking again.",
+      "reshuffle": "Show me something else"
+    },
+    "detail": {
+      "title": "Book",
+      "logIt": "Log this reading",
+      "about": "About",
+      "subjects": "Subjects"
+    },
+    "progress": {
+      "title": "Where you are",
+      "notStarted": "Not started. Mark it as being read and it will wait on your shelf.",
+      "start": "Start reading",
+      "stop": "Stop reading",
+      "hint": "Roughly is fine. Nobody is checking."
+    },
+    "reading": {
+      "title": "Currently reading"
+    },
+    "stats": {
+      "read": "Books",
+      "entries": "Readings"
+    },
+    "log": {
+      "title": "Log a reading",
+      "search": "Which book?",
+      "searchPlaceholder": "Search by title or author…",
+      "notThisOne": "Not this one — search again",
+      "finishedOn": "Finished on",
+      "save": "Save to my shelf",
+      "reading": "You are in the middle of",
+      "readingHint": "finish one off",
+      "readBefore": "Read before",
+      "nothingStarted": "Nothing on the go. Open a book and mark it as being read."
+    },
+    "rating": "{{score}} out of 5 · {{count}} readers",
+    "lists": {
+      "title": "Reading lists",
+      "new": "New list",
+      "name": "List name",
+      "shareWith": "Share with",
+      "empty": "No lists yet. Make one for yourself, or share it with a group.",
+      "delete": "Delete this list",
+      "noGroupsYet": "Make a book group first and it will appear here."
+    },
+    "groups": {
+      "title": "Book groups",
+      "new": "New group",
+      "empty": "No groups yet. Make one and add people by username."
+    },
+    "swipe": {
+      "title": "Decide together",
+      "start": "Decide together",
+      "needsGroup": "Share this list with a group to decide together — that is where the others find it.",
+      "agreed": "You agree",
+      "waitingHint": "You have seen every book. Waiting for the others."
+    },
+    "unavailable": "The catalogue is not answering just now. That is Open Library's end, not yours — try again in a minute."
   }
 }

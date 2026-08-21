@@ -15,11 +15,15 @@ export function Me({
   onFindPeople,
   onOpenProfile,
   onEditProfile,
+  onSwitchSide,
+  onFrontDoor,
 }: {
   onOpenTitle: (ref: TitleRef) => void
   onFindPeople: () => void
   onOpenProfile: (userId: string) => void
   onEditProfile: () => void
+  onSwitchSide: () => void
+  onFrontDoor: () => void
 }) {
   const { t, i18n } = useTranslation()
   const { profile, signOut, user, refreshProfile } = useAuth()
@@ -139,6 +143,15 @@ export function Me({
           </button>
         </div>
 
+        {/* The door back to the other half. */}
+        <button
+          type="button"
+          onClick={onSwitchSide}
+          className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+        >
+          {t('me.toBooks')}
+        </button>
+
         {error && <p className="mt-5 text-[0.875rem] text-velvet-500">{error}</p>}
 
         <div className="rule-pip mt-8 mb-4">
@@ -213,10 +226,21 @@ export function Me({
           ))
         )}
 
+        {/* The way out, and the way back to the front door, kept together at
+            the foot of the page rather than up among the profile buttons —
+            they are both leaving, not doing. */}
+        <button
+          type="button"
+          onClick={onFrontDoor}
+          className="type-meta mt-12 w-full text-center text-ink-3 underline underline-offset-4 hover:text-ink-2"
+        >
+          {t('chooser.frontDoor')}
+        </button>
+
         <button
           type="button"
           onClick={() => void signOut()}
-          className="type-meta mt-12 w-full text-center text-ink-3 underline underline-offset-4 hover:text-velvet-500"
+          className="type-meta mt-3 w-full text-center text-ink-3 underline underline-offset-4 hover:text-velvet-500"
         >
           {t('auth.signOut')}
         </button>

@@ -52,7 +52,11 @@
     "find": "Find personer",
     "myProfile": "Min profil",
     "noFollowers": "Ingen endnu.",
-    "noFollowing": "Følger ikke nogen endnu."
+    "noFollowing": "Følger ikke nogen endnu.",
+    "inYourGroups": "I dine grupper",
+    "noSuggestions": "Når du er med i en gruppe, dukker medlemmerne op her, så du slipper for at slå dem op.",
+    "newMembers": "Nye medlemmer",
+    "noNewMembers": "Der er ikke kommet andre til endnu."
   },
   "feed": {
     "title": "I denne gruppe",
@@ -109,7 +113,8 @@
       "rating": "Bedømmelse",
       "decade": "Årti",
       "none": "Ingenting"
-    }
+    },
+    "toBooks": "Gå til Book Society"
   },
   "swipe": {
     "title": "Beslut sammen",
@@ -202,10 +207,14 @@
     "alreadyLogged_one": "Du har allerede registreret denne én gang",
     "alreadyLogged_other": "Du har allerede registreret denne {{count}} gange",
     "unrated": "ikke bedømt",
-    "rewatchHint": "Gemmer du igen, tilføjes et gensyn — det overskriver ikke ovenstående."
+    "rewatchHint": "Gemmer du igen, tilføjes et gensyn — det overskriver ikke ovenstående.",
+    "onYourLists": "På dine lister",
+    "noSaved": "Der er ikke gemt noget endnu. Tilføj en film til en liste, så venter den her.",
+    "seenBefore": "Set før",
+    "seenBeforeHint": "til et gensyn"
   },
   "auth": {
-    "tagline": "Kun for medlemmer. Spørg i billetlugen.",
+    "tagline": "Kun for medlemmer. Begge døre er herinde.",
     "signIn": "Log ind",
     "signUp": "Bliv medlem",
     "email": "E-mail",
@@ -235,6 +244,22 @@
     "night": {
       "name": "Nat",
       "note": "Lyset er slukket"
+    },
+    "bookshop": {
+      "name": "Boghandel",
+      "note": "Grøn facade"
+    },
+    "readingroom": {
+      "name": "Læsesal",
+      "note": "Marineblåt og lampelys"
+    },
+    "paperback": {
+      "name": "Paperback",
+      "note": "Solbleget gul"
+    },
+    "latenight": {
+      "name": "Sent om aftenen",
+      "note": "Når alle andre sover"
     }
   },
   "edit": {
@@ -269,5 +294,97 @@
   },
   "profile": {
     "outOfTen": "{{score}} ud af ti"
+  },
+  "chooser": {
+    "welcome": "God aften",
+    "subtitle": "Hvilken vej i aften?",
+    "film": "Film Society",
+    "filmNote": "Hvad du har set, hvad du skal se, og hvordan I bliver enige.",
+    "book": "Book Society",
+    "bookNote": "Hvad du har læst, hvad du er midt i, og hvad du skal læse nu.",
+    "switchHint": "Du kan gå over til den anden side når som helst. Der bliver kun spurgt én gang.",
+    "frontDoor": "Vis begge døre",
+    "back": "Bliv hvor jeg var"
+  },
+  "book": {
+    "name": "Book Society",
+    "pages_one": "{{count}} side",
+    "pages_other": "{{count}} sider",
+    "seriesN": "{{series}}, bog {{n}}",
+    "finished": "Læst",
+    "empty": "Der er ikke registreret noget endnu. Brug + Log for at tilføje den første.",
+    "toFilm": "Gå til Film Society",
+    "nav": {
+      "label": "Hovednavigation",
+      "shelf": "Reol",
+      "reading": "Læser",
+      "log": "+ Log",
+      "me": "Mig",
+      "lists": "Lister",
+      "groups": "Grupper"
+    },
+    "shelf": {
+      "subtitle": "Valgt til dig, taget ned fra reolen",
+      "onTheShelf": "På reolen",
+      "loading": "Rækker ud efter reolen…",
+      "endOfShelf": "Det var reolen for nu",
+      "noneCame": "Der kom ikke noget tilbage denne gang. Butikken skal måske bare spørges igen.",
+      "reshuffle": "Vis mig noget andet"
+    },
+    "detail": {
+      "title": "Bog",
+      "logIt": "Registrér denne læsning",
+      "about": "Om bogen",
+      "subjects": "Emner"
+    },
+    "progress": {
+      "title": "Hvor du er",
+      "notStarted": "Ikke begyndt. Markér den som i gang, så venter den på din reol.",
+      "start": "Begynd at læse",
+      "stop": "Stop med at læse",
+      "hint": "Cirka er fint. Ingen tjekker efter."
+    },
+    "reading": {
+      "title": "Læser lige nu"
+    },
+    "stats": {
+      "read": "Bøger",
+      "entries": "Læsninger"
+    },
+    "log": {
+      "title": "Registrér en læsning",
+      "search": "Hvilken bog?",
+      "searchPlaceholder": "Søg på titel eller forfatter…",
+      "notThisOne": "Ikke denne — søg igen",
+      "finishedOn": "Læst færdig den",
+      "save": "Gem på min reol",
+      "reading": "Du er midt i",
+      "readingHint": "gør en færdig",
+      "readBefore": "Læst før",
+      "nothingStarted": "Ingenting i gang. Åbn en bog, og markér den som i gang."
+    },
+    "rating": "{{score}} ud af 5 · {{count}} læsere",
+    "lists": {
+      "title": "Læselister",
+      "new": "Ny liste",
+      "name": "Listens navn",
+      "shareWith": "Del med",
+      "empty": "Ingen lister endnu. Lav en til dig selv, eller del den med en gruppe.",
+      "delete": "Slet denne liste",
+      "noGroupsYet": "Lav først en boggruppe, så dukker den op her."
+    },
+    "groups": {
+      "title": "Boggrupper",
+      "new": "Ny gruppe",
+      "empty": "Ingen grupper endnu. Lav en, og tilføj folk med brugernavn."
+    },
+    "swipe": {
+      "title": "Beslut sammen",
+      "start": "Beslut sammen",
+      "needsGroup": "Del denne liste med en gruppe for at beslutte sammen — det er der, de andre finder den.",
+      "agreed": "I er enige",
+      "waitingHint": "Du har set alle bøger. Venter på de andre."
+    },
+    "unavailable": "Katalogget svarer ikke lige nu. Det er Open Librarys ende, ikke din — prøv igen om et minut."
   }
 }

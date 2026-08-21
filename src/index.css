@@ -345,3 +345,72 @@
 @utility shelf-fade {
   mask-image: linear-gradient(90deg, #000 0%, #000 86%, transparent 100%);
 }
+
+/* ==========================================================================
+   BOOK SOCIETY — the fittings
+
+   The book half must read as the same age as the film half. It keeps the same
+   three typefaces, the same paper grain and the same letterpress habits; what
+   changes is the furniture. Where the film side has bulbs and marquee plates,
+   this has brass rails, waxed wood and marbled endpapers — all of it straight
+   out of resources/mood-board/book app.
+   ========================================================================== */
+
+/* The shelf itself: waxed dark wood, lit from above like the shop window. */
+@utility shelf-wood {
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.1) 0%, transparent 22%, rgb(0 0 0 / 0.28) 100%),
+    repeating-linear-gradient(
+      90deg,
+      rgb(0 0 0 / 0.06) 0px,
+      transparent 2px,
+      transparent 7px,
+      rgb(0 0 0 / 0.05) 9px
+    );
+  background-color: var(--color-frame);
+}
+
+/* The brass rail across the front of the shelf, as on the bar in the
+   photographs. Three stops rather than a flat colour — brass is only brass
+   because it has a highlight running along it. */
+@utility brass-rail {
+  background-image: linear-gradient(
+    180deg,
+    #8a6320 0%,
+    #e8b44a 38%,
+    #c9922e 62%,
+    #6b4c17 100%
+  );
+}
+
+/* Marbled endpaper, for bands and headers. Old marbling is a few soft washes
+   pulled through each other, so overlapping off-centre radials read more
+   honestly than any repeating pattern would. */
+@utility endpaper {
+  background-image:
+    radial-gradient(60% 120% at 12% 20%, rgb(161 173 146 / 0.5) 0%, transparent 60%),
+    radial-gradient(50% 100% at 78% 12%, rgb(148 178 196 / 0.45) 0%, transparent 62%),
+    radial-gradient(70% 130% at 45% 88%, rgb(89 69 54 / 0.35) 0%, transparent 58%),
+    radial-gradient(40% 90% at 92% 70%, rgb(242 230 177 / 0.5) 0%, transparent 60%);
+  background-color: var(--color-band);
+}
+
+/* Gilt lettering, as stamped on a cloth spine. */
+@utility gilt {
+  background-image: linear-gradient(180deg, #f0d089 0%, #c9922e 45%, #8a6320 55%, #e8b44a 100%);
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.25);
+}
+
+/* The hexagonal tiled floor from the shop entrance. The film side has its
+   chequerboard; this is the same idea in the same ink. */
+@utility hex-floor {
+  background-image:
+    repeating-conic-gradient(
+      from 30deg at 50% 50%,
+      var(--color-frame) 0deg 60deg,
+      transparent 60deg 120deg
+    );
+  background-size: 18px 31px;
+}
