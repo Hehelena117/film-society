@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AddToList } from '@/components/AddToList'
+import { SuggestionRow } from '@/components/SuggestionRow'
 import { catalogTitle, searchTitles, type CatalogedTitle, type SearchHit } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
 import { useAuth } from '@/lib/auth'
 import type { SupportedLanguage } from '@/lib/i18n'
-import { getMyEntriesForTitle, logViewing, type PriorEntry } from '@/lib/log'
+import { getMyEntriesForTitle, getMyLog, logViewing, type LoggedEntry, type PriorEntry } from '@/lib/log'
+import { getSavedTitles, type SavedTitle } from '@/lib/watchlists'
 
 /**
  * Log a viewing: find the title, score it out of ten, keep a private note.
@@ -35,6 +37,28 @@ export function LogViewing({
   const [chosen, setChosen] = useState<CatalogedTitle | null>(null)
   const [addingToList, setAddingToList] = useState<CatalogedTitle | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState<SavedTitle[]>([])
+  const [recent, setRecent] = useState<LoggedEntry[]>([])
+
+  // The shortcuts under an empty search box. Fetched once on mount, and
+  // failures are silent on purpose — these are a convenience, and an error
+  // banner over the search box would be a worse screen than no shortcuts.
+  useEffect(() => {
+    if (prefill) return
+    let active = true
+
+    void getSavedTitles(language).then((s) => active && setSaved(s))
+    void getMyLog(language, 40).then((entries) => {
+      if (!active) return
+      // One card per film: three viewings of the same thing is one shortcut.
+      const seen = new Set<number>()
+      setRecent(entries.filter((e) => !seen.has(e.title.id) && seen.add(e.title.id)).slice(0, 12))
+    })
+
+    return () => {
+      active = false
+    }
+  }, [prefill, language])
 
   // Arriving from a title page: go straight to the rating form.
   useEffect(() => {
@@ -169,6 +193,42 @@ export function LogViewing({
                 </li>
               ))}
             </ul>
+
+            {/* Nothing typed yet. Rather than a thousand pixels of paper, the
+                two answers most likely to be wanted — both built from what the
+                app already holds, so no extra call goes out to fill a gap.
+
+                These open the title page, exactly as a search result does.
+                Being on this screen is not the same as having watched the
+                thing, and one rule for what a poster does beats two. */}
+            {!query.trim() && (
+              <>
+                <SuggestionRow
+                  title={t('log.onYourLists')}
+                  items={saved.map((s) => ({
+                    key: `saved-${s.titleId}`,
+                    name: s.name,
+                    year: s.year,
+                    posterUrl: s.posterUrl,
+                    onOpen: () => onOpenTitle({ tmdbId: s.tmdbId, mediaType: s.mediaType }),
+                  }))}
+                  empty={t('log.noSaved')}
+                />
+
+                <SuggestionRow
+                  title={t('log.seenBefore')}
+                  hint={t('log.seenBeforeHint')}
+                  items={recent.map((r) => ({
+                    key: `recent-${r.title.id}`,
+                    name: r.title.name,
+                    year: r.title.year,
+                    posterUrl: r.title.posterUrl,
+                    onOpen: () =>
+                      onOpenTitle({ tmdbId: r.title.tmdbId, mediaType: r.title.mediaType }),
+                  }))}
+                />
+              </>
+            )}
           </>
         )}
 

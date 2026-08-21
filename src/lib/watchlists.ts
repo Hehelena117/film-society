@@ -191,6 +191,62 @@ export async function getWatchlistItems(
   })
 }
 
+/** A title you have saved somewhere, for the shortcuts on the log screen. */
+export interface SavedTitle {
+  titleId: number
+  tmdbId: number
+  mediaType: 'movie' | 'tv'
+  name: string
+  year: number | null
+  posterUrl: string | null
+}
+
+/**
+ * Everything on any list you can read, newest first.
+ *
+ * Not per-list: this answers "what have I already said I want to watch",
+ * which is the likeliest thing someone is about to log, and which list it
+ * happens to sit on does not matter for that. RLS decides what counts as a
+ * list you can read, so a group list you were added to is in here too.
+ */
+export async function getSavedTitles(language: string, limit = 12): Promise<SavedTitle[]> {
+  const { data, error } = await supabase
+    .from('watchlist_items')
+    .select(
+      'title:titles!inner(id, tmdb_id, media_type, year, poster_path, ' +
+        'translations:title_translations(name, language))',
+    )
+    .order('added_at', { ascending: false })
+    .limit(limit * 3)
+
+  if (error) {
+    console.error('Could not read saved titles', error)
+    return []
+  }
+
+  // The same film can sit on several lists; it should appear once.
+  const seen = new Set<number>()
+  const out: SavedTitle[] = []
+  for (const row of (data ?? []) as Array<Record<string, any>>) {
+    if (out.length >= limit || seen.has(row.title.id)) continue
+    seen.add(row.title.id)
+
+    const translations = row.title?.translations ?? []
+    out.push({
+      titleId: row.title.id,
+      tmdbId: row.title.tmdb_id,
+      mediaType: row.title.media_type,
+      name:
+        translations.find((t: Record<string, unknown>) => t.language === language)?.name ??
+        translations[0]?.name ??
+        '—',
+      year: row.title.year,
+      posterUrl: row.title.poster_path ? `${POSTER_BASE}${row.title.poster_path}` : null,
+    })
+  }
+  return out
+}
+
 /**
  * The title must already be catalogued — call catalogTitle first.
  *

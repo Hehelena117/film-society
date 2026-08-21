@@ -22,6 +22,8 @@ import { chromium } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'node:fs'
 
+import { sweepTestUsers } from './sweep-test-users.mjs'
+
 function fromEnvFile(key) {
   const line = readFileSync(new URL('../.env', import.meta.url), 'utf8')
     .split('\n')
@@ -40,6 +42,9 @@ if (!SERVICE) {
 }
 
 const admin = createClient(URL_, SERVICE, { auth: { persistSession: false } })
+
+// Clears anything a previous run left behind before adding more.
+await sweepTestUsers(admin)
 
 let pass = 0
 let fail = 0
