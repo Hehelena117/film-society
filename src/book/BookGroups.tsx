@@ -2,6 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ScreenHeader } from '@/components/ScreenHeader'
+import {
+  getBookGroupActivity,
+  getGroupCurrentlyReading,
+  type BookActivityItem,
+  type CurrentRead,
+} from '@/lib/bookActivity'
 import { getOpenBookSessions, joinBookSwipe, type BookSession } from '@/lib/bookSwipe'
 import { errorMessage } from '@/lib/errors'
 import {
@@ -22,13 +28,21 @@ import {
  * here never appears on the film side, which is what "two sealed worlds"
  * means in practice.
  */
-export function BookGroups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) => void }) {
+export function BookGroups({
+  onJoinSwipe,
+  onOpenBook,
+}: {
+  onJoinSwipe: (sessionId: string) => void
+  onOpenBook: (olKey: string) => void
+}) {
   const { t } = useTranslation()
 
   const [groups, setGroups] = useState<Group[]>([])
   const [sessions, setSessions] = useState<BookSession[]>([])
   const [open, setOpen] = useState<Group | null>(null)
   const [members, setMembers] = useState<GroupMember[]>([])
+  const [reading, setReading] = useState<CurrentRead[]>([])
+  const [feed, setFeed] = useState<BookActivityItem[]>([])
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
@@ -55,9 +69,20 @@ export function BookGroups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) =
   useEffect(() => {
     if (!open) return
     let active = true
-    getGroupMembers(open.id)
-      .then((m) => active && setMembers(m))
+
+    void Promise.all([
+      getGroupMembers(open.id),
+      getGroupCurrentlyReading(open.id),
+      getBookGroupActivity(open.id),
+    ])
+      .then(([m, r, f]) => {
+        if (!active) return
+        setMembers(m)
+        setReading(r)
+        setFeed(f)
+      })
       .catch((err) => active && setError(errorMessage(err)))
+
     return () => {
       active = false
     }
@@ -149,6 +174,88 @@ export function BookGroups({ onJoinSwipe }: { onJoinSwipe: (sessionId: string) =
               </label>
             </div>
           )}
+
+          {/* What people said they are reading. Built from what they chose to
+              post, never from their progress, which stays owner-only. */}
+          <section className="mt-8">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">
+                {t('book.groups.reading')}
+              </span>
+            </div>
+
+            {reading.length === 0 ? (
+              <p className="mx-auto max-w-[34ch] text-center text-[0.8125rem] leading-relaxed text-ink-3">
+                {t('book.groups.nobodyReading')}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {reading.map((r) => (
+                  <li key={r.userId} className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onOpenBook(r.book.olKey)}
+                      aria-label={r.book.title}
+                      className="w-11 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5"
+                    >
+                      <span className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
+                        {r.book.coverUrl && (
+                          <img
+                            src={r.book.coverUrl}
+                            alt=""
+                            loading="lazy"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        )}
+                      </span>
+                    </button>
+                    <div className="min-w-0">
+                      <p className="type-meta text-accent">{r.username}</p>
+                      <p className="type-title truncate text-[0.9375rem] leading-tight text-ink">
+                        {r.book.title}
+                      </p>
+                      <p className="type-meta mt-0.5 truncate text-ink-3">
+                        {r.book.authors[0] ?? ''}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* The group's own feed. */}
+          <section className="mt-8">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">{t('feed.title')}</span>
+            </div>
+
+            {feed.length === 0 ? (
+              <p className="text-center text-[0.8125rem] text-ink-3">{t('feed.empty')}</p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {feed.map((item) => (
+                  <li key={item.id} className="flex items-baseline gap-2 text-[0.875rem] leading-relaxed">
+                    <span className="type-meta shrink-0 text-accent">{item.username}</span>
+                    <span className="text-ink-2">
+                      {item.kind === 'rated' && item.book
+                        ? t('book.feed.rated', { title: item.book.title, rating: item.rating })
+                        : item.kind === 'started' && item.book
+                          ? t('book.feed.started', { title: item.book.title })
+                          : item.kind === 'added' && item.book
+                            ? t('book.feed.added', {
+                                title: item.book.title,
+                                list: item.listName ?? '',
+                              })
+                            : item.kind === 'decided' && item.book
+                              ? t('book.feed.decided', { title: item.book.title })
+                              : t('feed.joined')}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </main>
       </div>
     )

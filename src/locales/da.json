@@ -342,7 +342,9 @@
       "notStarted": "Ikke begyndt. Markér den som i gang, så venter den på din reol.",
       "start": "Begynd at læse",
       "stop": "Stop med at læse",
-      "hint": "Cirka er fint. Ingen tjekker efter."
+      "hint": "Cirka er fint. Ingen tjekker efter.",
+      "tellGroups": "Fortæl mine grupper, at jeg læser den",
+      "told": "Dine grupper ved det"
     },
     "reading": {
       "title": "Læser lige nu"
@@ -379,7 +381,9 @@
     "groups": {
       "title": "Boggrupper",
       "new": "Ny gruppe",
-      "empty": "Ingen grupper endnu. Lav en, og tilføj folk med brugernavn."
+      "empty": "Ingen grupper endnu. Lav en, og tilføj folk med brugernavn.",
+      "reading": "Læser lige nu",
+      "nobodyReading": "Ingen har fortalt, hvad de læser endnu. Åbn en bog og fortæl dine grupper det."
     },
     "swipe": {
       "title": "Beslut sammen",
@@ -398,6 +402,12 @@
       "tallying": "Regner ud, hvor gruppen landede…",
       "agreed": "Gruppen vil helst",
       "averagePlace": "gennemsnitlig plads {{place}}"
+    },
+    "feed": {
+      "rated": "gav {{title}} {{rating}}/10",
+      "added": "tilføjede {{title}} til {{list}}",
+      "started": "gik i gang med {{title}}",
+      "decided": "gruppen valgte {{title}}"
     }
   }
 }

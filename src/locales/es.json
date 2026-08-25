@@ -342,7 +342,9 @@
       "notStarted": "Sin empezar. Márcalo como en curso y te esperará en tu estante.",
       "start": "Empezar a leer",
       "stop": "Dejar de leer",
-      "hint": "Aproximado vale. Nadie lo comprueba."
+      "hint": "Aproximado vale. Nadie lo comprueba.",
+      "tellGroups": "Contar a mis grupos que la estoy leyendo",
+      "told": "Tus grupos ya lo saben"
     },
     "reading": {
       "title": "Leyendo ahora"
@@ -379,7 +381,9 @@
     "groups": {
       "title": "Grupos de lectura",
       "new": "Nuevo grupo",
-      "empty": "Aún no hay grupos. Crea uno y añade gente por nombre de usuario."
+      "empty": "Aún no hay grupos. Crea uno y añade gente por nombre de usuario.",
+      "reading": "Leyendo ahora mismo",
+      "nobodyReading": "Nadie ha dicho aún qué está leyendo. Abre un libro y cuéntaselo a tus grupos."
     },
     "swipe": {
       "title": "Decidir juntos",
@@ -398,6 +402,12 @@
       "tallying": "Calculando dónde ha quedado el grupo…",
       "agreed": "El grupo preferiría",
       "averagePlace": "puesto medio {{place}}"
+    },
+    "feed": {
+      "rated": "puntuó {{title}} con {{rating}}/10",
+      "added": "añadió {{title}} a {{list}}",
+      "started": "empezó {{title}}",
+      "decided": "el grupo eligió {{title}}"
     }
   }
 }

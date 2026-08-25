@@ -342,7 +342,9 @@
       "notStarted": "Not started. Mark it as being read and it will wait on your shelf.",
       "start": "Start reading",
       "stop": "Stop reading",
-      "hint": "Roughly is fine. Nobody is checking."
+      "hint": "Roughly is fine. Nobody is checking.",
+      "tellGroups": "Tell my groups I am reading this",
+      "told": "Your groups know"
     },
     "reading": {
       "title": "Currently reading"
@@ -379,7 +381,9 @@
     "groups": {
       "title": "Book groups",
       "new": "New group",
-      "empty": "No groups yet. Make one and add people by username."
+      "empty": "No groups yet. Make one and add people by username.",
+      "reading": "Reading right now",
+      "nobodyReading": "Nobody has said what they are reading yet. Open a book and tell your groups."
     },
     "swipe": {
       "title": "Decide together",
@@ -398,6 +402,12 @@
       "tallying": "Working out where the group landed…",
       "agreed": "The group would rather",
       "averagePlace": "average place {{place}}"
+    },
+    "feed": {
+      "rated": "rated {{title}} {{rating}}/10",
+      "added": "added {{title}} to {{list}}",
+      "started": "started reading {{title}}",
+      "decided": "the group settled on {{title}}"
     }
   }
 }

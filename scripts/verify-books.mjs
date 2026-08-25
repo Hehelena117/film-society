@@ -490,6 +490,48 @@ try {
     carolAddErr?.message?.slice(0, 45),
   )
 
+  console.log('\n=== telling the group what you are reading ===')
+  // Posting is a deliberate act and it posts the BOOK only. Progress stays
+  // owner-only, which the check further up already proves and this must not
+  // quietly undo.
+  const { error: postErr } = await alice.client
+    .from('book_activity')
+    .insert({ group_id: bookGroup, kind: 'started', book_id: book.id })
+  check('posting a current read', !postErr, postErr?.message)
+
+  const { data: bobSeesPost } = await bob.client
+    .from('book_activity')
+    .select('kind, book_id, user_id')
+    .eq('group_id', bookGroup)
+    .eq('kind', 'started')
+  check(
+    'the group can see it',
+    (bobSeesPost ?? []).some((a) => a.book_id === book.id && a.user_id === alice.id),
+    `${(bobSeesPost ?? []).length} post(s)`,
+  )
+
+  const { data: bobStillBlind } = await bob.client
+    .from('book_progress')
+    .select('percent')
+    .eq('user_id', alice.id)
+  check(
+    'but her progress is still nobody else business',
+    (bobStillBlind ?? []).length === 0,
+    `${(bobStillBlind ?? []).length} row(s)`,
+  )
+
+  const { data: outsider } = await carol.client
+    .from('book_activity')
+    .select('kind')
+    .eq('group_id', bookGroup)
+  check('and an outsider sees no group activity', (outsider ?? []).length === 0)
+
+  const { error: forgePost } = await bob.client
+    .from('book_activity')
+    .insert({ group_id: bookGroup, user_id: alice.id, kind: 'started', book_id: book.id })
+  check('nobody can post as someone else', !!forgePost, forgePost?.message?.slice(0, 45))
+
+
   console.log('\n=== shelf feedback ===')
   const { error: fbErr } = await alice.client.from('book_recommendation_feedback').upsert(
     {

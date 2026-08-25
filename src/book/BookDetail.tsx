@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AddToReadingList } from '@/book/AddToReadingList'
+import { postCurrentRead } from '@/lib/bookActivity'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
 import {
@@ -38,6 +39,7 @@ export function BookDetail({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [posted, setPosted] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -179,6 +181,21 @@ export function BookDetail({
               />
 
               <p className="mt-1.5 text-[0.75rem] text-ink-3">{t('book.progress.hint')}</p>
+
+              {/* Telling the group is a deliberate act, never automatic:
+                  how far in you are stays owner-only, and this posts the
+                  book alone. See lib/bookActivity.ts. */}
+              <button
+                type="button"
+                onClick={async () => {
+                  await postCurrentRead(book.id)
+                  setPosted(true)
+                }}
+                disabled={posted}
+                className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-2.5 text-[11px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink disabled:opacity-60"
+              >
+                {posted ? t('book.progress.told') : t('book.progress.tellGroups')}
+              </button>
             </>
           )}
         </section>

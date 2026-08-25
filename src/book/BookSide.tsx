@@ -68,7 +68,9 @@ export function BookSide({
           {view === 'lists' && (
             <ReadingLists onOpenBook={setOpenBook} onStartSwipe={setSwipeSession} />
           )}
-          {view === 'groups' && <BookGroups onJoinSwipe={setSwipeSession} />}
+          {view === 'groups' && (
+            <BookGroups onJoinSwipe={setSwipeSession} onOpenBook={setOpenBook} />
+          )}
           {view === 'me' && (
             <MyShelf
               onOpenBook={setOpenBook}

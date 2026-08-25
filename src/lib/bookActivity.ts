@@ -98,3 +98,81 @@ export async function announceBook(entry: {
     console.error('Could not post book activity', err)
   }
 }
+
+export interface CurrentRead {
+  userId: string
+  username: string
+  avatarUrl: string | null
+  postedAt: string
+  book: { title: string; authors: string[]; coverUrl: string | null; olKey: string }
+}
+
+/**
+ * What people in a group have said they are reading.
+ *
+ * Built from what people chose to POST, not from book_progress. Progress is
+ * owner-only and stays that way — "she is 12% into it" is nobody else's
+ * business, and there is no setting here that could quietly turn that around.
+ * Telling the group is a deliberate act, so this shows exactly what was
+ * deliberately told.
+ *
+ * A post is superseded by finishing: if someone rated the same book after
+ * saying they had started it, they are no longer reading it. That is inferred
+ * rather than stored, so nobody has to remember to un-post.
+ */
+export async function getGroupCurrentlyReading(groupId: string): Promise<CurrentRead[]> {
+  const { data, error } = await supabase
+    .from('book_activity')
+    .select(
+      'user_id, book_id, kind, created_at, ' +
+        'actor:profiles!inner(username, avatar_url), ' +
+        'book:books!inner(ol_key, title, authors, cover_id)',
+    )
+    .eq('group_id', groupId)
+    .in('kind', ['started', 'rated'])
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) throw error
+
+  const rows = (data ?? []) as Array<Record<string, any>>
+  const one = (v: any) => (Array.isArray(v) ? v[0] : v)
+
+  // Finished first, so a start can be checked against it.
+  const finished = new Set(
+    rows.filter((r) => r.kind === 'rated').map((r) => `${r.user_id}:${r.book_id}`),
+  )
+
+  const seen = new Set<string>()
+  const out: CurrentRead[] = []
+
+  for (const row of rows) {
+    if (row.kind !== 'started') continue
+    // Newest first, so the first start found for a person is their latest.
+    if (seen.has(row.user_id)) continue
+    if (finished.has(`${row.user_id}:${row.book_id}`)) continue
+
+    seen.add(row.user_id)
+    const actor = one(row.actor)
+    const book = one(row.book)
+    out.push({
+      userId: row.user_id,
+      username: actor?.username ?? '—',
+      avatarUrl: actor?.avatar_url ?? null,
+      postedAt: row.created_at,
+      book: {
+        title: book.title,
+        authors: book.authors ?? [],
+        coverUrl: book.cover_id ? COVER(book.cover_id) : null,
+        olKey: book.ol_key,
+      },
+    })
+  }
+
+  return out
+}
+
+/** Tells your book groups what you have picked up. Nothing else changes. */
+export async function postCurrentRead(bookId: number): Promise<void> {
+  await announceBook({ kind: 'started', bookId })
+}
