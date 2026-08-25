@@ -408,6 +408,14 @@
       "added": "añadió {{title}} a {{list}}",
       "started": "empezó {{title}}",
       "decided": "el grupo eligió {{title}}"
+    },
+    "profile": {
+      "mine": "Mis lecturas",
+      "ratings": "Lo que ha leído",
+      "follow": "Seguir sus lecturas"
+    },
+    "people": {
+      "noSuggestions": "Cuando entres en un grupo de lectura, sus miembros aparecerán aquí."
     }
   }
 }

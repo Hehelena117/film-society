@@ -408,6 +408,14 @@
       "added": "added {{title}} to {{list}}",
       "started": "started reading {{title}}",
       "decided": "the group settled on {{title}}"
+    },
+    "profile": {
+      "mine": "My reading",
+      "ratings": "What they have read",
+      "follow": "Follow their reading"
+    },
+    "people": {
+      "noSuggestions": "Once you are in a book group, the people in it show up here."
     }
   }
 }

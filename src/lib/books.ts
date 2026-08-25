@@ -600,3 +600,101 @@ export async function getBookRatingsForCrossover(limit = 30): Promise<
       score: row.rating,
     }))
 }
+
+// ---------------------------------------------------------------------------
+// Reading profiles
+// ---------------------------------------------------------------------------
+
+export interface RatedBook {
+  bookId: number
+  olKey: string
+  title: string
+  authors: string[]
+  year: number | null
+  coverUrl: string | null
+  rating: number
+}
+
+/**
+ * Somebody's rated books, best first.
+ *
+ * Read through public_book_ratings, so it can only ever surface a score —
+ * never when they read it, never a note. The whole set rather than a page:
+ * the profile sorts these into a shelf per score and prints a count on each,
+ * and a count taken from a truncated list is a wrong count.
+ */
+export async function getBookProfileRatings(userId: string, limit = 400): Promise<RatedBook[]> {
+  const { data, error } = await supabase
+    .from('public_book_ratings')
+    .select(
+      'rating, book:books!inner(id, ol_key, title, authors, first_published_year, cover_id)',
+    )
+    .eq('user_id', userId)
+    .order('rating', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+
+  return ((data ?? []) as Array<Record<string, any>>).map((row) => ({
+    bookId: row.book.id,
+    olKey: row.book.ol_key,
+    title: row.book.title,
+    authors: row.book.authors ?? [],
+    year: row.book.first_published_year,
+    coverUrl: row.book.cover_id ? COVER(row.book.cover_id, 'M') : null,
+    rating: row.rating,
+  }))
+}
+
+export interface ReadingProfile {
+  id: string
+  username: string
+  avatarUrl: string | null
+  bio: string | null
+  booksRead: number
+  followers: number
+  following: number
+}
+
+/**
+ * A reading profile.
+ *
+ * The count comes from public_book_counts rather than book_log_entries, which
+ * is owner-only — that view exists so a profile can say how much someone reads
+ * without saying when. Follower counts are per side: following somebody for
+ * books is a separate act from following them for films.
+ */
+export async function getReadingProfile(userId: string): Promise<ReadingProfile | null> {
+  const [profileRes, countRes, followersRes, followingRes] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, username, avatar_url, bio')
+      .eq('id', userId)
+      .maybeSingle(),
+    supabase.from('public_book_counts').select('books_read').eq('user_id', userId).maybeSingle(),
+    supabase
+      .from('follows')
+      .select('follower_id', { count: 'exact', head: true })
+      .eq('followee_id', userId)
+      .eq('side', 'book'),
+    supabase
+      .from('follows')
+      .select('followee_id', { count: 'exact', head: true })
+      .eq('follower_id', userId)
+      .eq('side', 'book'),
+  ])
+
+  if (profileRes.error) throw profileRes.error
+  if (!profileRes.data) return null
+
+  const p = profileRes.data as Record<string, any>
+  return {
+    id: p.id,
+    username: p.username,
+    avatarUrl: p.avatar_url,
+    bio: p.bio,
+    booksRead: (countRes.data as Record<string, any> | null)?.books_read ?? 0,
+    followers: followersRes.count ?? 0,
+    following: followingRes.count ?? 0,
+  }
+}

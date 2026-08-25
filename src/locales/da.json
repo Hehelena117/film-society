@@ -408,6 +408,14 @@
       "added": "tilføjede {{title}} til {{list}}",
       "started": "gik i gang med {{title}}",
       "decided": "gruppen valgte {{title}}"
+    },
+    "profile": {
+      "mine": "Min læsning",
+      "ratings": "Hvad de har læst",
+      "follow": "Følg deres læsning"
+    },
+    "people": {
+      "noSuggestions": "Når du er med i en boggruppe, dukker medlemmerne op her."
     }
   }
 }

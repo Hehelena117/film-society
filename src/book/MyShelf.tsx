@@ -18,13 +18,17 @@ export function MyShelf({
   onOpenBook,
   onSwitchSide,
   onFrontDoor,
+  onOpenProfile,
+  onFindPeople,
 }: {
   onOpenBook: (olKey: string) => void
   onSwitchSide: () => void
   onFrontDoor: () => void
+  onOpenProfile: (userId: string) => void
+  onFindPeople: () => void
 }) {
   const { t } = useTranslation()
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, user } = useAuth()
 
   const [reading, setReading] = useState<Reading[]>([])
   const [entries, setEntries] = useState<ReadEntry[]>([])
@@ -78,6 +82,23 @@ export function MyShelf({
             <Stat label={t('book.stats.entries')} value={entries.length} />
             <Stat label={t('me.average')} value={average ?? '—'} />
           </dl>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => user && onOpenProfile(user.id)}
+            className="type-marquee rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            {t('book.profile.mine')}
+          </button>
+          <button
+            type="button"
+            onClick={onFindPeople}
+            className="type-marquee rounded-[2px] border border-rule-strong py-3 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+          >
+            {t('people.find')}
+          </button>
         </div>
 
         {/* The door back to the other half. */}

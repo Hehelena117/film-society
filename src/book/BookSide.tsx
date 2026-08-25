@@ -15,6 +15,10 @@ const ReadingLists = lazy(() =>
 )
 const BookGroups = lazy(() => import('@/book/BookGroups').then((m) => ({ default: m.BookGroups })))
 const BookSwipe = lazy(() => import('@/book/BookSwipe').then((m) => ({ default: m.BookSwipe })))
+const ReadingProfile = lazy(() =>
+  import('@/book/ReadingProfile').then((m) => ({ default: m.ReadingProfile })),
+)
+const BookPeople = lazy(() => import('@/book/BookPeople').then((m) => ({ default: m.BookPeople })))
 
 /**
  * The book half. Everything here reads `books`; nothing here knows about films.
@@ -36,6 +40,8 @@ export function BookSide({
   const [openBook, setOpenBook] = useState<string | null>(null)
   const [swipeSession, setSwipeSession] = useState<string | null>(null)
   const [prefill, setPrefill] = useState<CachedBook | null>(null)
+  const [openProfile, setOpenProfile] = useState<string | null>(null)
+  const [findingPeople, setFindingPeople] = useState(false)
 
   const overlay = swipeSession ? (
     // A session takes over the screen: leaving mid-decision would leave the
@@ -49,6 +55,20 @@ export function BookSide({
         setPrefill(book)
         setOpenBook(null)
         setView('log')
+      }}
+    />
+  ) : openProfile ? (
+    <ReadingProfile
+      userId={openProfile}
+      onBack={() => setOpenProfile(null)}
+      onOpenBook={setOpenBook}
+    />
+  ) : findingPeople ? (
+    <BookPeople
+      onBack={() => setFindingPeople(false)}
+      onOpenProfile={(id) => {
+        setFindingPeople(false)
+        setOpenProfile(id)
       }}
     />
   ) : null
@@ -74,6 +94,8 @@ export function BookSide({
           {view === 'me' && (
             <MyShelf
               onOpenBook={setOpenBook}
+              onOpenProfile={setOpenProfile}
+              onFindPeople={() => setFindingPeople(true)}
               onSwitchSide={onSwitchSide}
               onFrontDoor={onFrontDoor}
             />

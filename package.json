@@ -16,6 +16,7 @@
     "verify:profile": "node scripts/verify-profile.mjs",
     "verify:books": "node scripts/verify-books.mjs",
     "verify:ranking": "node scripts/verify-ranking.mjs",
+    "verify:reading-profile": "node scripts/verify-reading-profile.mjs",
     "measure:shelf": "node scripts/measure-shelf.mjs",
     "build:native": "cross-env CAPACITOR=1 npm run build",
     "sync:native": "npm run build:native && cap sync"
