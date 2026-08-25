@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { announceBook } from '@/lib/bookActivity'
 
 const COVER = (id: number, size: 'M' | 'L' = 'L') =>
   `https://covers.openlibrary.org/b/id/${id}-${size}.jpg?default=false`
@@ -206,6 +207,12 @@ export async function logReading(input: {
 
   // Finishing a book means you are no longer in the middle of it.
   await supabase.from('book_progress').delete().eq('book_id', input.bookId)
+
+  // Tell the groups, if it was scored. An unrated entry is usually
+  // bookkeeping rather than an opinion, and not worth announcing.
+  if (input.rating !== null) {
+    await announceBook({ kind: 'rated', bookId: input.bookId, rating: input.rating })
+  }
 
   return entryId
 }
@@ -548,6 +555,7 @@ export async function addToReadingList(listId: string, bookId: number): Promise<
     .insert({ list_id: listId, book_id: bookId })
 
   if (error && error.code !== '23505') throw error
+  await announceBook({ kind: 'added', bookId, listId })
 }
 
 export async function removeFromReadingList(listId: string, bookId: number): Promise<void> {

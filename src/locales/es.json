@@ -371,7 +371,10 @@
       "shareWith": "Compartir con",
       "empty": "Aún no hay listas. Crea una para ti o compártela con un grupo.",
       "delete": "Eliminar esta lista",
-      "noGroupsYet": "Crea antes un grupo de lectura y aparecerá aquí."
+      "noGroupsYet": "Crea antes un grupo de lectura y aparecerá aquí.",
+      "addTo": "Añadir a una lista",
+      "added": "Añadido",
+      "newNamed": "Nombre de la nueva lista"
     },
     "groups": {
       "title": "Grupos de lectura",
@@ -385,6 +388,16 @@
       "agreed": "Estáis de acuerdo",
       "waitingHint": "Has visto todos los libros. Esperando a los demás."
     },
-    "unavailable": "El catálogo no responde ahora mismo. Es cosa de Open Library, no tuya — inténtalo dentro de un minuto."
+    "unavailable": "El catálogo no responde ahora mismo. Es cosa de Open Library, no tuya — inténtalo dentro de un minuto.",
+    "rank": {
+      "title": "¿Cuál preferirías?",
+      "whichWouldYouRather": "¿Cuál preferirías leer?",
+      "roughlyLeft": "quedan unas {{count}}",
+      "yoursIsIn": "Tu orden está registrado",
+      "waitingFor": "Esperando a {{who}}.",
+      "tallying": "Calculando dónde ha quedado el grupo…",
+      "agreed": "El grupo preferiría",
+      "averagePlace": "puesto medio {{place}}"
+    }
   }
 }

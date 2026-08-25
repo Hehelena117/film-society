@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AddToReadingList } from '@/book/AddToReadingList'
 import { Spine } from '@/book/Spine'
 import type { SupportedLanguage } from '@/lib/i18n'
 import { useAuth } from '@/lib/auth'
@@ -38,6 +39,7 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
   const [error, setError] = useState<string | null>(null)
   const [exhausted, setExhausted] = useState(false)
   const [verdicts, setVerdicts] = useState<Record<string, BookVerdict>>({})
+  const [adding, setAdding] = useState<{ olKey: string; title: string } | null>(null)
 
   const railRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -265,6 +267,9 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
                   verdict={verdicts[rec.book.olKey] ?? null}
                   onVerdict={(next) => void judge(rec, next)}
                   onOpen={() => onOpenBook(rec.book)}
+                  onAddToList={() =>
+                    setAdding({ olKey: rec.book.olKey, title: rec.book.title })
+                  }
                 />
               ))}
 
@@ -282,6 +287,13 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
           </div>
         )}
       </main>
+      {adding && (
+        <AddToReadingList
+          olKey={adding.olKey}
+          title={adding.title}
+          onClose={() => setAdding(null)}
+        />
+      )}
     </div>
   )
 }
@@ -297,11 +309,13 @@ function Bay({
   verdict,
   onVerdict,
   onOpen,
+  onAddToList,
 }: {
   rec: BookRecommendation
   verdict: BookVerdict | null
   onVerdict: (next: BookVerdict | null) => void
   onOpen: () => void
+  onAddToList: () => void
 }) {
   const { t } = useTranslation()
   const { book } = rec
@@ -423,6 +437,14 @@ function Bay({
             {t('actions.wontShowAgain')}
           </p>
         )}
+
+        <button
+          type="button"
+          onClick={onAddToList}
+          className="type-marquee mt-2.5 rounded-full border border-rule-strong px-4 py-1.5 text-[11px] text-ink-3 transition-colors hover:border-brass-600 hover:text-ink-2"
+        >
+          + {t('book.lists.addTo')}
+        </button>
       </div>
     </article>
   )

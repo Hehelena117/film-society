@@ -371,7 +371,10 @@
       "shareWith": "Del med",
       "empty": "Ingen lister endnu. Lav en til dig selv, eller del den med en gruppe.",
       "delete": "Slet denne liste",
-      "noGroupsYet": "Lav først en boggruppe, så dukker den op her."
+      "noGroupsYet": "Lav først en boggruppe, så dukker den op her.",
+      "addTo": "Tilføj til en liste",
+      "added": "Tilføjet",
+      "newNamed": "Navn på ny liste"
     },
     "groups": {
       "title": "Boggrupper",
@@ -385,6 +388,16 @@
       "agreed": "I er enige",
       "waitingHint": "Du har set alle bøger. Venter på de andre."
     },
-    "unavailable": "Katalogget svarer ikke lige nu. Det er Open Librarys ende, ikke din — prøv igen om et minut."
+    "unavailable": "Katalogget svarer ikke lige nu. Det er Open Librarys ende, ikke din — prøv igen om et minut.",
+    "rank": {
+      "title": "Hvilken vil du helst?",
+      "whichWouldYouRather": "Hvilken vil du helst læse?",
+      "roughlyLeft": "cirka {{count}} tilbage",
+      "yoursIsIn": "Din rækkefølge er registreret",
+      "waitingFor": "Venter på {{who}}.",
+      "tallying": "Regner ud, hvor gruppen landede…",
+      "agreed": "Gruppen vil helst",
+      "averagePlace": "gennemsnitlig plads {{place}}"
+    }
   }
 }

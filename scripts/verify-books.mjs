@@ -398,24 +398,97 @@ try {
     .eq('session_id', session.id)
   check('the other person can read the deck', (bobDeck ?? []).length === 1)
 
+  const carol = await makeUser('carol')
+
+  // Ranking, not yes/no: each person picks which of two books they would
+  // rather read, and the group's answer is the best average position.
+  const { data: second } = await admin
+    .from('books')
+    .upsert({ ol_key: 'OL45804W', title: 'A Second Book' }, { onConflict: 'ol_key' })
+    .select('id')
+    .single()
+
+  await alice.client
+    .from('book_swipe_candidates')
+    .insert({ session_id: session.id, book_id: second.id, position: 1 })
+
   for (const u of [alice, bob]) {
-    const { error } = await u.client
-      .from('book_swipes')
-      .insert({ session_id: session.id, book_id: book.id, liked: true })
-    check(`vote (${u === alice ? 'alice' : 'bob'})`, !error, error?.message)
+    const who = u === alice ? 'alice' : 'bob'
+    const { error } = await u.client.from('book_comparisons').insert({
+      session_id: session.id,
+      winner_book_id: book.id,
+      loser_book_id: second.id,
+    })
+    check(`record a comparison (${who})`, !error, error?.message)
   }
 
-  const { data: votes } = await alice.client
-    .from('book_swipes')
-    .select('user_id, liked')
+  const { error: selfErr } = await alice.client.from('book_comparisons').insert({
+    session_id: session.id,
+    winner_book_id: book.id,
+    loser_book_id: book.id,
+  })
+  check('a book cannot be preferred to itself', !!selfErr, selfErr?.message?.slice(0, 45))
+
+  for (const u of [alice, bob]) {
+    const who = u === alice ? 'alice' : 'bob'
+    const { error } = await u.client.from('book_rankings').upsert(
+      [
+        { session_id: session.id, user_id: u.id, book_id: book.id, position: 1 },
+        { session_id: session.id, user_id: u.id, book_id: second.id, position: 2 },
+      ],
+      { onConflict: 'session_id,user_id,book_id' },
+    )
+    check(`file a finished ranking (${who})`, !error, error?.message)
+  }
+
+  const { data: everyones } = await bob.client
+    .from('book_rankings')
+    .select('user_id, book_id, position')
     .eq('session_id', session.id)
-  check('both votes are there — two people, both yes', (votes ?? []).length === 2)
+  check(
+    "everyone in the session can read everyone else's rankings",
+    (everyones ?? []).length === 4,
+    `${(everyones ?? []).length} rows`,
+  )
+
+  const { data: carolPeek } = await carol.client
+    .from('book_rankings')
+    .select('book_id')
+    .eq('session_id', session.id)
+  check('an outsider sees no rankings', (carolPeek ?? []).length === 0)
+
+  const { error: forgeErr } = await bob.client.from('book_rankings').upsert(
+    { session_id: session.id, user_id: alice.id, book_id: book.id, position: 1 },
+    { onConflict: 'session_id,user_id,book_id' },
+  )
+  check('nobody can file a ranking for someone else', !!forgeErr, forgeErr?.message?.slice(0, 45))
 
   const { error: settleErr } = await alice.client
     .from('book_swipe_sessions')
     .update({ decided_book_id: book.id, closed_at: new Date().toISOString() })
     .eq('id', session.id)
   check('settle on it', !settleErr, settleErr?.message)
+
+  // Adding a book was a data-layer function with no caller anywhere: the
+  // button did not exist on any screen. These check the rule behind it —
+  // reading a list and writing to it are the same permission.
+  const { error: bobAddErr } = await bob.client
+    .from('reading_list_items')
+    .insert({ list_id: list.id, book_id: book.id })
+  check(
+    'a shared list is writable by the people it is shared with',
+    !bobAddErr || bobAddErr.code === '23505',
+    bobAddErr?.message?.slice(0, 45),
+  )
+
+  const { error: carolAddErr } = await carol.client
+    .from('reading_list_items')
+    .insert({ list_id: list.id, book_id: book.id })
+  check(
+    'but not by someone it was never shared with',
+    !!carolAddErr && carolAddErr.code !== '23505',
+    carolAddErr?.message?.slice(0, 45),
+  )
 
   console.log('\n=== shelf feedback ===')
   const { error: fbErr } = await alice.client.from('book_recommendation_feedback').upsert(

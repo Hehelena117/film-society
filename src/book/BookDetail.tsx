@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { AddToReadingList } from '@/book/AddToReadingList'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
 import {
@@ -36,6 +37,7 @@ export function BookDetail({
   const [percent, setPercent] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -189,6 +191,16 @@ export function BookDetail({
           {t('book.detail.logIt')}
         </button>
 
+        {/* Looking a book up often ends in "not now, but remember it"
+            rather than "I have read this", so both endings live here. */}
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-3.5 text-[13px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+        >
+          + {t('book.lists.addTo')}
+        </button>
+
         {book.description && (
           <section className="mt-8">
             <div className="rule-pip mb-4">
@@ -222,6 +234,10 @@ export function BookDetail({
           </section>
         )}
       </main>
+
+      {adding && (
+        <AddToReadingList olKey={olKey} title={book.title} onClose={() => setAdding(false)} />
+      )}
     </div>
   )
 }

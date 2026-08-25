@@ -371,7 +371,10 @@
       "shareWith": "Share with",
       "empty": "No lists yet. Make one for yourself, or share it with a group.",
       "delete": "Delete this list",
-      "noGroupsYet": "Make a book group first and it will appear here."
+      "noGroupsYet": "Make a book group first and it will appear here.",
+      "addTo": "Add to a list",
+      "added": "Added",
+      "newNamed": "New list name"
     },
     "groups": {
       "title": "Book groups",
@@ -385,6 +388,16 @@
       "agreed": "You agree",
       "waitingHint": "You have seen every book. Waiting for the others."
     },
-    "unavailable": "The catalogue is not answering just now. That is Open Library's end, not yours — try again in a minute."
+    "unavailable": "The catalogue is not answering just now. That is Open Library's end, not yours — try again in a minute.",
+    "rank": {
+      "title": "Which would you rather?",
+      "whichWouldYouRather": "Which would you rather read?",
+      "roughlyLeft": "about {{count}} to go",
+      "yoursIsIn": "Your order is in",
+      "waitingFor": "Waiting for {{who}}.",
+      "tallying": "Working out where the group landed…",
+      "agreed": "The group would rather",
+      "averagePlace": "average place {{place}}"
+    }
   }
 }
