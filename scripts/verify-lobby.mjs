@@ -57,6 +57,23 @@ const { data: made, error: mkErr } = await admin.auth.admin.createUser({
 })
 if (mkErr) throw new Error(mkErr.message)
 
+/**
+ * Walk through the film door.
+ *
+ * Every account now meets the chooser on its first login, so a suite that
+ * signs in and waits for the Lobby waits forever. Harmless if the chooser is
+ * not there — an existing account goes straight through.
+ */
+async function enterFilmSide(page) {
+  const door = page.getByRole('button', { name: /film society/i }).first()
+  try {
+    await door.waitFor({ timeout: 15_000 })
+    await door.click()
+  } catch {
+    // Already inside.
+  }
+}
+
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
 
@@ -75,6 +92,7 @@ try {
   await page.getByLabel(/email/i).fill(email)
   await page.getByLabel(/password/i).fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
+  await enterFilmSide(page)
 
   // Everything is scoped to :visible. The hidden Lobby stays in the DOM by
   // design, so an unscoped selector matches it even when a title page is up —

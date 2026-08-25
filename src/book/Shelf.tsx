@@ -164,7 +164,7 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col wall-ground texture-wall pb-24">
+    <div className="flex min-h-dvh flex-col wall-ground texture-wall pb-12 sm:pb-24">
       {/* ---- The shop sign ------------------------------------------------
           Measured before it was trimmed: 257px of a 640px phone, leaving 193px
           for a book that needed 304 — the shelf did not fit on ANY handset
@@ -210,7 +210,7 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
           absolutely at exactly this height and the two must never disagree. */}
       <main
         className="relative z-10 flex flex-1 flex-col justify-center py-3 sm:py-6"
-        style={{ ['--shelf-h' as string]: 'clamp(8.5rem, 27vh, 19rem)' }}
+        style={{ ['--shelf-h' as string]: 'clamp(7rem, 20vh, 19rem)' }}
       >
         <div className="rule-pip mb-3 px-6 sm:mb-5">
           <span className="type-meta whitespace-nowrap text-ink-3">{t('book.shelf.onTheShelf')}</span>
@@ -325,28 +325,33 @@ function Bay({
         <Spine title={`${book.authors[0] ?? ''} ${book.title}`} />
         <Spine title={book.title.split(' ').reverse().join(' ')} />
 
-        {/* The frame takes the jacket's shape rather than imposing one.
-            Book covers are nothing like as uniform as film posters — a Penguin
+        {/* A frame of fixed width, with the jacket fitted inside it.
+            Covers are nothing like as uniform as film posters — a Penguin
             paperback, a square art book and a tall hardback are all normal —
-            and a fixed 2:3 box with object-cover was slicing the top and
-            bottom off most of them. The height is fixed to the shelf, the
-            width follows the artwork, and the frame shrinks to fit. */}
+            so object-cover was slicing the top and bottom off most of them.
+            object-contain shows the whole jacket instead.
+
+            The width is fixed rather than following the artwork. Letting it
+            follow meant a cover that had not loaded yet had no intrinsic size
+            and the frame collapsed to a sliver: on a phone the recommended
+            book appeared as a brown stripe between its neighbours, which is
+            what the first photograph of a real shelf showed. */}
         <button
           type="button"
           onClick={onOpen}
-          className="relative mx-1 h-full shrink-0 self-end overflow-hidden rounded-[2px] bg-frame p-1 shadow-frame transition-transform duration-300 hover:-translate-y-1"
+          className="relative mx-1 h-full w-[8.5rem] shrink-0 self-end overflow-hidden rounded-[2px] bg-frame p-1 shadow-frame transition-transform duration-300 hover:-translate-y-1 sm:w-[9.5rem]"
         >
-          <span className="block h-full overflow-hidden bg-pitch texture-grain">
+          <span className="flex h-full items-center justify-center overflow-hidden bg-pitch texture-grain">
             {cover ? (
               <img
                 src={cover}
                 alt={book.title}
                 onError={() => setCoverFailed(true)}
-                className="h-full w-auto max-w-[13rem] object-contain"
+                className="max-h-full max-w-full object-contain"
               />
             ) : (
-              <span className="flex h-full w-[9rem] flex-col items-center justify-center gap-3 px-3 text-center">
-                <span className="type-title text-[1.05rem] leading-tight text-plate">
+              <span className="flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center">
+                <span className="type-title text-[0.95rem] leading-tight text-plate">
                   {book.title}
                 </span>
                 <span className="h-px w-8 bg-brass-500/60" />
@@ -367,7 +372,7 @@ function Bay({
       <div className="h-[11px]" aria-hidden />
 
       {/* ---- The card slipped under the book ---------------------------- */}
-      <div className="mt-3 text-center sm:mt-5">
+      <div className="mt-2 text-center sm:mt-5">
         <h2 className="type-title text-[1.15rem] leading-tight text-ink sm:text-[1.4rem]">{book.title}</h2>
         <p className="type-meta mt-1.5 text-accent">
           {[book.authors[0], book.year].filter(Boolean).join(' · ')}
@@ -388,11 +393,11 @@ function Bay({
           </p>
         )}
 
-        <div className="rule-pip my-2 sm:my-3.5" aria-hidden>
+        <div className="rule-pip my-1.5 sm:my-3.5" aria-hidden>
           <span className="size-1 rotate-45 bg-brass-600/70" />
         </div>
 
-        <p className="mx-auto line-clamp-3 max-w-[32ch] text-[0.8125rem] leading-relaxed text-ink-2">
+        <p className="mx-auto line-clamp-2 max-w-[32ch] sm:line-clamp-3 text-[0.8125rem] leading-relaxed text-ink-2">
           {rec.reason}
         </p>
 

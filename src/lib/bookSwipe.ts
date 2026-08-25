@@ -18,7 +18,7 @@ export interface BookSession {
   decidedBookId: number | null
 }
 
-const COVER = (id: number) => `https://covers.openlibrary.org/b/id/${id}-L.jpg`
+const COVER = (id: number) => `https://covers.openlibrary.org/b/id/${id}-L.jpg?default=false`
 
 /**
  * Opens a session and stocks its deck.

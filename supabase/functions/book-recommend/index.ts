@@ -276,7 +276,7 @@ async function resolveOnOpenLibrary(title: string, author: string | null) {
     // record from the readable title. See _shared/names.ts.
     authors: readableAuthor ? [readableAuthor] : (hit.author_name ?? []),
     year: hit.first_publish_year ?? null,
-    coverUrl: hit.cover_i ? `https://covers.openlibrary.org/b/id/${hit.cover_i}-L.jpg` : null,
+    coverUrl: hit.cover_i ? `https://covers.openlibrary.org/b/id/${hit.cover_i}-L.jpg?default=false` : null,
     pages: hit.number_of_pages_median ?? null,
     seriesName: hit.series_name?.[0] ?? null,
     seriesPosition: hit.series_position?.[0] ?? null,

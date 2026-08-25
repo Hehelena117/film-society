@@ -104,6 +104,23 @@ const { error: noteErr } = await seed
   .insert({ entry_id: entry.id, body: NOTE })
 check('seeded a rated entry with a note', !noteErr, noteErr?.message)
 
+/**
+ * Walk through the film door.
+ *
+ * Every account now meets the chooser on its first login, so a suite that
+ * signs in and waits for the Lobby waits forever. Harmless if the chooser is
+ * not there — an existing account goes straight through.
+ */
+async function enterFilmSide(page) {
+  const door = page.getByRole('button', { name: /film society/i }).first()
+  try {
+    await door.waitFor({ timeout: 15_000 })
+    await door.click()
+  } catch {
+    // Already inside.
+  }
+}
+
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
 
@@ -121,6 +138,7 @@ try {
   await page.getByLabel(/email/i).fill(email)
   await page.getByLabel(/password/i).fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
+  await enterFilmSide(page)
 
   // Scoped :visible throughout — the Lobby stays mounted while hidden.
   const wallTitles = page.locator('article h2:visible')

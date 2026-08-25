@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 
 const COVER = (id: number, size: 'M' | 'L' = 'L') =>
-  `https://covers.openlibrary.org/b/id/${id}-${size}.jpg`
+  `https://covers.openlibrary.org/b/id/${id}-${size}.jpg?default=false`
 
 /** A book as Open Library search hands it back, before it is cached. */
 export interface BookHit {

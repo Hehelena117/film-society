@@ -54,8 +54,14 @@ export function ThemeSwitcher({ side }: { side: Side }) {
   return (
     <div
       ref={rootRef}
-      /* bottom-20 keeps it clear of the navigation bar */
-      className="fixed right-4 bottom-20 z-50 flex flex-col items-end gap-2"
+      /* Top-right on a phone, bottom-right with room above the nav on
+         anything taller.
+
+         It used to be bottom-right everywhere, which put it straight on top of
+         the shelf's "Not for me" button on a 360px screen — two tap targets in
+         the same place, one of them recording a permanent verdict. The top
+         corner is empty on every screen in the app. */
+      className="fixed right-3 top-3 z-50 flex flex-col items-end gap-2 sm:top-auto sm:right-4 sm:bottom-20"
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {open && (

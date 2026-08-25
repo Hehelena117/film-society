@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
     title: saved.title,
     authors: saved.authors,
     year: saved.first_published_year,
-    coverUrl: saved.cover_id ? `https://covers.openlibrary.org/b/id/${saved.cover_id}-L.jpg` : null,
+    coverUrl: saved.cover_id ? `https://covers.openlibrary.org/b/id/${saved.cover_id}-L.jpg?default=false` : null,
     pages: saved.pages,
     subjects: saved.subjects,
     seriesName: saved.series_name,

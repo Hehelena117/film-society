@@ -53,7 +53,7 @@ export function BookSwipe({
         title: b.title,
         authors: b.authors ?? [],
         year: b.first_published_year,
-        coverUrl: b.cover_id ? `https://covers.openlibrary.org/b/id/${b.cover_id}-L.jpg` : null,
+        coverUrl: b.cover_id ? `https://covers.openlibrary.org/b/id/${b.cover_id}-L.jpg?default=false` : null,
       })
       await settleOn(sessionId, bookId)
     } catch (err) {

@@ -63,15 +63,43 @@ const external = (label, ok, detail = '') => {
   check(label, ok, detail)
 }
 
-try {
-  await fetch('https://openlibrary.org/search.json?q=dune&fields=key&limit=1', {
-    headers: { 'User-Agent': 'FilmSociety/0.1 (verify)' },
-    signal: AbortSignal.timeout(10000),
-  })
-} catch {
-  OL_UP = false
-  console.log('\nOpen Library is not answering. Its checks are skipped; everything')
-  console.log('that does not depend on it still runs.')
+// Three attempts before writing them off. They are back but flaky today: a
+// hand-run request succeeded in 2.7s and this probe failed a second later, and
+// a single failed connection was enough to skip every check below. One bad
+// request is not an outage.
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    await fetch('https://openlibrary.org/search.json?q=dune&fields=key&limit=1', {
+      headers: { 'User-Agent': 'FilmSociety/0.1 (verify)' },
+      signal: AbortSignal.timeout(10000),
+    })
+    OL_UP = true
+    break
+  } catch {
+    OL_UP = false
+  }
+}
+
+if (!OL_UP) {
+  console.log('\nOpen Library did not answer three times running. Its checks are')
+  console.log('skipped; everything that does not depend on it still runs.')
+}
+
+/**
+ * A check on data that Open Library may simply not have returned.
+ *
+ * Their outages are not always total: with the service up, one query answers
+ * in two seconds and the next times out at eight. The function reports that
+ * honestly as `unavailable`, and a suite that turned it into FAIL would be
+ * blaming our code for their bad minute — the same mistake in miniature that
+ * the OL_UP probe above exists to prevent.
+ */
+const flaky = (label, data, ok, detail = '') => {
+  if (!OL_UP || data?.unavailable) {
+    console.log(`  SKIP  ${label} — Open Library did not answer that one`)
+    return
+  }
+  check(label, ok, detail)
 }
 
 const users = []
@@ -123,15 +151,17 @@ try {
     'openlibrary?q=' + encodeURIComponent('The Fellowship of the Ring'),
     { method: 'GET' },
   )
-  external('search returns results', !sErr && found?.results?.length > 0, sErr?.message)
-  external(
+  flaky('search returns results', found, !sErr && found?.results?.length > 0, sErr?.message)
+  flaky(
     'series is read, not lost to the wrong field name',
+    found,
     found?.results?.[0]?.seriesName?.includes('Lord of the Rings'),
     `${found?.results?.[0]?.seriesName} #${found?.results?.[0]?.seriesPosition}`,
   )
 
-  external(
+  flaky(
     'search carries a rating',
+    found,
     found?.results?.some((r) => typeof r.rating === 'number'),
     `${found?.results?.[0]?.rating ?? 'none'} / 5`,
   )
@@ -146,13 +176,15 @@ try {
     { method: 'GET' },
   )
   const titles = (cp?.results ?? []).map((r) => r.title)
-  external(
+  flaky(
     'no foreign-script titles survive an English search',
+    cp,
     titles.length > 0 && titles.every((x) => /^[\x20-\x7E]+$/.test(x)),
     titles.slice(0, 3).join(' | '),
   )
-  external(
+  flaky(
     'and every result is actually about the book asked for',
+    cp,
     titles.every((x) => /crime|punishment|dostoev/i.test(x)),
     titles.slice(0, 4).join(' | '),
   )
@@ -163,8 +195,9 @@ try {
     'openlibrary?q=' + encodeURIComponent('tolkien'),
     { method: 'GET' },
   )
-  external(
+  flaky(
     'an author search still returns their books',
+    byAuthor,
     (byAuthor?.results ?? []).length >= 3,
     `${(byAuthor?.results ?? []).length} results`,
   )
