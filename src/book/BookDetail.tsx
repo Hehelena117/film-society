@@ -9,9 +9,11 @@ import {
   catalogBook,
   CatalogueUnavailable,
   getCurrentlyReading,
+  getSeries,
   setProgress,
   stopReading,
   type CachedBook,
+  type SeriesVolume,
 } from '@/lib/books'
 import { errorMessage } from '@/lib/errors'
 
@@ -26,10 +28,12 @@ export function BookDetail({
   olKey,
   onBack,
   onLog,
+  onOpenBook,
 }: {
   olKey: string
   onBack: () => void
   onLog: (book: CachedBook) => void
+  onOpenBook: (olKey: string) => void
 }) {
   const { t, i18n } = useTranslation()
   const { profile } = useAuth()
@@ -40,6 +44,7 @@ export function BookDetail({
   const [busy, setBusy] = useState(false)
   const [adding, setAdding] = useState(false)
   const [posted, setPosted] = useState(false)
+  const [series, setSeries] = useState<SeriesVolume[]>([])
 
   useEffect(() => {
     let active = true
@@ -59,6 +64,30 @@ export function BookDetail({
       active = false
     }
   }, [olKey, i18n.resolvedLanguage, profile?.country])
+
+  /**
+   * The rest of the series, fetched after the book and never blocking it.
+   *
+   * Its own request rather than part of cataloguing, because the page is
+   * perfectly useful without it and Open Library takes its time. A failure is
+   * silent for the same reason — a book page that will not load because a
+   * sequel list could not be found would be a poor trade.
+   */
+  useEffect(() => {
+    const name = book?.seriesName
+    if (!name) {
+      setSeries([])
+      return
+    }
+
+    let active = true
+    getSeries(name)
+      .then((v) => active && setSeries(v))
+      .catch(() => active && setSeries([]))
+    return () => {
+      active = false
+    }
+  }, [book?.seriesName])
 
   async function move(next: number | null) {
     if (!book) return
@@ -218,6 +247,67 @@ export function BookDetail({
           + {t('book.lists.addTo')}
         </button>
 
+        {series.length > 1 && (
+          <section className="mt-8">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">
+                {book.seriesName}
+              </span>
+            </div>
+
+            {/* Sideways, like the shelf: a long series should not push the
+                rest of the page down. The book you are on is marked rather
+                than removed, so the sequence reads properly. */}
+            <div className="shelf-scroll">
+              <div className="flex gap-3">
+                {series.map((v) => {
+                  const here = v.olKey === olKey
+                  return (
+                    <button
+                      key={v.olKey}
+                      type="button"
+                      onClick={() => !here && onOpenBook(v.olKey)}
+                      disabled={here}
+                      className="w-[5.5rem] shrink-0 snap-start text-left disabled:cursor-default"
+                    >
+                      <span
+                        className={`relative block overflow-hidden rounded-[2px] bg-frame p-1 ${
+                          here ? 'ring-2 ring-accent' : 'shadow-lift'
+                        }`}
+                      >
+                        <span className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
+                          {v.coverUrl ? (
+                            <img
+                              src={v.coverUrl}
+                              alt=""
+                              loading="lazy"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="type-title px-1 text-center text-[0.65rem] leading-tight text-plate/70">
+                              {v.title}
+                            </span>
+                          )}
+                        </span>
+                        <span className="type-marquee absolute bottom-1 left-1 rounded-[2px] bg-frame/90 px-1.5 py-0.5 text-[10px] text-plate">
+                          {v.position}
+                        </span>
+                      </span>
+                      <span
+                        className={`mt-1.5 line-clamp-2 block text-[0.7rem] leading-tight ${
+                          here ? 'text-accent' : 'text-ink'
+                        }`}
+                      >
+                        {v.title}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
         {book.description && (
           <section className="mt-8">
             <div className="rule-pip mb-4">
@@ -226,7 +316,7 @@ export function BookDetail({
               </span>
             </div>
             <p className="text-[0.9375rem] leading-relaxed text-ink-2">
-              {book.description.slice(0, 1200)}
+              {plainText(book.description).slice(0, 1200)}
             </p>
           </section>
         )}
@@ -257,4 +347,26 @@ export function BookDetail({
       )}
     </div>
   )
+}
+
+/**
+ * Open Library descriptions are markdown, and were being printed raw.
+ *
+ * A book page opened with '***A Game of Thrones*** is the inaugural novel in
+ * ***A Song of Ice and Fire***' and had '###' headings scattered through the
+ * middle of sentences. Rendering the markdown properly would mean shipping a
+ * parser for one field; stripping the marks is the smaller honest answer, and
+ * the text then reads the way whoever wrote it meant it to.
+ */
+function plainText(md: string): string {
+  return md
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1') // links, keeping the words
+    .replace(/^#{1,6}\s*/gm, '') // headings at the start of a line
+    .replace(/#{2,6}\s+/g, '') // and the ones buried mid-paragraph
+    .replace(/[*_]{1,3}(?=\S)([^*_]+)[*_]{1,3}/g, '$1') // bold and italics
+    .replace(/^>\s?/gm, '') // block quotes
+    .replace(/`([^`]+)`/g, '$1') // code ticks
+    .replace(/\r/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }

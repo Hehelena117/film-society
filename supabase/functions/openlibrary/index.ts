@@ -157,8 +157,69 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
   const url = new URL(req.url)
+  /**
+   * The rest of a series, when asked for one.
+   *
+   * A different question from a search, so it gets a different answer shape
+   * and none of the resemblance machinery below — nothing here is being
+   * matched against what somebody typed.
+   *
+   * Only volumes with a POSITION are kept. Open Library files all sorts under
+   * a series name: a book about the films sits under "The Lord of the Rings",
+   * and something called Tadhkirtal Awliyah under "The Empyrean". Having a
+   * numbered place in the sequence is what distinguishes a volume of the
+   * series from a book that merely mentions it.
+   *
+   * One volume per position, preferring whichever edition more people have
+   * rated — otherwise a translation can take the slot from the edition the
+   * reader is likelier to want.
+   */
+  const seriesParam = url.searchParams.get('series')?.trim()
+  if (seriesParam) {
+    const bySeries = new URL('https://openlibrary.org/search.json')
+    bySeries.searchParams.set('q', 'series:"' + seriesParam.replace(/"/g, '') + '"')
+    bySeries.searchParams.set('fields', FIELDS)
+    bySeries.searchParams.set('limit', '20')
+
+    try {
+      const res = await fetch(bySeries, {
+        headers: { 'User-Agent': UA },
+        signal: AbortSignal.timeout(8000),
+      })
+      if (!res.ok) return json({ volumes: [], unavailable: true })
+
+      const docs = ((await res.json()).docs ?? []) as Record<string, any>[]
+      const best = new Map<number, Record<string, any>>()
+
+      for (const d of docs) {
+        const position = Number(d.series_position?.[0])
+        if (!Number.isFinite(position)) continue
+        const held = best.get(position)
+        if (!held || (d.ratings_count ?? 0) > (held.ratings_count ?? 0)) best.set(position, d)
+      }
+
+      const volumes = [...best.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([position, d]) => ({
+          position,
+          olKey: String(d.key).replace('/works/', ''),
+          title: d.title,
+          authors: readableAuthor(d, docs),
+          year: d.first_publish_year ?? null,
+          coverId: d.cover_i ?? null,
+          ratingCount: d.ratings_count ?? null,
+        }))
+
+      return json({ volumes })
+    } catch (err) {
+      console.error('Series lookup failed', err)
+      return json({ volumes: [], unavailable: true })
+    }
+  }
+
   const q = url.searchParams.get('q')?.trim()
   if (!q) return json({ results: [] })
+
 
   const search = new URL('https://openlibrary.org/search.json')
   search.searchParams.set('q', q)

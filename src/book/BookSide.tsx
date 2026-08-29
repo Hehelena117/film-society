@@ -51,6 +51,7 @@ export function BookSide({
     <BookDetail
       olKey={openBook}
       onBack={() => setOpenBook(null)}
+      onOpenBook={setOpenBook}
       onLog={(book) => {
         setPrefill(book)
         setOpenBook(null)

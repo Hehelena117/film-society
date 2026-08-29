@@ -753,3 +753,57 @@ export async function getReadingProfile(userId: string): Promise<ReadingProfile 
     following: followingRes.count ?? 0,
   }
 }
+
+// ---------------------------------------------------------------------------
+// The rest of a series
+// ---------------------------------------------------------------------------
+
+export interface SeriesVolume {
+  position: number
+  olKey: string
+  title: string
+  authors: string[]
+  year: number | null
+  coverUrl: string | null
+}
+
+/**
+ * The other books in a series, in order.
+ *
+ * Only volumes Open Library gives a numbered place in the sequence: they file
+ * all sorts under a series name — a book about the films under "The Lord of
+ * the Rings", something unrelated under "The Empyrean" — and having a position
+ * is what separates a volume from a book that merely mentions the series.
+ *
+ * Cached for the session like search is, because a series does not change
+ * while you are looking at it and Open Library is slow enough that asking
+ * twice is worth avoiding.
+ */
+const seriesCache = new Map<string, SeriesVolume[]>()
+
+export async function getSeries(name: string): Promise<SeriesVolume[]> {
+  const key = name.trim().toLowerCase()
+  if (!key) return []
+
+  const cached = seriesCache.get(key)
+  if (cached) return cached
+
+  const { data, error } = await supabase.functions.invoke(
+    `openlibrary?series=${encodeURIComponent(name.trim())}`,
+    { method: 'GET' },
+  )
+  if (error) throw error
+  if (data?.unavailable) throw new CatalogueUnavailable()
+
+  const volumes = ((data?.volumes ?? []) as Array<Record<string, any>>).map((v) => ({
+    position: v.position,
+    olKey: v.olKey,
+    title: v.title,
+    authors: v.authors ?? [],
+    year: v.year ?? null,
+    coverUrl: v.coverId ? COVER(v.coverId, 'M') : null,
+  }))
+
+  if (volumes.length) seriesCache.set(key, volumes)
+  return volumes
+}
