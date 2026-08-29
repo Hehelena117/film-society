@@ -5,6 +5,7 @@ import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
 import {
   deleteReadEntry,
+  updateReadEntry,
   getCurrentlyReading,
   getMyReading,
   setProgress,
@@ -35,6 +36,7 @@ export function MyShelf({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [openEntry, setOpenEntry] = useState<string | null>(null)
+  const [editing, setEditing] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -245,25 +247,50 @@ export function MyShelf({
 
                 {openEntry === entry.id && (
                   <div className="pb-3 pl-[3.5rem]">
-                    {entry.note && (
-                      <p className="border-l-2 border-brass-600/40 pl-3 text-[0.8125rem] leading-relaxed text-ink-2 italic">
-                        {entry.note}
-                      </p>
+                    {editing === entry.id ? (
+                      <EditReading
+                        entry={entry}
+                        onCancel={() => setEditing(null)}
+                        onSaved={(patch) => {
+                          setEntries((c) =>
+                            c.map((e) => (e.id === entry.id ? { ...e, ...patch } : e)),
+                          )
+                          setEditing(null)
+                        }}
+                        onError={setError}
+                      />
+                    ) : (
+                      <>
+                        {entry.note && (
+                          <p className="border-l-2 border-brass-600/40 pl-3 text-[0.8125rem] leading-relaxed text-ink-2 italic">
+                            {entry.note}
+                          </p>
+                        )}
+                        <div className="mt-2 flex gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setEditing(entry.id)}
+                            className="text-[0.7rem] text-ink-3 underline underline-offset-2 hover:text-ink"
+                          >
+                            {t('book.edit.open')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await deleteReadEntry(entry.id)
+                                setEntries((c) => c.filter((e) => e.id !== entry.id))
+                              } catch (err) {
+                                setError(errorMessage(err))
+                              }
+                            }}
+                            className="text-[0.7rem] text-ink-3 underline underline-offset-2 hover:text-accent"
+                          >
+                            {t('me.delete')}
+                          </button>
+                        </div>
+                      </>
                     )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await deleteReadEntry(entry.id)
-                          setEntries((c) => c.filter((e) => e.id !== entry.id))
-                        } catch (err) {
-                          setError(errorMessage(err))
-                        }
-                      }}
-                      className="mt-2 text-[0.7rem] text-ink-3 underline underline-offset-2 hover:text-accent"
-                    >
-                      {t('me.delete')}
-                    </button>
                   </div>
                 )}
               </li>
@@ -297,6 +324,123 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     <div>
       <dt className="type-meta text-ink-3">{label}</dt>
       <dd className="type-title mt-1 text-[1.5rem] text-ink">{value}</dd>
+    </div>
+  )
+}
+
+/**
+ * Changing a reading after the fact.
+ *
+ * People misremember when they finished something, change their mind about a
+ * score a week later, and think of the thing they actually wanted to say long
+ * after closing the book. All three are editable for that reason.
+ *
+ * Inline rather than a separate sheet: you are already looking at the row you
+ * want to change, and being sent elsewhere to alter one number loses the
+ * context that made you want to alter it.
+ */
+function EditReading({
+  entry,
+  onCancel,
+  onSaved,
+  onError,
+}: {
+  entry: ReadEntry
+  onCancel: () => void
+  onSaved: (patch: {
+    rating: number | null
+    finishedOn: string | null
+    note: string | null
+  }) => void
+  onError: (message: string) => void
+}) {
+  const { t } = useTranslation()
+  const [rating, setRating] = useState<number | null>(entry.rating)
+  const [finishedOn, setFinishedOn] = useState(entry.finishedOn ?? '')
+  const [note, setNote] = useState(entry.note ?? '')
+  const [busy, setBusy] = useState(false)
+
+  async function save() {
+    setBusy(true)
+    try {
+      const patch = {
+        rating,
+        finishedOn: finishedOn || null,
+        note: note.trim() || null,
+      }
+      await updateReadEntry({ entryId: entry.id, ...patch })
+      onSaved(patch)
+    } catch (err) {
+      onError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mt-1 rounded-[2px] border border-rule bg-ground px-3 py-3">
+      <fieldset>
+        <legend className="type-meta mb-2 text-ink-3">{t('log.rating')}</legend>
+        <div className="grid grid-cols-10 gap-1">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setRating(rating === n ? null : n)}
+              aria-pressed={rating === n}
+              className={`type-marquee rounded-[2px] border py-1.5 text-[11px] transition-colors ${
+                rating === n
+                  ? 'border-accent bg-accent text-plate'
+                  : 'border-rule text-ink-3 hover:border-brass-600 hover:text-ink'
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-[0.7rem] text-ink-3">{t('log.ratingOptional')}</p>
+      </fieldset>
+
+      <label className="mt-3 block">
+        <span className="type-meta mb-1.5 block text-ink-3">{t('book.log.finishedOn')}</span>
+        <input
+          type="date"
+          value={finishedOn}
+          onChange={(e) => setFinishedOn(e.target.value)}
+          className="w-full rounded-[2px] border border-rule bg-ground-2 px-3 py-2 text-[0.875rem] text-ink outline-none focus:border-brass-600"
+        />
+      </label>
+
+      <label className="mt-3 block">
+        <span className="type-meta mb-1.5 block text-ink-3">{t('log.note')}</span>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+          maxLength={4000}
+          placeholder={t('log.notePlaceholder')}
+          className="w-full resize-y rounded-[2px] border border-rule bg-ground-2 px-3 py-2 text-[0.875rem] leading-relaxed text-ink outline-none focus:border-brass-600"
+        />
+        <span className="mt-1 block text-[0.7rem] text-ink-3">{t('book.edit.clearHint')}</span>
+      </label>
+
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={busy}
+          className="type-marquee flex-1 rounded-[2px] bg-accent py-2.5 text-[12px] text-plate disabled:opacity-60"
+        >
+          {busy ? t('auth.working') : t('edit.save')}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="type-marquee flex-1 rounded-[2px] border border-rule-strong py-2.5 text-[12px] text-ink-2"
+        >
+          {t('log.close')}
+        </button>
+      </div>
     </div>
   )
 }

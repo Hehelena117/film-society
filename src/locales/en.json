@@ -363,7 +363,8 @@
       "reading": "You are in the middle of",
       "readingHint": "finish one off",
       "readBefore": "Read before",
-      "nothingStarted": "Nothing on the go. Open a book and mark it as being read."
+      "nothingStarted": "Nothing on the go. Open a book and mark it as being read.",
+      "noMatch": "Nothing by that name. Open Library can be fussy about spelling — try the author, or fewer words."
     },
     "rating": "{{score}} out of 5 · {{count}} readers",
     "lists": {
@@ -416,6 +417,10 @@
     },
     "people": {
       "noSuggestions": "Once you are in a book group, the people in it show up here."
+    },
+    "edit": {
+      "open": "Edit",
+      "clearHint": "Clearing the text removes the note."
     }
   }
 }

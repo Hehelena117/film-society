@@ -363,7 +363,8 @@
       "reading": "Du er midt i",
       "readingHint": "gør en færdig",
       "readBefore": "Læst før",
-      "nothingStarted": "Ingenting i gang. Åbn en bog, og markér den som i gang."
+      "nothingStarted": "Ingenting i gang. Åbn en bog, og markér den som i gang.",
+      "noMatch": "Ingen med det navn. Open Library er kræsen med stavning — prøv forfatteren eller færre ord."
     },
     "rating": "{{score}} ud af 5 · {{count}} læsere",
     "lists": {
@@ -416,6 +417,10 @@
     },
     "people": {
       "noSuggestions": "Når du er med i en boggruppe, dukker medlemmerne op her."
+    },
+    "edit": {
+      "open": "Redigér",
+      "clearHint": "Sletter du teksten, fjernes noten."
     }
   }
 }

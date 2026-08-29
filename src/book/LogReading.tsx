@@ -167,6 +167,12 @@ export function LogReading({
               ))}
             </ul>
 
+            {query.trim() && !searching && hits.length === 0 && !error && (
+              <p className="mt-8 text-center text-[0.875rem] leading-relaxed text-ink-3">
+                {t('book.log.noMatch')}
+              </p>
+            )}
+
             {!query.trim() && (
               <>
                 <SuggestionRow

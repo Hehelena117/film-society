@@ -48,6 +48,8 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
   const snapshotRef = useRef<ReadingSnapshot | null>(null)
   const feedbackRef = useRef<BookFeedbackEntry[]>([])
   const countRef = useRef(0)
+  // Mirrors `recs`, so loadMore can check for duplicates without depending on it.
+  const recsRef = useRef<BookRecommendation[]>([])
   // Films they loved, read once with the snapshot.
   const crossoverRef = useRef<Array<{ name: string; year: number | null; score: number }>>([])
 
@@ -95,10 +97,28 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
         return
       }
 
-      const titles = batch.map((b) => b.book.title)
+      // Belt and braces against the same book arriving twice.
+      //
+      // The exclusion list is built from TITLES, because that is the language
+      // the prompt speaks — but a book can come back under a slightly
+      // different title than the one that was excluded, and then it is a
+      // duplicate cover on the same shelf. The Open Library key is the only
+      // thing that actually identifies a book, so the last word is here.
+      const known = new Set(recsRef.current.map((r) => r.book.olKey))
+      const fresh = batch.filter((b) => !known.has(b.book.olKey))
+
+      if (!fresh.length) {
+        // Everything offered was already on the shelf. Asking again with the
+        // same prompt would return the same thing, so stop rather than loop.
+        setExhausted(true)
+        return
+      }
+
+      const titles = fresh.map((b) => b.book.title)
       seenRef.current = [...new Set([...seenRef.current, ...titles])].slice(-150)
-      countRef.current += batch.length
-      setRecs((current) => [...current, ...batch])
+      countRef.current += fresh.length
+      recsRef.current = [...recsRef.current, ...fresh]
+      setRecs((current) => [...current, ...fresh])
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -191,6 +211,7 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
             // do. Only the snapshot is dropped, so new ratings count.
             snapshotRef.current = null
             countRef.current = 0
+            recsRef.current = []
             setRecs([])
             setExhausted(false)
             railRef.current?.scrollTo({ left: 0 })

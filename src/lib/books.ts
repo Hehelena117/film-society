@@ -217,6 +217,61 @@ export async function logReading(input: {
   return entryId
 }
 
+/**
+ * Changes a reading you have already logged.
+ *
+ * The rating, the date and the note are all editable: people misremember when
+ * they finished something, change their mind about a score a week later, and
+ * think of the thing they actually wanted to say about a book long after
+ * closing it.
+ *
+ * The note lives in its own table, so it is written separately — and
+ * user_id is NAMED rather than left to its DEFAULT, because this is an upsert
+ * and PostgREST does not apply column defaults on that path. The default would
+ * silently not fire, the row would arrive with a null owner, and RLS would
+ * reject it while blaming the wrong thing. That is precisely how watchlist
+ * writes broke once already.
+ *
+ * Clearing the text deletes the note rather than storing an empty one: a note
+ * that exists but says nothing would still show its quotation mark on the row.
+ */
+export async function updateReadEntry(input: {
+  entryId: string
+  rating: number | null
+  finishedOn: string | null
+  note: string | null
+}): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Not signed in')
+
+  const { error } = await supabase
+    .from('book_log_entries')
+    .update({ rating: input.rating, finished_on: input.finishedOn })
+    .eq('id', input.entryId)
+  if (error) throw error
+
+  const body = input.note?.trim()
+  if (!body) {
+    const { error: delErr } = await supabase
+      .from('book_entry_notes')
+      .delete()
+      .eq('entry_id', input.entryId)
+    if (delErr) throw delErr
+    return
+  }
+
+  const { error: noteErr } = await supabase.from('book_entry_notes').upsert(
+    {
+      entry_id: input.entryId,
+      user_id: auth.user.id,
+      body,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'entry_id' },
+  )
+  if (noteErr) throw noteErr
+}
+
 export async function deleteReadEntry(id: string): Promise<void> {
   const { error } = await supabase.from('book_log_entries').delete().eq('id', id)
   if (error) throw error

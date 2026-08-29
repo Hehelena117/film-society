@@ -94,7 +94,24 @@ Deno.serve(async (req: Request) => {
     }),
   )
 
-  return json({ recommendations: resolved.filter(Boolean) })
+  /**
+   * One book per shelf, however many ways the model names it.
+   *
+   * The model happily suggests "Dune" and "Dune (Dune Chronicles #1)" in the
+   * same batch, and both resolve to the same Open Library work — so the same
+   * cover appeared twice on one shelf. The exclusion list cannot catch this,
+   * because it works on the titles ASKED for, and those two are different
+   * strings. The resolved key is the only thing that identifies a book.
+   */
+  const seen = new Set<string>()
+  const unique = resolved.filter((r): r is { book: { olKey: string }; reason: string } => {
+    if (!r) return false
+    if (seen.has(r.book.olKey)) return false
+    seen.add(r.book.olKey)
+    return true
+  })
+
+  return json({ recommendations: unique })
 })
 
 async function askModel(body: Body, count: number) {

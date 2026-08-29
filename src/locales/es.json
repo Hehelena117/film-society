@@ -363,7 +363,8 @@
       "reading": "Tienes a medias",
       "readingHint": "termina uno",
       "readBefore": "Leídos antes",
-      "nothingStarted": "Nada en curso. Abre un libro y márcalo como en curso."
+      "nothingStarted": "Nada en curso. Abre un libro y márcalo como en curso.",
+      "noMatch": "Nada con ese nombre. Open Library es quisquilloso con la ortografía — prueba con el autor o menos palabras."
     },
     "rating": "{{score}} sobre 5 · {{count}} lectores",
     "lists": {
@@ -416,6 +417,10 @@
     },
     "people": {
       "noSuggestions": "Cuando entres en un grupo de lectura, sus miembros aparecerán aquí."
+    },
+    "edit": {
+      "open": "Editar",
+      "clearHint": "Si borras el texto, se elimina la nota."
     }
   }
 }

@@ -69,13 +69,6 @@ const FIELDS = [
 const LIMIT = 8
 
 /**
- * How many good matches are needed before the poor ones are dropped rather
- * than merely sorted below. Under this many, everything is kept — otherwise
- * an unusual search would come back empty, which is worse than untidy.
- */
-const ENOUGH = 3
-
-/**
  * Books about books, which Open Library holds as ordinary works.
  *
  * A search for Kafka on the Shore led with "A Study Guide for Haruki
@@ -89,6 +82,67 @@ const ENOUGH = 3
  */
 const APPARATUS =
   /\b(study guide|sparknotes|cliffsnotes|shmoop|summary|analysis|notes?|companion|handbook|casebook|a guide to|guide for|readers? guide|critical (essays|edition|companion)|bloom'?s)\b/i
+
+/**
+ * How alike two titles are, 0 to 1.
+ *
+ * Levenshtein over the normalised strings. Needed because containment alone
+ * treats "predjudice" as having nothing to do with "prejudice", which is
+ * exactly the case a reader hits when they misspell something.
+ */
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0
+  if (a === b) return 1
+
+  const rows = a.length + 1
+  const cols = b.length + 1
+  let prev = Array.from({ length: cols }, (_, i) => i)
+
+  for (let i = 1; i < rows; i++) {
+    const row = [i]
+    for (let j = 1; j < cols; j++) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      )
+    }
+    prev = row
+  }
+
+  return 1 - prev[cols - 1] / Math.max(a.length, b.length)
+}
+
+/** Close enough that a person would call it the same title. */
+const NEARLY = 0.82
+
+/**
+ * Does this title look like what was typed?
+ *
+ * Whole-title similarity alone is not enough, and the failure is instructive:
+ * "hary potter" against "harry potter and the philosopher's stone" scores
+ * about 0.4, because most of the title is words the reader never typed. So
+ * every typed word has to find a near match SOMEWHERE in the title instead —
+ * "hary" finds "harry", "potter" finds "potter", and the rest of the title is
+ * allowed to be as long as it likes.
+ *
+ * That also keeps rubbish out: "the lord of the rigns" finds nothing in
+ * "Anno XXVII. Henrici VIII", which is what a search for a Tolkien novel was
+ * answering with before this existed.
+ */
+function looksLike(got: string, asked: string): boolean {
+  if (got.length < 3 || !asked) return false
+  if (got.includes(asked) || asked.includes(got)) return true
+  if (similarity(got, asked) >= NEARLY) return true
+
+  const wanted = asked.split(' ').filter((w) => w.length >= 3)
+  if (!wanted.length) return false
+
+  const have = got.split(' ').filter(Boolean)
+  return wanted.every((w) =>
+    have.some((h) => h === w || h.includes(w) || similarity(h, w) >= 0.78),
+  )
+}
 
 const normalise = (s: string) =>
   s
@@ -140,9 +194,76 @@ Deno.serve(async (req: Request) => {
     // fact worth reporting in words the client can actually show.
     return json({ results: [], unavailable: true })
   }
+  /**
+   * Ask again, fuzzily, when the plain search comes back thin.
+   *
+   * Open Library is Solr underneath and accepts the ~ operator, which their
+   * ordinary search does not use: "pride and predjudice" plain can miss the
+   * book entirely, while title:(pride~2 predjudice~2) finds it. Only run when
+   * the first answer was poor, so the usual search costs nothing extra.
+   *
+   * Not a cure-all — "the hobbbit" returns nothing either way, because three
+   * b's is past what their index will forgive.
+   */
+  async function fuzzyRetry(): Promise<Record<string, unknown>[]> {
+    const words = q
+      .split(/\s+/)
+      .filter((w) => w.length > 3)
+      .map((w) => w.replace(/[^\p{L}\p{N}]/gu, ''))
+      .filter(Boolean)
+    if (!words.length) return []
+
+    const fuzzy = new URL('https://openlibrary.org/search.json')
+    fuzzy.searchParams.set('q', 'title:(' + words.map((w) => w + '~2').join(' ') + ')')
+    fuzzy.searchParams.set('fields', FIELDS)
+    fuzzy.searchParams.set('limit', String(LIMIT))
+
+    try {
+      const res = await fetch(fuzzy, {
+        headers: { 'User-Agent': UA },
+        signal: AbortSignal.timeout(6000),
+      })
+      if (!res.ok) return []
+      return ((await res.json()).docs ?? []) as Record<string, unknown>[]
+    } catch {
+      return []
+    }
+  }
+
   const asked = normalise(q)
 
-  const scored = (data.docs ?? [])
+  let docs = (data.docs ?? []) as Record<string, unknown>[]
+
+  // Retry on the QUALITY of the answer, not the quantity of it.
+  //
+  // Triggering on `docs.length < 3` looked reasonable and was wrong: "the lord
+  // of the rigns" comes back with several results, none of them Tolkien — a
+  // Tudor statute among them — so the count is healthy, the retry never fires,
+  // and the reader gets nothing useful. What matters is whether any of it
+  // resembles what they typed.
+  const promising = docs.filter((d) =>
+    looksLike(normalise(String(d.title ?? '')), normalise(q)),
+  ).length
+
+  if (promising < 3) {
+    const more = await fuzzyRetry()
+    const seenKeys = new Set(docs.map((d) => String(d.key)))
+    const asked0 = normalise(q)
+
+    // A fuzzy query is generous by design, and generosity brings rubbish:
+    // 'the lord of the rigns' came back with a Tudor statute, because ~2 on
+    // 'rigns' also matches 'reigns'. Anything the retry offers has to look
+    // like what was typed before it is allowed onto the list.
+    docs = [
+      ...docs,
+      ...more.filter((d) => {
+        if (seenKeys.has(String(d.key))) return false
+        return looksLike(normalise(String(d.title ?? '')), asked0)
+      }),
+    ]
+  }
+
+  const scored = docs
     .filter((d: Record<string, unknown>) => d.key && d.title)
     .map((d: Record<string, any>) => {
       const got = normalise(String(d.title))
@@ -156,7 +277,14 @@ Deno.serve(async (req: Request) => {
       // The length guard is load-bearing. A title in a non-Latin script
       // normalises to the empty string, and every string contains the empty
       // string — so «Преступление и наказание» once scored as a perfect match.
-      const exact = got.length >= 3 && got === asked
+      // A near miss counts as a hit. Ranking on EXACT equality promoted a
+      // typo-titled reprint with no ratings above the real Pride and
+      // Prejudice, because the reprint matched the misspelling perfectly —
+      // measured, not imagined. Everything close enough now shares the top
+      // band, and the tie-break below decides between them on how many people
+      // have actually read the thing.
+      const alike = got.length >= 3 ? similarity(got, asked) : 0
+      const exact = alike >= NEARLY
       const contains = got.length >= 3 && (got.includes(asked) || asked.includes(got))
 
       // Searching by author is normal and matches no title at all, so the
@@ -182,7 +310,12 @@ Deno.serve(async (req: Request) => {
           (exact ? 3 : contains ? 2 : authorMatches ? 1 : 0) -
           (isApparatus ? 2 : 0) -
           (unreadable ? 4 : 0),
-        relevant: contains || authorMatches,
+        // Near matches count as relevant too, not merely rank well. Leaving this on
+        // plain containment DROPPED "Pride and Prejudice" from a search for "pride
+        // and predjudice" — four typo-titled reprints passed the gate, which met
+        // the threshold to discard everything else, including the one book the
+        // reader obviously wanted.
+        relevant: looksLike(got, asked) || authorMatches,
         book: {
           olKey: String(d.key).replace('/works/', ''),
           title: d.title,
@@ -208,8 +341,15 @@ Deno.serve(async (req: Request) => {
   //
   // Filtering only kicks in once enough good matches survive — a search for
   // something obscure keeps everything rather than coming back empty.
-  const relevant = scored.filter((s: { relevant: boolean }) => s.relevant)
-  const chosen = relevant.length >= ENOUGH ? relevant : scored
+  // Only what resembles the query, and nothing at all when nothing does.
+  //
+  // This used to keep EVERYTHING whenever fewer than three results looked
+  // right, on the reasoning that an odd list beats an empty one. Measured, it
+  // does not: 'the lord of the rigns' answered with a Tudor statute, because
+  // the statute was the only thing Open Library returned and so it won by
+  // default. A search box that says it found nothing is understood instantly;
+  // one that offers Anno XXVII. Henrici VIII is not.
+  const chosen = scored.filter((s: { relevant: boolean }) => s.relevant)
 
   // Within a rank, the most-rated edition first. Open Library holds a separate
   // work for every translation and study guide, and the one everybody has
