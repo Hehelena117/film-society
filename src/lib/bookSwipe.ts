@@ -261,12 +261,127 @@ export async function getGroupResult(
     .map((o) => ({ book: byId.get(o.bookId)!, average: o.average, voters: o.voters }))
 }
 
-export async function settleOn(sessionId: string, bookId: number): Promise<void> {
-  const { error } = await supabase
-    .from('book_swipe_sessions')
-    .update({ decided_book_id: bookId, closed_at: new Date().toISOString() })
-    .eq('id', sessionId)
+/**
+ * Closes the session on a book — once, for everybody.
+ *
+ * Returns the book the session is *actually* settled on, which is not always
+ * the one passed in. Every client used to work out a winner and write it, so
+ * two people finishing together wrote two answers and the screen could show
+ * one and then the other. Now the first writer decides and the rest are told.
+ *
+ * Through a function rather than an update because the table may only be
+ * updated by whoever opened the session, so anyone else closing it silently
+ * changed nothing.
+ */
+export async function settleOn(sessionId: string, bookId: number): Promise<number | null> {
+  const { data, error } = await supabase.rpc('settle_book_session', {
+    p_session: sessionId,
+    p_book: bookId,
+  })
+
+  // Until the migration that adds that function has been run, close the
+  // session the old way. The ordering is what actually fixed two answers
+  // appearing — every client now computes the same one — so this should keep
+  // working rather than fail loudly over a nicety that is not there yet.
+  if (error?.code === 'PGRST202' || error?.code === '42883') {
+    await supabase
+      .from('book_swipe_sessions')
+      .update({ decided_book_id: bookId, closed_at: new Date().toISOString() })
+      .eq('id', sessionId)
+      .is('decided_book_id', null)
+    const { data: row } = await supabase
+      .from('book_swipe_sessions')
+      .select('decided_book_id')
+      .eq('id', sessionId)
+      .maybeSingle()
+    return (row?.decided_book_id as number | null) ?? bookId
+  }
+
   if (error) throw error
+  return (data as number | null) ?? null
+}
+
+export interface GroupDecision {
+  sessionId: string
+  listName: string
+  decidedAt: string | null
+  winner: BookCandidate
+  /** The full order — empty unless you were one of the people ranking. */
+  order: Array<{ book: BookCandidate; average: number }>
+  people: number
+}
+
+/**
+ * What this group has already decided, most recent first.
+ *
+ * The winner is visible to the whole group; the order behind it only to the
+ * people who ranked, because that is who the rankings belong to and the
+ * database will not hand them to anybody else. So a member who sat one out
+ * still sees what was chosen, just not everyone's private order.
+ */
+export async function getGroupDecisions(groupId: string, limit = 3): Promise<GroupDecision[]> {
+  const { data: sessions, error } = await supabase
+    .from('book_swipe_sessions')
+    .select('id, decided_book_id, closed_at, list:reading_lists(name), people:book_swipe_participants(count)')
+    .eq('group_id', groupId)
+    .not('decided_book_id', 'is', null)
+    .order('closed_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
+  if (error) throw error
+
+  const rows = (sessions ?? []) as Array<Record<string, any>>
+  if (!rows.length) return []
+
+  const { data: rankings } = await supabase
+    .from('book_rankings')
+    .select('session_id, user_id, book_id, position')
+    .in(
+      'session_id',
+      rows.map((r) => r.id),
+    )
+
+  const bySession = new Map<string, Array<{ userId: string; bookId: number; position: number }>>()
+  for (const r of (rankings ?? []) as Array<Record<string, any>>) {
+    bySession.set(r.session_id, [
+      ...(bySession.get(r.session_id) ?? []),
+      { userId: r.user_id, bookId: r.book_id, position: r.position },
+    ])
+  }
+
+  const wanted = new Set<number>(rows.map((r) => r.decided_book_id))
+  for (const list of bySession.values()) for (const r of list) wanted.add(r.bookId)
+
+  const { data: books } = await supabase
+    .from('books')
+    .select('id, ol_key, title, authors, first_published_year, cover_id')
+    .in('id', [...wanted])
+
+  const byId = new Map<number, BookCandidate>(
+    ((books ?? []) as Array<Record<string, any>>).map((b) => [
+      b.id as number,
+      {
+        bookId: b.id,
+        olKey: b.ol_key,
+        title: b.title,
+        authors: b.authors ?? [],
+        year: b.first_published_year,
+        coverUrl: b.cover_id ? COVER(b.cover_id) : null,
+      },
+    ]),
+  )
+
+  return rows
+    .filter((row) => byId.has(row.decided_book_id))
+    .map((row) => ({
+      sessionId: row.id,
+      listName: row.list?.name ?? '',
+      decidedAt: row.closed_at,
+      winner: byId.get(row.decided_book_id)!,
+      people: row.people?.[0]?.count ?? 0,
+      order: bestAveragePosition(bySession.get(row.id) ?? [])
+        .filter((o) => byId.has(o.bookId))
+        .map((o) => ({ book: byId.get(o.bookId)!, average: o.average })),
+    }))
 }
 
 /** Sessions running on lists you can see, so others can join one. */

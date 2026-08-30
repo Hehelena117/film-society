@@ -145,5 +145,68 @@ check(
   `${middle.map((m) => `${m.bookId}:${m.average.toFixed(1)}/${m.voters}`).join(' ')}`,
 )
 
+console.log('\n=== the same answer every time ===')
+// The bug this exists for: two people who disagree completely tie on
+// average, the rows came back from the database in no particular order, and
+// the winner was whichever one happened to be first. The screen showed one
+// book, then the other.
+const disagree = [
+  { userId: 'a', bookId: 7, position: 1 },
+  { userId: 'a', bookId: 3, position: 2 },
+  { userId: 'b', bookId: 3, position: 1 },
+  { userId: 'b', bookId: 7, position: 2 },
+]
+
+
+const answers = new Set()
+for (let i = 0; i < 500; i++) {
+  answers.add(bestAveragePosition(shuffle(disagree)).map((r) => r.bookId).join(">"))
+}
+check(
+  'a dead tie still gives one answer, in any row order',
+  answers.size === 1,
+  `${answers.size} different answers: ${[...answers].join(" | ")}`,
+)
+
+// A three-way pile-up, ranked by three people in every order they could
+// have arrived in.
+const messy = [
+  { userId: 'a', bookId: 1, position: 1 },
+  { userId: 'a', bookId: 2, position: 2 },
+  { userId: 'a', bookId: 3, position: 3 },
+  { userId: 'b', bookId: 2, position: 1 },
+  { userId: 'b', bookId: 3, position: 2 },
+  { userId: 'b', bookId: 1, position: 3 },
+  { userId: 'c', bookId: 3, position: 1 },
+  { userId: 'c', bookId: 1, position: 2 },
+  { userId: 'c', bookId: 2, position: 3 },
+]
+const messyAnswers = new Set()
+for (let i = 0; i < 500; i++) {
+  messyAnswers.add(bestAveragePosition(shuffle(messy)).map((r) => r.bookId).join(">"))
+}
+check(
+  'three people in a perfect circle still settle on one order',
+  messyAnswers.size === 1,
+  `${messyAnswers.size} different answers`,
+)
+
+// And the tie is broken by something a person would recognise as a reason.
+const firsts = bestAveragePosition([
+  { userId: 'a', bookId: 5, position: 1 },
+  { userId: 'a', bookId: 6, position: 3 },
+  { userId: 'b', bookId: 5, position: 1 },
+  { userId: 'b', bookId: 6, position: 3 },
+  { userId: 'c', bookId: 6, position: 1 },
+  { userId: 'c', bookId: 5, position: 3 },
+  { userId: 'd', bookId: 6, position: 1 },
+  { userId: 'd', bookId: 5, position: 3 },
+])
+check(
+  'a tie on average is broken by who was put first more often',
+  firsts[0].average === firsts[1].average && firsts[0].firsts === 2,
+  `${firsts.map((f) => `${f.bookId}:${f.average.toFixed(1)}/${f.firsts}`).join(" ")}`,
+)
+
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

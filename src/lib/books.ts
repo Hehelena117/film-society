@@ -822,3 +822,43 @@ export async function getSeries(name: string): Promise<SeriesVolume[]> {
   if (volumes.length) seriesCache.set(key, volumes)
   return volumes
 }
+
+export interface SharedList {
+  id: string
+  name: string
+  count: number
+  /** A few jackets, so a list reads as books rather than as a row of text. */
+  covers: Array<{ bookId: number; olKey: string; title: string; coverUrl: string | null }>
+}
+
+/**
+ * The lists this group shares.
+ *
+ * A shared list is where a group's next read comes from, so it belongs on the
+ * group's own page and not only under your lists — otherwise the only way to
+ * find what the group is choosing between is to remember it exists.
+ */
+export async function getGroupReadingLists(groupId: string): Promise<SharedList[]> {
+  const { data, error } = await supabase
+    .from('reading_lists')
+    .select('id, name, items:reading_list_items(book:books!inner(id, ol_key, title, cover_id))')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return ((data ?? []) as Array<Record<string, any>>).map((row) => {
+    const items = (row.items ?? []) as Array<Record<string, any>>
+    return {
+      id: row.id,
+      name: row.name,
+      count: items.length,
+      covers: items.slice(0, 6).map((i) => ({
+        bookId: i.book.id,
+        olKey: i.book.ol_key,
+        title: i.book.title,
+        coverUrl: i.book.cover_id ? COVER(i.book.cover_id, 'M') : null,
+      })),
+    }
+  })
+}

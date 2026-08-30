@@ -386,14 +386,20 @@
       "new": "Ny gruppe",
       "empty": "Ingen grupper endnu. Lav en, og tilføj folk med brugernavn.",
       "reading": "Læser lige nu",
-      "nobodyReading": "Ingen har fortalt, hvad de læser endnu. Åbn en bog og fortæl dine grupper det."
+      "nobodyReading": "Ingen har fortalt, hvad de læser endnu. Åbn en bog og fortæl dine grupper det.",
+      "sharedLists": "Delte lister",
+      "noSharedLists": "Ingen lister delt med denne gruppe endnu. Del en fra dine lister, så dukker den op her.",
+      "joinRanking": "Vær med i rangeringen",
+      "decided": "Allerede besluttet",
+      "noDecisions": "Intet besluttet endnu. Rangér en delt liste, så lander gruppens valg her."
     },
     "swipe": {
       "title": "Beslut sammen",
       "start": "Beslut sammen",
-      "needsGroup": "Del denne liste med en gruppe for at beslutte sammen — det er der, de andre finder den.",
       "agreed": "I er enige",
-      "waitingHint": "Du har set alle bøger. Venter på de andre."
+      "waitingHint": "Du har set alle bøger. Venter på de andre.",
+      "needsTwo": "Mindst to bøger — ellers er der ikke noget at vælge imellem.",
+      "justYou": "Denne liste er ikke delt med en gruppe, så den rangeres kun for dig."
     },
     "unavailable": "Katalogget svarer ikke lige nu. Det er Open Librarys ende, ikke din — prøv igen om et minut.",
     "rank": {
@@ -404,7 +410,9 @@
       "waitingFor": "Venter på {{who}}.",
       "tallying": "Regner ud, hvor gruppen landede…",
       "agreed": "Gruppen vil helst",
-      "averagePlace": "gennemsnitlig plads {{place}}"
+      "averagePlace": "gennemsnitlig plads {{place}}",
+      "youWouldRather": "Du vil helst",
+      "tied": "Det stod lige med {{title}} i gennemsnit."
     },
     "feed": {
       "rated": "gav {{title}} {{rating}}/10",

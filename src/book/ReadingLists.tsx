@@ -129,7 +129,7 @@ export function ReadingLists({
           {/* Deciding together needs a group to decide with. */}
           <button
             type="button"
-            disabled={!open.groupId || items.length === 0}
+            disabled={items.length < 2}
             onClick={async () => {
               try {
                 const { startBookSwipe } = await import('@/lib/bookSwipe')
@@ -142,11 +142,15 @@ export function ReadingLists({
           >
             {t('book.swipe.start')}
           </button>
-          {!open.groupId && (
+          {items.length < 2 ? (
             <p className="mt-2 text-center text-[0.75rem] leading-relaxed text-ink-3">
-              {t('book.swipe.needsGroup')}
+              {t('book.swipe.needsTwo')}
             </p>
-          )}
+          ) : !open.groupId ? (
+            <p className="mt-2 text-center text-[0.75rem] leading-relaxed text-ink-3">
+              {t('book.swipe.justYou')}
+            </p>
+          ) : null}
 
           <div className="rule-pip mt-8 mb-4">
             <span className="type-meta whitespace-nowrap text-ink-3">

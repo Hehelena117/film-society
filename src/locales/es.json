@@ -386,14 +386,20 @@
       "new": "Nuevo grupo",
       "empty": "Aún no hay grupos. Crea uno y añade gente por nombre de usuario.",
       "reading": "Leyendo ahora mismo",
-      "nobodyReading": "Nadie ha dicho aún qué está leyendo. Abre un libro y cuéntaselo a tus grupos."
+      "nobodyReading": "Nadie ha dicho aún qué está leyendo. Abre un libro y cuéntaselo a tus grupos.",
+      "sharedLists": "Listas compartidas",
+      "noSharedLists": "Todavía no hay listas compartidas con este grupo. Comparte una desde tus listas y aparecerá aquí.",
+      "joinRanking": "Unirse a la clasificación",
+      "decided": "Ya decidido",
+      "noDecisions": "Nada decidido todavía. Ordena una lista compartida y la elección del grupo aparecerá aquí."
     },
     "swipe": {
       "title": "Decidir juntos",
       "start": "Decidir juntos",
-      "needsGroup": "Comparte esta lista con un grupo para decidir juntos — ahí es donde la encuentran los demás.",
       "agreed": "Estáis de acuerdo",
-      "waitingHint": "Has visto todos los libros. Esperando a los demás."
+      "waitingHint": "Has visto todos los libros. Esperando a los demás.",
+      "needsTwo": "Al menos dos libros — si no, no hay nada entre lo que elegir.",
+      "justYou": "Esta lista no está compartida con un grupo, así que se ordena solo para ti."
     },
     "unavailable": "El catálogo no responde ahora mismo. Es cosa de Open Library, no tuya — inténtalo dentro de un minuto.",
     "rank": {
@@ -404,7 +410,9 @@
       "waitingFor": "Esperando a {{who}}.",
       "tallying": "Calculando dónde ha quedado el grupo…",
       "agreed": "El grupo preferiría",
-      "averagePlace": "puesto medio {{place}}"
+      "averagePlace": "puesto medio {{place}}",
+      "youWouldRather": "Tú preferirías",
+      "tied": "Hubo empate en promedio con {{title}}."
     },
     "feed": {
       "rated": "puntuó {{title}} con {{rating}}/10",

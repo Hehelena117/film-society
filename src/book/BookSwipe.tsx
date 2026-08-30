@@ -49,6 +49,9 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
   const [state, setState] = useState<RankingState<BookCandidate> | null>(null)
   const [progress, setProgress] = useState<SessionProgress | null>(null)
   const [result, setResult] = useState<GroupResult>(null)
+  // Not "whatever this screen worked out just now": the book the session is
+  // settled on, which was settled once, by whoever got there first.
+  const [decided, setDecided] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,7 +60,7 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
       const [p, r] = await Promise.all([getSessionProgress(sessionId), getGroupResult(sessionId)])
       setProgress(p)
       setResult(r)
-      if (r?.length) await settleOn(sessionId, r[0].book.bookId)
+      if (r?.length) setDecided(await settleOn(sessionId, r[0].book.bookId))
     } catch (err) {
       setError(errorMessage(err))
     }
@@ -132,10 +135,17 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
 
   // ---- everyone is done: the group's answer -------------------------------
   if (result?.length) {
-    const winner = result[0]
+    const winner = result.find((r) => r.book.bookId === decided) ?? result[0]
+    const rest = result.filter((r) => r.book.bookId !== winner.book.bookId)
+    // Two people who disagree completely tie on average, and something has to
+    // break it. Saying so is better than presenting a coin toss as a verdict.
+    const tiedWith = rest[0]?.average === winner.average ? rest[0].book.title : null
+    const alone = session?.groupId === null
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center wall-ground texture-wall px-6 py-10">
-        <p className="type-script text-[1.9rem] text-accent">{t('book.rank.agreed')}</p>
+        <p className="type-script text-[1.9rem] text-accent">
+          {t(alone ? 'book.rank.youWouldRather' : 'book.rank.agreed')}
+        </p>
 
         <div className="mt-5 w-40 overflow-hidden rounded-[2px] bg-frame p-1.5 shadow-frame">
           <div className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
@@ -157,11 +167,17 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
           {t('book.rank.averagePlace', { place: winner.average.toFixed(1) })}
         </p>
 
+        {tiedWith && (
+          <p className="mx-auto mt-2 max-w-[30ch] text-center text-[0.8125rem] leading-relaxed text-ink-3">
+            {t('book.rank.tied', { title: tiedWith })}
+          </p>
+        )}
+
         {/* What nearly won, which is the useful part when the winner turns out
             to be one somebody has already read. */}
-        {result.length > 1 && (
+        {rest.length > 0 && (
           <ul className="mt-6 w-full max-w-xs">
-            {result.slice(1, 4).map((r, i) => (
+            {rest.slice(0, 3).map((r, i) => (
               <li
                 key={r.book.bookId}
                 className="flex items-baseline justify-between gap-3 border-b border-rule py-2"

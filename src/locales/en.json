@@ -386,14 +386,20 @@
       "new": "New group",
       "empty": "No groups yet. Make one and add people by username.",
       "reading": "Reading right now",
-      "nobodyReading": "Nobody has said what they are reading yet. Open a book and tell your groups."
+      "nobodyReading": "Nobody has said what they are reading yet. Open a book and tell your groups.",
+      "sharedLists": "Shared lists",
+      "noSharedLists": "No lists shared with this group yet. Share one from your lists and it turns up here.",
+      "joinRanking": "Join the ranking",
+      "decided": "Already decided",
+      "noDecisions": "Nothing decided yet. Rank a shared list and the group's pick lands here."
     },
     "swipe": {
       "title": "Decide together",
       "start": "Decide together",
-      "needsGroup": "Share this list with a group to decide together — that is where the others find it.",
       "agreed": "You agree",
-      "waitingHint": "You have seen every book. Waiting for the others."
+      "waitingHint": "You have seen every book. Waiting for the others.",
+      "needsTwo": "Two books at least — there is nothing to choose between otherwise.",
+      "justYou": "This list is not shared with a group, so it ranks just for you."
     },
     "unavailable": "The catalogue is not answering just now. That is Open Library's end, not yours — try again in a minute.",
     "rank": {
@@ -404,7 +410,9 @@
       "waitingFor": "Waiting for {{who}}.",
       "tallying": "Working out where the group landed…",
       "agreed": "The group would rather",
-      "averagePlace": "average place {{place}}"
+      "averagePlace": "average place {{place}}",
+      "youWouldRather": "You would rather",
+      "tied": "It was a tie on average with {{title}}."
     },
     "feed": {
       "rated": "rated {{title}} {{rating}}/10",

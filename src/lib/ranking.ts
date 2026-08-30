@@ -86,38 +86,47 @@ export function questionsLeft<T>(state: RankingState<T>): number {
 }
 
 /**
- * The group's answer: the book with the best average position.
+ * The group's order: best average position first.
  *
- * Averaged rather than totalled, so everyone counts equally however long the
- * list was.
+ * Averaged over the people who ranked, and books everybody judged come
+ * before books only some did — otherwise one person's lone first choice
+ * (1.0) beats a book three people all put second (2.0), which is the
+ * opposite of finding what the group agrees on.
  *
- * Books ranked by the MOST people are considered first, and only then by
- * average. Without that, a book one person put first (average 1.0) beats a
- * book three people put second (average 2.0) — which is the opposite of
- * finding what the group would most rather read. In the ordinary case this
- * changes nothing, because a ranking is written all-or-nothing when someone
- * finishes, so every book carries the same number of voters; it only bites
- * when a session is somehow uneven, which is exactly when it should.
+ * Every tie is broken by something, all the way down, because this has to
+ * give the same answer on every phone and on every refresh. It did not:
+ * two people who disagree completely produce a genuine tie on average, and
+ * the winner then came down to whatever order the rows arrived in, so the
+ * screen showed one book and then another. After the average, the book more
+ * people put first wins; after that, the one fewer people put last; and
+ * finally the lower id, which decides nothing but decides it consistently.
  */
 export function bestAveragePosition(
   rankings: Array<{ userId: string; bookId: number; position: number }>,
-): Array<{ bookId: number; average: number; voters: number }> {
+): Array<{ bookId: number; average: number; voters: number; firsts: number }> {
   const byBook = new Map<number, number[]>()
   for (const r of rankings) {
     byBook.set(r.bookId, [...(byBook.get(r.bookId) ?? []), r.position])
   }
 
+  // The longest ranking anybody filed: last place in a deck of ten is tenth.
+  const last = Math.max(0, ...rankings.map((r) => r.position))
+
   const scored = [...byBook.entries()].map(([bookId, positions]) => ({
     bookId,
     average: positions.reduce((a, b) => a + b, 0) / positions.length,
     voters: positions.length,
+    firsts: positions.filter((p) => p === 1).length,
+    lasts: positions.filter((p) => p === last).length,
   }))
 
   const most = Math.max(0, ...scored.map((s) => s.voters))
-  const byAverage = (a: { average: number }, b: { average: number }) => a.average - b.average
+
+  const order = (a: (typeof scored)[number], b: (typeof scored)[number]) =>
+    a.average - b.average || b.firsts - a.firsts || a.lasts - b.lasts || a.bookId - b.bookId
 
   return [
-    ...scored.filter((s) => s.voters === most).sort(byAverage),
-    ...scored.filter((s) => s.voters < most).sort(byAverage),
-  ]
+    ...scored.filter((s) => s.voters === most).sort(order),
+    ...scored.filter((s) => s.voters < most).sort(order),
+  ].map(({ bookId, average, voters, firsts }) => ({ bookId, average, voters, firsts }))
 }

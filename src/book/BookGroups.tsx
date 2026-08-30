@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Cover } from '@/book/Cover'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import {
   getBookGroupActivity,
@@ -8,7 +9,15 @@ import {
   type BookActivityItem,
   type CurrentRead,
 } from '@/lib/bookActivity'
-import { getOpenBookSessions, joinBookSwipe, type BookSession } from '@/lib/bookSwipe'
+import {
+  getGroupDecisions,
+  getOpenBookSessions,
+  joinBookSwipe,
+  startBookSwipe,
+  type BookSession,
+  type GroupDecision,
+} from '@/lib/bookSwipe'
+import { getGroupReadingLists, type SharedList } from '@/lib/books'
 import { errorMessage } from '@/lib/errors'
 import {
   addMemberByUsername,
@@ -35,7 +44,7 @@ export function BookGroups({
   onJoinSwipe: (sessionId: string) => void
   onOpenBook: (olKey: string) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const [groups, setGroups] = useState<Group[]>([])
   const [sessions, setSessions] = useState<BookSession[]>([])
@@ -43,6 +52,8 @@ export function BookGroups({
   const [members, setMembers] = useState<GroupMember[]>([])
   const [reading, setReading] = useState<CurrentRead[]>([])
   const [feed, setFeed] = useState<BookActivityItem[]>([])
+  const [shared, setShared] = useState<SharedList[]>([])
+  const [decisions, setDecisions] = useState<GroupDecision[]>([])
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
@@ -54,7 +65,9 @@ export function BookGroups({
     try {
       const [g, s] = await Promise.all([getMyGroups('book'), getOpenBookSessions()])
       setGroups(g)
-      setSessions(s.filter((x) => x.decidedBookId === null))
+      // Open, and actually a group's: ranking a list of your own is a private
+      // thing, and it has no business inviting the group to join in.
+      setSessions(s.filter((x) => x.decidedBookId === null && x.groupId !== null))
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -74,12 +87,16 @@ export function BookGroups({
       getGroupMembers(open.id),
       getGroupCurrentlyReading(open.id),
       getBookGroupActivity(open.id),
+      getGroupReadingLists(open.id),
+      getGroupDecisions(open.id),
     ])
-      .then(([m, r, f]) => {
+      .then(([m, r, f, l, d]) => {
         if (!active) return
         setMembers(m)
         setReading(r)
         setFeed(f)
+        setShared(l)
+        setDecisions(d)
       })
       .catch((err) => active && setError(errorMessage(err)))
 
@@ -196,18 +213,9 @@ export function BookGroups({
                       type="button"
                       onClick={() => onOpenBook(r.book.olKey)}
                       aria-label={r.book.title}
-                      className="w-11 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5"
+                      className="w-11 shrink-0"
                     >
-                      <span className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
-                        {r.book.coverUrl && (
-                          <img
-                            src={r.book.coverUrl}
-                            alt=""
-                            loading="lazy"
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        )}
-                      </span>
+                      <Cover url={r.book.coverUrl} title={r.book.title} />
                     </button>
                     <div className="min-w-0">
                       <p className="type-meta text-accent">{r.username}</p>
@@ -220,6 +228,153 @@ export function BookGroups({
                     </div>
                   </li>
                 ))}
+              </ul>
+            )}
+          </section>
+
+          {/* The lists this group shares — where its next read comes from, so
+              it belongs here and not only under your own lists. */}
+          <section className="mt-8">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">
+                {t('book.groups.sharedLists')}
+              </span>
+            </div>
+
+            {shared.length === 0 ? (
+              <p className="mx-auto max-w-[34ch] text-center text-[0.8125rem] leading-relaxed text-ink-3">
+                {t('book.groups.noSharedLists')}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {shared.map((list) => {
+                  // Somebody may already have opened a ranking on this list, and
+                  // a second one would split the group across two answers.
+                  const live = sessions.find((x) => x.listId === list.id)
+                  return (
+                    <li
+                      key={list.id}
+                      className="rounded-[2px] border border-rule bg-ground-2 px-4 py-3.5"
+                    >
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="type-title min-w-0 truncate text-[1.0625rem] text-ink">
+                          {list.name}
+                        </span>
+                        <span className="type-meta shrink-0 text-ink-3">
+                          {t('lists.count', { count: list.count })}
+                        </span>
+                      </div>
+
+                      {list.covers.length > 0 && (
+                        <ul className="mt-3 flex gap-2">
+                          {list.covers.map((c) => (
+                            <li key={c.bookId} className="w-10 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => onOpenBook(c.olKey)}
+                                aria-label={c.title}
+                                className="block w-full"
+                              >
+                                <Cover url={c.coverUrl} title={c.title} />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {list.count > 1 && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              if (live) {
+                                await joinBookSwipe(live.id)
+                                onJoinSwipe(live.id)
+                              } else {
+                                onJoinSwipe(await startBookSwipe(list.id))
+                              }
+                            } catch (err) {
+                              setError(errorMessage(err))
+                            }
+                          }}
+                          className="type-marquee mt-3 w-full rounded-[2px] border border-rule-strong py-2.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink"
+                        >
+                          {t(live ? 'book.groups.joinRanking' : 'book.swipe.start')}
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+
+          {/* What the group has already settled on. */}
+          <section className="mt-8">
+            <div className="rule-pip mb-4">
+              <span className="type-meta whitespace-nowrap text-ink-3">
+                {t('book.groups.decided')}
+              </span>
+            </div>
+
+            {decisions.length === 0 ? (
+              <p className="mx-auto max-w-[34ch] text-center text-[0.8125rem] leading-relaxed text-ink-3">
+                {t('book.groups.noDecisions')}
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {decisions.map((d) => {
+                  const runnersUp = d.order.filter((o) => o.book.bookId !== d.winner.bookId)
+                  return (
+                    <li key={d.sessionId} className="flex items-start gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onOpenBook(d.winner.olKey)}
+                        aria-label={d.winner.title}
+                        className="w-12 shrink-0"
+                      >
+                        <Cover url={d.winner.coverUrl} title={d.winner.title} />
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="type-meta truncate text-ink-3">
+                          {[
+                            d.listName,
+                            d.decidedAt
+                              ? new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'en', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                }).format(new Date(d.decidedAt))
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                        <p className="type-title truncate text-[0.9375rem] leading-tight text-ink">
+                          {d.winner.title}
+                        </p>
+                        <p className="type-meta mt-0.5 truncate text-accent">
+                          {d.winner.authors[0] ?? ''}
+                        </p>
+
+                        {/* Only the people who ranked may read the order behind
+                            the winner, so for anyone else this is simply absent. */}
+                        {runnersUp.length > 0 && (
+                          <ol className="mt-1.5">
+                            {runnersUp.slice(0, 2).map((o, i) => (
+                              <li
+                                key={o.book.bookId}
+                                className="truncate text-[0.75rem] leading-relaxed text-ink-3"
+                              >
+                                {i + 2}. {o.book.title}
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
