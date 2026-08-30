@@ -412,7 +412,8 @@
       "agreed": "El grupo preferiría",
       "averagePlace": "puesto medio {{place}}",
       "youWouldRather": "Tú preferirías",
-      "tied": "Hubo empate en promedio con {{title}}."
+      "tied": "Hubo empate en promedio con {{title}}.",
+      "whatsItAbout": "¿De qué trata?"
     },
     "feed": {
       "rated": "puntuó {{title}} con {{rating}}/10",
@@ -431,6 +432,10 @@
     "edit": {
       "open": "Editar",
       "clearHint": "Si borras el texto, se elimina la nota."
+    },
+    "peek": {
+      "back": "Volver a elegir",
+      "noDescription": "Open Library no tiene descripción de este. El año, la extensión y lo que opinaron otros lectores están arriba."
     }
   }
 }

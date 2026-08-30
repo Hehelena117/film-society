@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { BookPeek } from '@/book/BookPeek'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import {
   getBookDeck,
@@ -52,6 +53,9 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
   // Not "whatever this screen worked out just now": the book the session is
   // settled on, which was settled once, by whoever got there first.
   const [decided, setDecided] = useState<number | null>(null)
+  // A book you are being asked about but know nothing of. Held here rather
+  // than navigated to, because the comparisons so far live in this screen.
+  const [peek, setPeek] = useState<BookCandidate | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -249,32 +253,43 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
                 { book: pair.left, left: true },
                 { book: pair.right, left: false },
               ].map(({ book, left }) => (
-                <button
-                  key={book.bookId}
-                  type="button"
-                  onClick={() => void pick(left)}
-                  className="flex flex-col rounded-[2px] border border-rule bg-ground-2 p-2 text-left transition-colors hover:border-accent"
-                >
-                  <span className="block overflow-hidden rounded-[2px] bg-frame p-1">
-                    <span className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
-                      {book.coverUrl ? (
-                        <img
-                          src={book.coverUrl}
-                          alt=""
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <span className="type-title px-2 text-center text-[0.8rem] leading-tight text-plate">
-                          {book.title}
-                        </span>
-                      )}
+                <div key={book.bookId} className="flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => void pick(left)}
+                    className="flex flex-1 flex-col rounded-[2px] border border-rule bg-ground-2 p-2 text-left transition-colors hover:border-accent"
+                  >
+                    <span className="block overflow-hidden rounded-[2px] bg-frame p-1">
+                      <span className="flex aspect-[2/3] items-center justify-center overflow-hidden bg-pitch">
+                        {book.coverUrl ? (
+                          <img
+                            src={book.coverUrl}
+                            alt=""
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <span className="type-title px-2 text-center text-[0.8rem] leading-tight text-plate">
+                            {book.title}
+                          </span>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                  <span className="type-title mt-2 line-clamp-2 text-[0.9rem] leading-tight text-ink">
-                    {book.title}
-                  </span>
-                  <span className="type-meta mt-1 truncate text-ink-3">{book.authors[0] ?? ''}</span>
-                </button>
+                    <span className="type-title mt-2 line-clamp-2 text-[0.9rem] leading-tight text-ink">
+                      {book.title}
+                    </span>
+                    <span className="type-meta mt-1 truncate text-ink-3">
+                      {book.authors[0] ?? ''}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPeek(book)}
+                    className="mt-1.5 text-center text-[0.75rem] text-ink-3 underline underline-offset-2 transition-colors hover:text-accent"
+                  >
+                    {t('book.rank.whatsItAbout')}
+                  </button>
+                </div>
               ))}
             </div>
 
@@ -284,6 +299,8 @@ export function BookSwipe({ sessionId, onExit }: { sessionId: string; onExit: ()
           </>
         )}
       </main>
+
+      {peek && <BookPeek book={peek} onClose={() => setPeek(null)} />}
     </div>
   )
 }

@@ -412,7 +412,8 @@
       "agreed": "Gruppen vil helst",
       "averagePlace": "gennemsnitlig plads {{place}}",
       "youWouldRather": "Du vil helst",
-      "tied": "Det stod lige med {{title}} i gennemsnit."
+      "tied": "Det stod lige med {{title}} i gennemsnit.",
+      "whatsItAbout": "Hvad handler den om?"
     },
     "feed": {
       "rated": "gav {{title}} {{rating}}/10",
@@ -431,6 +432,10 @@
     "edit": {
       "open": "Redigér",
       "clearHint": "Sletter du teksten, fjernes noten."
+    },
+    "peek": {
+      "back": "Tilbage til valget",
+      "noDescription": "Open Library har ingen beskrivelse af denne. Årstal, længde og hvad andre læsere syntes står ovenfor."
     }
   }
 }

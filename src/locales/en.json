@@ -412,7 +412,8 @@
       "agreed": "The group would rather",
       "averagePlace": "average place {{place}}",
       "youWouldRather": "You would rather",
-      "tied": "It was a tie on average with {{title}}."
+      "tied": "It was a tie on average with {{title}}.",
+      "whatsItAbout": "What's it about?"
     },
     "feed": {
       "rated": "rated {{title}} {{rating}}/10",
@@ -431,6 +432,10 @@
     "edit": {
       "open": "Edit",
       "clearHint": "Clearing the text removes the note."
+    },
+    "peek": {
+      "back": "Back to choosing",
+      "noDescription": "Open Library has no description for this one. The year, the length and what other readers made of it are above."
     }
   }
 }
