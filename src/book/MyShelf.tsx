@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Cover } from '@/book/Cover'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
 import {
@@ -28,7 +29,7 @@ export function MyShelf({
   onOpenProfile: (userId: string) => void
   onFindPeople: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { profile, signOut, user } = useAuth()
 
   const [reading, setReading] = useState<Reading[]>([])
@@ -129,51 +130,55 @@ export function MyShelf({
                     type="button"
                     onClick={() => onOpenBook(r.book.olKey)}
                     aria-label={r.book.title}
-                    className="w-12 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5"
+                    className="w-12 shrink-0"
                   >
-                    <span className="block aspect-[2/3] overflow-hidden bg-pitch">
-                      {r.book.coverUrl && (
-                        <img
-                          src={r.book.coverUrl}
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </span>
+                    <Cover url={r.book.coverUrl} title={r.book.title} />
                   </button>
 
                   <div className="min-w-0 flex-1">
                     <p className="type-title truncate text-[0.9375rem] leading-tight text-ink">
                       {r.book.title}
                     </p>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      {/* The bookmark's position along the block. */}
-                      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-rule">
-                        <span
-                          className="block h-full bg-accent"
-                          style={{ width: `${r.percent}%` }}
-                        />
+                    {/* One control, not two. This drew a progress bar AND a
+                        range input under it — the same number twice, one of
+                        them inert, which read as two smudges stacked up. */}
+                    <div className="mt-1 flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={r.percent}
+                        onChange={(e) =>
+                          setReading((current) =>
+                            current.map((x) =>
+                              x.bookId === r.bookId ? { ...x, percent: Number(e.target.value) } : x,
+                            ),
+                          )
+                        }
+                        onPointerUp={() => void nudge(r.bookId, r.percent)}
+                        onKeyUp={() => void nudge(r.bookId, r.percent)}
+                        aria-label={t('book.progress.title')}
+                        className="bookmark-slider min-w-0 flex-1"
+                        style={{ ['--read']: `${r.percent}%` } as React.CSSProperties}
+                      />
+                      <span className="type-meta w-9 shrink-0 text-right text-ink-3">
+                        {r.percent}%
                       </span>
-                      <span className="type-meta shrink-0 text-ink-3">{r.percent}%</span>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={r.percent}
-                      onChange={(e) =>
-                        setReading((current) =>
-                          current.map((x) =>
-                            x.bookId === r.bookId ? { ...x, percent: Number(e.target.value) } : x,
-                          ),
-                        )
-                      }
-                      onPointerUp={() => void nudge(r.bookId, r.percent)}
-                      onKeyUp={() => void nudge(r.bookId, r.percent)}
-                      aria-label={t('book.progress.title')}
-                      className="mt-1 w-full accent-accent"
-                    />
+
+                    {r.startedOn && (
+                      <p className="type-meta mt-0.5 text-ink-3/80">
+                        {/* Not the raw 2026-08-14. Nobody reads a date aloud
+                            that way, and the film log was corrected for the
+                            same reason. */}
+                        {t('book.reading.since', {
+                          date: new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'en', {
+                            day: 'numeric',
+                            month: 'long',
+                          }).format(new Date(r.startedOn)),
+                        })}
+                      </p>
+                    )}
                   </div>
                 </li>
               ))}
@@ -201,18 +206,9 @@ export function MyShelf({
                     type="button"
                     onClick={() => onOpenBook(entry.book.olKey)}
                     aria-label={entry.book.title}
-                    className="w-11 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5"
+                    className="w-11 shrink-0"
                   >
-                    <span className="block aspect-[2/3] overflow-hidden bg-pitch">
-                      {entry.book.coverUrl && (
-                        <img
-                          src={entry.book.coverUrl}
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </span>
+                    <Cover url={entry.book.coverUrl} title={entry.book.title} />
                   </button>
 
                   <button

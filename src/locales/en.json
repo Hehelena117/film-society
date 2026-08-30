@@ -344,10 +344,12 @@
       "stop": "Stop reading",
       "hint": "Roughly is fine. Nobody is checking.",
       "tellGroups": "Tell my groups I am reading this",
-      "told": "Your groups know"
+      "told": "Your groups know",
+      "startedOn": "Started on"
     },
     "reading": {
-      "title": "Currently reading"
+      "title": "Currently reading",
+      "since": "Since {{date}}"
     },
     "stats": {
       "read": "Books",

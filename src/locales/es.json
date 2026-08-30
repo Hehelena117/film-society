@@ -344,10 +344,12 @@
       "stop": "Dejar de leer",
       "hint": "Aproximado vale. Nadie lo comprueba.",
       "tellGroups": "Contar a mis grupos que la estoy leyendo",
-      "told": "Tus grupos ya lo saben"
+      "told": "Tus grupos ya lo saben",
+      "startedOn": "Empezado el"
     },
     "reading": {
-      "title": "Leyendo ahora"
+      "title": "Leyendo ahora",
+      "since": "Desde {{date}}"
     },
     "stats": {
       "read": "Libros",

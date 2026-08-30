@@ -318,7 +318,11 @@ export async function getCurrentlyReading(): Promise<Reading[]> {
  * NOT apply column DEFAULTs on that path — the trap that once made watchlist
  * writes fail with an error blaming the wrong thing.
  */
-export async function setProgress(bookId: number, percent: number): Promise<void> {
+export async function setProgress(
+  bookId: number,
+  percent: number,
+  startedOn?: string,
+): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('Not signed in')
 
@@ -327,11 +331,22 @@ export async function setProgress(bookId: number, percent: number): Promise<void
       user_id: auth.user.id,
       book_id: bookId,
       percent: Math.max(0, Math.min(100, Math.round(percent))),
+      // Sent only when the caller means to change it. Omitting it on an
+      // ordinary nudge leaves the existing date alone, which is what moving a
+      // bookmark should do — you are not starting the book again.
+      ...(startedOn ? { started_on: startedOn } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,book_id' },
   )
   if (error) throw error
+}
+
+/** Picks a book up, recording the day. */
+export async function startReading(bookId: number, on?: string): Promise<void> {
+  // The date is named rather than left to the column's DEFAULT: this goes
+  // through an upsert, and defaults are exactly what that path does not apply.
+  await setProgress(bookId, 0, on ?? new Date().toISOString().slice(0, 10))
 }
 
 export async function stopReading(bookId: number): Promise<void> {

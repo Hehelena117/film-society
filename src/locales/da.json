@@ -344,10 +344,12 @@
       "stop": "Stop med at læse",
       "hint": "Cirka er fint. Ingen tjekker efter.",
       "tellGroups": "Fortæl mine grupper, at jeg læser den",
-      "told": "Dine grupper ved det"
+      "told": "Dine grupper ved det",
+      "startedOn": "Begyndt den"
     },
     "reading": {
-      "title": "Læser lige nu"
+      "title": "Læser lige nu",
+      "since": "Siden {{date}}"
     },
     "stats": {
       "read": "Bøger",

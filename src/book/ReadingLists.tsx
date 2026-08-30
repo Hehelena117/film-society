@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Cover } from '@/book/Cover'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import {
   createReadingList,
@@ -164,18 +165,7 @@ export function ReadingLists({
                     onClick={() => onOpenBook(item.olKey)}
                     className="block w-full text-left"
                   >
-                    <span className="block overflow-hidden rounded-[2px] bg-frame p-1 shadow-lift">
-                      <span className="block aspect-[2/3] overflow-hidden bg-pitch">
-                        {item.coverUrl && (
-                          <img
-                            src={item.coverUrl}
-                            alt=""
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        )}
-                      </span>
-                    </span>
+                    <Cover url={item.coverUrl} title={item.title} className="shadow-lift" />
                     <span className="mt-1.5 line-clamp-2 block text-[0.7rem] leading-tight text-ink">
                       {item.title}
                     </span>

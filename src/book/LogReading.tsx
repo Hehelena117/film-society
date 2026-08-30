@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Cover } from '@/book/Cover'
 import { SuggestionRow } from '@/components/SuggestionRow'
 import {
   CatalogueUnavailable,
@@ -138,15 +139,8 @@ export function LogReading({
                     onClick={() => onOpenBook(hit.olKey)}
                     className="flex w-full items-center gap-3 rounded-[2px] border border-rule bg-ground-2 p-2 text-left transition-colors hover:border-brass-600"
                   >
-                    <span className="h-[68px] w-[46px] shrink-0 overflow-hidden rounded-[1px] bg-frame">
-                      {hit.coverUrl && (
-                        <img
-                          src={hit.coverUrl}
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-cover"
-                        />
-                      )}
+                    <span className="w-[46px] shrink-0">
+                      <Cover url={hit.coverUrl} title={hit.title} />
                     </span>
                     <span className="min-w-0">
                       <span className="type-title block text-[1.0625rem] leading-tight text-ink">
@@ -243,10 +237,8 @@ function RatingForm({
   return (
     <>
       <div className="flex items-center gap-4">
-        <div className="w-16 shrink-0 overflow-hidden rounded-[2px] bg-frame p-0.5">
-          <div className="aspect-[2/3] overflow-hidden bg-pitch">
-            {book.coverUrl && <img src={book.coverUrl} alt="" className="h-full w-full object-cover" />}
-          </div>
+        <div className="w-16 shrink-0">
+          <Cover url={book.coverUrl} title={book.title} />
         </div>
         <div className="min-w-0">
           <h2 className="type-title text-[1.25rem] leading-tight text-ink">{book.title}</h2>

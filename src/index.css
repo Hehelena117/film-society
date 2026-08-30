@@ -414,3 +414,69 @@
     );
   background-size: 18px 31px;
 }
+
+/* A reading marker you can slide.
+ *
+ * One control, not two. The reading list used to draw a progress bar AND a
+ * range input beneath it — the same number twice, one of them inert, which
+ * read as two smudges stacked on top of each other. This is the slider,
+ * dressed so it can be the only thing there: a thin track with the read part
+ * filled, and a brass tab for the thumb, like a bookmark sitting in the block.
+ *
+ * The filled portion comes from --read, set inline, because a range input
+ * cannot express "how much is behind the thumb" in CSS alone.
+ */
+@utility bookmark-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+
+  &::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--color-accent) 0 var(--read),
+      var(--color-rule) var(--read) 100%
+    );
+  }
+
+  &::-moz-range-track {
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--color-accent) 0 var(--read),
+      var(--color-rule) var(--read) 100%
+    );
+  }
+
+  /* The tab of the bookmark, standing a little proud of the page edge. */
+  &::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 11px;
+    height: 17px;
+    margin-top: -6px;
+    border-radius: 1px 1px 2px 2px;
+    background-image: linear-gradient(180deg, #e8b44a 0%, #c9922e 55%, #8a6320 100%);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.45);
+  }
+
+  &::-moz-range-thumb {
+    width: 11px;
+    height: 17px;
+    border: 0;
+    border-radius: 1px 1px 2px 2px;
+    background-image: linear-gradient(180deg, #e8b44a 0%, #c9922e 55%, #8a6320 100%);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.45);
+  }
+
+  &:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--color-brass-600);
+    outline-offset: 2px;
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Cover } from '@/book/Cover'
 import { AddToReadingList } from '@/book/AddToReadingList'
 import { postCurrentRead } from '@/lib/bookActivity'
 import { ScreenHeader } from '@/components/ScreenHeader'
@@ -10,6 +11,7 @@ import {
   CatalogueUnavailable,
   getCurrentlyReading,
   getSeries,
+  startReading,
   setProgress,
   stopReading,
   type CachedBook,
@@ -45,6 +47,7 @@ export function BookDetail({
   const [adding, setAdding] = useState(false)
   const [posted, setPosted] = useState(false)
   const [series, setSeries] = useState<SeriesVolume[]>([])
+  const [startedOn, setStartedOn] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -53,7 +56,11 @@ export function BookDetail({
         if (!active) return
         setBook(b)
         const reading = await getCurrentlyReading()
-        if (active) setPercent(reading.find((r) => r.bookId === b.id)?.percent ?? null)
+        const mine = reading.find((r) => r.bookId === b.id)
+        if (active) {
+          setPercent(mine?.percent ?? null)
+          setStartedOn(mine?.startedOn ?? null)
+        }
       })
       .catch(
         (err) =>
@@ -97,6 +104,7 @@ export function BookDetail({
     setPercent(next)
     try {
       if (next === null) await stopReading(book.id)
+      else if (percent === null) await startReading(book.id)
       else await setProgress(book.id, next)
     } catch (err) {
       setPercent(previous)
@@ -126,12 +134,8 @@ export function BookDetail({
 
         {/* The book laid on the reading table. */}
         <div className="flex gap-5">
-          <div className="w-32 shrink-0 overflow-hidden rounded-[2px] bg-frame p-1 shadow-frame">
-            <div className="aspect-[2/3] overflow-hidden bg-pitch">
-              {book.coverUrl && (
-                <img src={book.coverUrl} alt="" className="h-full w-full object-cover" />
-              )}
-            </div>
+          <div className="w-32 shrink-0 shadow-frame">
+            <Cover url={book.coverUrl} title={book.title} />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -210,6 +214,31 @@ export function BookDetail({
               />
 
               <p className="mt-1.5 text-[0.75rem] text-ink-3">{t('book.progress.hint')}</p>
+
+              {/* When you picked it up. Stored from the first day but never
+                  shown before, so a date you could not see was also a date
+                  you could not correct. */}
+              <label className="mt-3 block">
+                <span className="type-meta mb-1.5 block text-ink-3">
+                  {t('book.progress.startedOn')}
+                </span>
+                <input
+                  type="date"
+                  value={startedOn ?? ''}
+                  onChange={async (e) => {
+                    const on = e.target.value
+                    setStartedOn(on || null)
+                    if (on && percent !== null) {
+                      try {
+                        await setProgress(book.id, percent, on)
+                      } catch (err) {
+                        setError(errorMessage(err))
+                      }
+                    }
+                  }}
+                  className="w-full rounded-[2px] border border-rule bg-ground px-3 py-2 text-[0.875rem] text-ink outline-none focus:border-brass-600"
+                />
+              </label>
 
               {/* Telling the group is a deliberate act, never automatic:
                   how far in you are stays owner-only, and this posts the
