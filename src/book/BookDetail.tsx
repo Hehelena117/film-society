@@ -411,7 +411,11 @@ export function BookDetail({
               }}
               className="type-marquee w-full rounded-[2px] border border-dashed border-rule-strong py-3.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink disabled:opacity-60"
             >
-              {writing ? t('book.thoughts.writing') : t('book.thoughts.ask')}
+              {writing
+                ? t('book.thoughts.writing')
+                : book.description
+                  ? t('book.thoughts.askThin')
+                  : t('book.thoughts.askNone')}
             </button>
           )}
         </section>

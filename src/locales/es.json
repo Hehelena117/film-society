@@ -447,11 +447,12 @@
       "noDescription": "Open Library no tiene descripción de este. El año, la extensión y lo que opinaron otros lectores están arriba."
     },
     "thoughts": {
-      "ask": "Cuéntame sobre este",
       "writing": "Documentándose…",
       "inOtherWords": "Dicho de otro modo",
       "wouldYou": "Te gustaría",
-      "written": "Escrito por la IA de la aplicación a partir del catálogo y tus valoraciones. Puede equivocarse sobre un libro, así que tómalo como una sugerencia y no como un veredicto."
+      "written": "Escrito por la IA de la aplicación a partir del catálogo y tus valoraciones. Puede equivocarse sobre un libro, así que tómalo como una sugerencia y no como un veredicto.",
+      "askThin": "¿Esta descripción no te sirve de mucho?",
+      "askNone": "No hay ninguna descripción. ¿Escribo una?"
     }
   }
 }
