@@ -872,3 +872,102 @@ export async function getGroupReadingLists(groupId: string): Promise<SharedList[
     }
   })
 }
+
+// ---------------------------------------------------------------------------
+// What a book is, and whether you would get on with it
+// ---------------------------------------------------------------------------
+
+export interface BookThoughts {
+  /** The written description. Shared: the same for every reader. */
+  description: string | null
+  /** Why THIS reader might like it. Theirs alone. */
+  would: string | null
+  wouldnt: string | null
+}
+
+/** What has already been written, if anything. Costs nothing. */
+export async function getBookThoughts(bookId: number): Promise<BookThoughts | null> {
+  const [fit, row] = await Promise.all([
+    supabase.from('book_fit').select('would, wouldnt').eq('book_id', bookId).maybeSingle(),
+    supabase.from('books').select('ai_description').eq('id', bookId).maybeSingle(),
+  ])
+
+  const description = (row.data as Record<string, any> | null)?.ai_description ?? null
+  const mine = fit.data as Record<string, any> | null
+  if (!description && !mine) return null
+
+  return {
+    description,
+    would: mine?.would ?? null,
+    wouldnt: mine?.wouldnt ?? null,
+  }
+}
+
+/**
+ * Asks for a description, and for an honest word about whether you would
+ * like it.
+ *
+ * Only ever on request. Every book anyone glanced at would otherwise cost a
+ * call, and most books do not need explaining -- Open Library's own
+ * description is often perfectly good, which is why it stays exactly where
+ * it is and this goes underneath rather than over the top.
+ *
+ * Notes reach the prompt only if the reader turned that on, which is read
+ * here rather than passed in, so no screen can get it wrong.
+ */
+export async function writeBookThoughts(
+  olKey: string,
+  language: string,
+): Promise<BookThoughts> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) throw new Error('Not signed in')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('use_book_notes_for_recommendations')
+    .eq('id', auth.user.id)
+    .maybeSingle()
+
+  const snapshot = await getReadingSnapshot(
+    (profile as Record<string, any> | null)?.use_book_notes_for_recommendations === true,
+  )
+
+  const { data, error } = await supabase.functions.invoke<{
+    bookId: number
+    description: string | null
+    would: string
+    wouldnt: string | null
+    error?: string
+  }>('book-blurb', {
+    body: {
+      olKey,
+      ratings: snapshot.ratings,
+      notes: snapshot.notes,
+      language,
+    },
+  })
+
+  if (error) throw error
+  if (!data) throw new Error('book-blurb returned nothing')
+  if (data.error) throw new Error(data.error)
+
+  // Written by the reader to their own row, not by the function on their
+  // behalf: what they would make of a book is built from their ratings and
+  // their notes, and RLS is what keeps it theirs rather than a promise made
+  // in a function they cannot see.
+  //
+  // user_id is named because this is an upsert, and PostgREST does not apply
+  // column DEFAULTs on that path.
+  const { error: fitErr } = await supabase.from('book_fit').upsert(
+    {
+      user_id: auth.user.id,
+      book_id: data.bookId,
+      would: data.would,
+      wouldnt: data.wouldnt,
+    },
+    { onConflict: 'user_id,book_id' },
+  )
+  if (fitErr) throw fitErr
+
+  return { description: data.description, would: data.would, wouldnt: data.wouldnt }
+}

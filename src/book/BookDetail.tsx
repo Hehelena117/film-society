@@ -16,6 +16,9 @@ import {
   stopReading,
   type CachedBook,
   type SeriesVolume,
+  getBookThoughts,
+  writeBookThoughts,
+  type BookThoughts,
 } from '@/lib/books'
 import { errorMessage } from '@/lib/errors'
 import { plainText } from '@/lib/plainText'
@@ -48,6 +51,19 @@ export function BookDetail({
   const [adding, setAdding] = useState(false)
   const [series, setSeries] = useState<SeriesVolume[]>([])
   const [startedOn, setStartedOn] = useState<string | null>(null)
+  const [thoughts, setThoughts] = useState<BookThoughts | null>(null)
+  const [writing, setWriting] = useState(false)
+
+  useEffect(() => {
+    if (!book) return
+    let active = true
+    getBookThoughts(book.id)
+      .then((t) => active && setThoughts(t))
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [book])
 
   useEffect(() => {
     let active = true
@@ -341,6 +357,64 @@ export function BookDetail({
             </p>
           </section>
         )}
+
+        {/* Underneath the catalogue's own description, never over it. A
+            good blurb written by a person is not improved by replacing it,
+            and which ones are good is not a judgement to make silently. */}
+        <section className="mt-8">
+          {thoughts?.description && (
+            <>
+              <div className="rule-pip mb-4">
+                <span className="type-meta whitespace-nowrap text-ink-3">
+                  {t('book.thoughts.inOtherWords')}
+                </span>
+              </div>
+              <p className="text-[0.9375rem] leading-relaxed text-ink-2">
+                {thoughts.description}
+              </p>
+            </>
+          )}
+
+          {thoughts?.would && (
+            <>
+              <div className="rule-pip mt-8 mb-4">
+                <span className="type-meta whitespace-nowrap text-ink-3">
+                  {t('book.thoughts.wouldYou')}
+                </span>
+              </div>
+              <p className="text-[0.9375rem] leading-relaxed text-ink-2">{thoughts.would}</p>
+              {thoughts.wouldnt && (
+                <p className="mt-3 border-l-2 border-brass-600/40 pl-3 text-[0.875rem] leading-relaxed text-ink-3">
+                  {thoughts.wouldnt}
+                </p>
+              )}
+              {/* Said plainly. Text a machine wrote should say so. */}
+              <p className="mt-4 text-[0.7rem] leading-relaxed text-ink-3/70">
+                {t('book.thoughts.written')}
+              </p>
+            </>
+          )}
+
+          {!thoughts?.would && (
+            <button
+              type="button"
+              disabled={writing}
+              onClick={async () => {
+                setWriting(true)
+                try {
+                  setThoughts(await writeBookThoughts(olKey, i18n.resolvedLanguage ?? 'en'))
+                } catch (err) {
+                  setError(errorMessage(err))
+                } finally {
+                  setWriting(false)
+                }
+              }}
+              className="type-marquee w-full rounded-[2px] border border-dashed border-rule-strong py-3.5 text-[12px] text-ink-2 transition-colors hover:border-brass-600 hover:text-ink disabled:opacity-60"
+            >
+              {writing ? t('book.thoughts.writing') : t('book.thoughts.ask')}
+            </button>
+          )}
+        </section>
 
         {book.subjects.length > 0 && (
           <section className="mt-8">

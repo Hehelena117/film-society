@@ -445,6 +445,13 @@
     "peek": {
       "back": "Back to choosing",
       "noDescription": "Open Library has no description for this one. The year, the length and what other readers made of it are above."
+    },
+    "thoughts": {
+      "ask": "Tell me about this one",
+      "writing": "Reading up on it…",
+      "inOtherWords": "In other words",
+      "wouldYou": "Would you like it",
+      "written": "Written by the app's AI from the catalogue and your ratings. It can be wrong about a book, so take it as a nudge rather than a verdict."
     }
   }
 }

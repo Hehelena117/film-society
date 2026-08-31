@@ -445,6 +445,13 @@
     "peek": {
       "back": "Tilbage til valget",
       "noDescription": "Open Library har ingen beskrivelse af denne. Årstal, længde og hvad andre læsere syntes står ovenfor."
+    },
+    "thoughts": {
+      "ask": "Fortæl mig om denne",
+      "writing": "Læser op på den…",
+      "inOtherWords": "Sagt på en anden måde",
+      "wouldYou": "Ville du kunne lide den",
+      "written": "Skrevet af appens AI ud fra kataloget og dine bedømmelser. Den kan tage fejl om en bog, så tag det som et vink og ikke som en dom."
     }
   }
 }
