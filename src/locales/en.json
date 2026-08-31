@@ -352,7 +352,8 @@
     },
     "reading": {
       "title": "Currently reading",
-      "since": "Since {{date}}"
+      "since": "Since {{date}}",
+      "addStart": "Add a start date"
     },
     "stats": {
       "read": "Books",
@@ -369,7 +370,12 @@
       "readingHint": "finish one off",
       "readBefore": "Read before",
       "nothingStarted": "Nothing on the go. Open a book and mark it as being read.",
-      "noMatch": "Nothing by that name. Open Library can be fussy about spelling — try the author, or fewer words."
+      "noMatch": "Nothing by that name. Open Library can be fussy about spelling — try the author, or fewer words.",
+      "startedOn": "Started on",
+      "startedHint": "Leave it blank if you would rather not say.",
+      "between": "Read {{from}} – {{to}}",
+      "finishedDate": "Finished {{date}}",
+      "startedDate": "Started {{date}}"
     },
     "rating": "{{score}} out of 5 · {{count}} readers",
     "lists": {

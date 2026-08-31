@@ -130,6 +130,8 @@ export interface ReadEntry {
   id: string
   rating: number | null
   finishedOn: string | null
+  /** When they began. Null for every entry logged before the column existed. */
+  startedOn: string | null
   createdAt: string
   /** Only ever populated for the owner — book_entry_notes has no public read path. */
   note: string | null
@@ -156,7 +158,7 @@ export async function getMyReading(limit = 100): Promise<ReadEntry[]> {
   const { data, error } = await supabase
     .from('book_log_entries')
     .select(
-      'id, rating, finished_on, created_at, note:book_entry_notes(body), ' +
+      'id, rating, finished_on, started_on, created_at, note:book_entry_notes(body), ' +
         'book:books!inner(id, ol_key, title, authors, first_published_year, cover_id)',
     )
     .order('created_at', { ascending: false })
@@ -168,6 +170,7 @@ export async function getMyReading(limit = 100): Promise<ReadEntry[]> {
     id: row.id,
     rating: row.rating,
     finishedOn: row.finished_on,
+    startedOn: row.started_on,
     createdAt: row.created_at,
     // One-to-one, but PostgREST embeds it as an array.
     note: Array.isArray(row.note) ? (row.note[0]?.body ?? null) : (row.note?.body ?? null),
@@ -179,6 +182,7 @@ export async function logReading(input: {
   bookId: number
   rating: number | null
   finishedOn: string | null
+  startedOn: string | null
   note: string | null
 }): Promise<string> {
   const { data, error } = await supabase
@@ -187,6 +191,7 @@ export async function logReading(input: {
       book_id: input.bookId,
       rating: input.rating,
       finished_on: input.finishedOn,
+      started_on: input.startedOn,
     })
     .select('id')
     .single()
@@ -239,6 +244,7 @@ export async function updateReadEntry(input: {
   entryId: string
   rating: number | null
   finishedOn: string | null
+  startedOn: string | null
   note: string | null
 }): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
@@ -246,7 +252,11 @@ export async function updateReadEntry(input: {
 
   const { error } = await supabase
     .from('book_log_entries')
-    .update({ rating: input.rating, finished_on: input.finishedOn })
+    .update({
+      rating: input.rating,
+      finished_on: input.finishedOn,
+      started_on: input.startedOn,
+    })
     .eq('id', input.entryId)
   if (error) throw error
 

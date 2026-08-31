@@ -17,6 +17,20 @@ import {
 import { errorMessage } from '@/lib/errors'
 
 /** Your own shelf: what you are in the middle of, and everything you have finished. */
+/**
+ * A date the way a person says one.
+ *
+ * Never the raw 2026-08-14, which the film log was corrected for once
+ * already. The year comes along for finished readings because those go
+ * back years, and is left off a book you are holding right now.
+ */
+const day = (iso: string, lang: string, withYear = false) =>
+  new Intl.DateTimeFormat(lang, {
+    day: 'numeric',
+    month: 'long',
+    ...(withYear ? { year: 'numeric' as const } : {}),
+  }).format(new Date(iso))
+
 export function MyShelf({
   onOpenBook,
   onSwitchSide,
@@ -36,6 +50,8 @@ export function MyShelf({
   const [reading, setReading] = useState<Reading[]>([])
   const [entries, setEntries] = useState<ReadEntry[]>([])
   const [loading, setLoading] = useState(true)
+  // Which reading row has its start date open for changing.
+  const [editDate, setEditDate] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openEntry, setOpenEntry] = useState<string | null>(null)
   const [editing, setEditing] = useState<string | null>(null)
@@ -56,6 +72,20 @@ export function MyShelf({
   useEffect(() => {
     void load()
   }, [load])
+
+  async function began(bookId: number, on: string) {
+    if (!on) return
+    setReading((current) =>
+      current.map((r) => (r.bookId === bookId ? { ...r, startedOn: on } : r)),
+    )
+    try {
+      const now = reading.find((r) => r.bookId === bookId)?.percent ?? 0
+      await setProgress(bookId, now, on)
+    } catch (err) {
+      setError(errorMessage(err))
+      void load()
+    }
+  }
 
   async function nudge(bookId: number, percent: number) {
     setReading((current) =>
@@ -167,18 +197,31 @@ export function MyShelf({
                       </span>
                     </div>
 
-                    {r.startedOn && (
-                      <p className="type-meta mt-0.5 text-ink-3/80">
-                        {/* Not the raw 2026-08-14. Nobody reads a date aloud
-                            that way, and the film log was corrected for the
-                            same reason. */}
-                        {t('book.reading.since', {
-                          date: new Intl.DateTimeFormat(i18n.resolvedLanguage ?? 'en', {
-                            day: 'numeric',
-                            month: 'long',
-                          }).format(new Date(r.startedOn)),
-                        })}
-                      </p>
+                    {/* Shown and changed in the same place. It was readable
+                        here and only editable on the book's own page, which
+                        is a long way to go to correct a day. */}
+                    {editDate === r.bookId ? (
+                      <input
+                        type="date"
+                        autoFocus
+                        value={r.startedOn ?? ''}
+                        onChange={(e) => void began(r.bookId, e.target.value)}
+                        onBlur={() => setEditDate(null)}
+                        aria-label={t('book.progress.startedOn')}
+                        className="mt-1 rounded-[2px] border border-rule bg-ground-2 px-2 py-1 text-[0.75rem] text-ink outline-none focus:border-brass-600"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditDate(r.bookId)}
+                        className="type-meta mt-0.5 block text-ink-3/80 underline underline-offset-2 hover:text-accent"
+                      >
+                        {r.startedOn
+                          ? t('book.reading.since', {
+                              date: day(r.startedOn, i18n.resolvedLanguage ?? 'en'),
+                            })
+                          : t('book.reading.addStart')}
+                      </button>
                     )}
 
                     {/* Here as well as on the book itself, because a book
@@ -266,6 +309,26 @@ export function MyShelf({
                       />
                     ) : (
                       <>
+                        {/* Blank for everything logged before there was
+                            anywhere to put it, which is honest: those
+                            readings really do have no start date. */}
+                        {(entry.startedOn || entry.finishedOn) && (
+                          <p className="type-meta mb-2 text-ink-3">
+                            {entry.startedOn && entry.finishedOn
+                              ? t('book.log.between', {
+                                  from: day(entry.startedOn, i18n.resolvedLanguage ?? 'en', true),
+                                  to: day(entry.finishedOn, i18n.resolvedLanguage ?? 'en', true),
+                                })
+                              : entry.finishedOn
+                                ? t('book.log.finishedDate', {
+                                    date: day(entry.finishedOn, i18n.resolvedLanguage ?? 'en', true),
+                                  })
+                                : t('book.log.startedDate', {
+                                    date: day(entry.startedOn!, i18n.resolvedLanguage ?? 'en', true),
+                                  })}
+                          </p>
+                        )}
+
                         {entry.note && (
                           <p className="border-l-2 border-brass-600/40 pl-3 text-[0.8125rem] leading-relaxed text-ink-2 italic">
                             {entry.note}
@@ -362,6 +425,7 @@ function EditReading({
   const { t } = useTranslation()
   const [rating, setRating] = useState<number | null>(entry.rating)
   const [finishedOn, setFinishedOn] = useState(entry.finishedOn ?? '')
+  const [startedOn, setStartedOn] = useState(entry.startedOn ?? '')
   const [note, setNote] = useState(entry.note ?? '')
   const [busy, setBusy] = useState(false)
 
@@ -371,6 +435,7 @@ function EditReading({
       const patch = {
         rating,
         finishedOn: finishedOn || null,
+        startedOn: startedOn || null,
         note: note.trim() || null,
       }
       await updateReadEntry({ entryId: entry.id, ...patch })
@@ -405,6 +470,16 @@ function EditReading({
         </div>
         <p className="mt-1 text-[0.7rem] text-ink-3">{t('log.ratingOptional')}</p>
       </fieldset>
+
+      <label className="mt-3 block">
+        <span className="type-meta mb-1.5 block text-ink-3">{t('book.log.startedOn')}</span>
+        <input
+          type="date"
+          value={startedOn}
+          onChange={(e) => setStartedOn(e.target.value)}
+          className="w-full rounded-[2px] border border-rule bg-ground-2 px-3 py-2 text-[0.875rem] text-ink outline-none focus:border-brass-600"
+        />
+      </label>
 
       <label className="mt-3 block">
         <span className="type-meta mb-1.5 block text-ink-3">{t('book.log.finishedOn')}</span>

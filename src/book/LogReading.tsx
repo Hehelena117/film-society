@@ -215,6 +215,9 @@ function RatingForm({
   const [rating, setRating] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [finishedOn, setFinishedOn] = useState('')
+  // Blank, never guessed from the shelf. A date filled in on your behalf
+  // is one nobody checks, and a wrong one is worse than none.
+  const [startedOn, setStartedOn] = useState('')
   const [busy, setBusy] = useState(false)
 
   async function save() {
@@ -224,6 +227,7 @@ function RatingForm({
         bookId: book.id,
         rating,
         finishedOn: finishedOn || null,
+        startedOn: startedOn || null,
         note: note || null,
       })
       onSaved()
@@ -276,6 +280,17 @@ function RatingForm({
         </div>
         <p className="mt-1.5 text-[0.75rem] text-ink-3">{t('log.ratingOptional')}</p>
       </fieldset>
+
+      <label className="mt-6 flex flex-col">
+        <span className="type-meta mb-2 text-ink-3">{t('book.log.startedOn')}</span>
+        <input
+          type="date"
+          value={startedOn}
+          onChange={(e) => setStartedOn(e.target.value)}
+          className="rounded-[2px] border border-rule bg-ground-2 px-3 py-2.5 text-[0.9375rem] text-ink outline-none focus:border-brass-600"
+        />
+        <span className="mt-1.5 block text-[0.75rem] text-ink-3">{t('book.log.startedHint')}</span>
+      </label>
 
       <label className="mt-6 flex flex-col">
         <span className="type-meta mb-2 text-ink-3">{t('book.log.finishedOn')}</span>
