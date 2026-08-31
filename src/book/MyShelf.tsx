@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Cover } from '@/book/Cover'
+import { TellGroups } from '@/book/TellGroups'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useAuth } from '@/lib/auth'
 import {
@@ -179,6 +180,14 @@ export function MyShelf({
                         })}
                       </p>
                     )}
+
+                    {/* Here as well as on the book itself, because a book
+                        you started a while ago is one you reach through
+                        the shelf and not by searching for it again. */}
+                    <TellGroups
+                      bookId={r.bookId}
+                      className="mt-1 text-[0.75rem] text-ink-3 underline underline-offset-2 transition-colors hover:text-accent"
+                    />
                   </div>
                 </li>
               ))}

@@ -345,7 +345,10 @@
       "hint": "Roughly is fine. Nobody is checking.",
       "tellGroups": "Tell my groups I am reading this",
       "told": "Your groups know",
-      "startedOn": "Started on"
+      "startedOn": "Started on",
+      "toldN_one": "Told your group.",
+      "toldN_other": "Told all {{count}} of your groups.",
+      "noGroups": "You are not in a book group yet, so there was nobody to tell. Make one under Groups and add people by username."
     },
     "reading": {
       "title": "Currently reading",

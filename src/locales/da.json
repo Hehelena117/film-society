@@ -345,7 +345,10 @@
       "hint": "Cirka er fint. Ingen tjekker efter.",
       "tellGroups": "Fortæl mine grupper, at jeg læser den",
       "told": "Dine grupper ved det",
-      "startedOn": "Begyndt den"
+      "startedOn": "Begyndt den",
+      "toldN_one": "Din gruppe er underrettet.",
+      "toldN_other": "Alle dine {{count}} grupper er underrettet.",
+      "noGroups": "Du er ikke med i en bogguppe endnu, så der var ingen at fortælle det til. Lav en under Grupper, og tilføj folk med brugernavn."
     },
     "reading": {
       "title": "Læser lige nu",

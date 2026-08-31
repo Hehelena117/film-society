@@ -345,7 +345,10 @@
       "hint": "Aproximado vale. Nadie lo comprueba.",
       "tellGroups": "Contar a mis grupos que la estoy leyendo",
       "told": "Tus grupos ya lo saben",
-      "startedOn": "Empezado el"
+      "startedOn": "Empezado el",
+      "toldN_one": "Tu grupo ya lo sabe.",
+      "toldN_other": "Tus {{count}} grupos ya lo saben.",
+      "noGroups": "Todavía no estás en ningún grupo de libros, así que no había a quién contárselo. Crea uno en Grupos y añade gente por nombre de usuario."
     },
     "reading": {
       "title": "Leyendo ahora",

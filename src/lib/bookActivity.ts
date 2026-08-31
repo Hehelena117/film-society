@@ -173,6 +173,68 @@ export async function getGroupCurrentlyReading(groupId: string): Promise<Current
 }
 
 /** Tells your book groups what you have picked up. Nothing else changes. */
-export async function postCurrentRead(bookId: number): Promise<void> {
-  await announceBook({ kind: 'started', bookId })
+export interface Told {
+  /** Book groups you are in at all. Zero means there was nobody to tell. */
+  groups: number
+  /** How many of them this book was new to. */
+  posted: number
+}
+
+/**
+ * Tell your book groups what you have picked up.
+ *
+ * Written out rather than handed to announceBook, which swallows every
+ * error on purpose — a feed line that fails to post is not worth
+ * interrupting anybody over. This one has a button behind it that says
+ * "your groups know", and saying that when nothing was written is worse
+ * than an error. It also could not tell you the difference between posting
+ * to three groups and being in none, which look identical from the outside
+ * and are not the same thing at all.
+ */
+export async function postCurrentRead(bookId: number): Promise<Told> {
+  const { data: auth } = await supabase.auth.getUser()
+  const me = auth.user?.id
+  if (!me) throw new Error('Not signed in')
+
+  // Book groups only. The tables are shared with the film side, so without
+  // this a novel would be announced to a film group.
+  const { data: groups, error: gErr } = await supabase
+    .from('group_members')
+    .select('group_id, group:groups!inner(side)')
+    .eq('user_id', me)
+    .eq('group.side', 'book')
+  if (gErr) throw gErr
+
+  const ids = (groups ?? []).map((g: Record<string, any>) => g.group_id as string)
+  if (!ids.length) return { groups: 0, posted: 0 }
+
+  // Saying it twice is not saying it louder.
+  const { data: already, error: aErr } = await supabase
+    .from('book_activity')
+    .select('group_id')
+    .eq('user_id', me)
+    .eq('book_id', bookId)
+    .eq('kind', 'started')
+    .in('group_id', ids)
+  if (aErr) throw aErr
+
+  const done = new Set((already ?? []).map((r) => r.group_id as string))
+  const rows = ids
+    .filter((id) => !done.has(id))
+    .map((id) => ({
+      group_id: id,
+      // Named rather than left to the column DEFAULT. The write policy
+      // checks user_id = auth.uid(), and a row failing that check is
+      // refused quietly.
+      user_id: me,
+      kind: 'started' as const,
+      book_id: bookId,
+    }))
+
+  if (rows.length) {
+    const { error } = await supabase.from('book_activity').insert(rows)
+    if (error) throw error
+  }
+
+  return { groups: ids.length, posted: rows.length }
 }
