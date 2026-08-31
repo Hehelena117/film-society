@@ -179,7 +179,7 @@ async function askModel(body: Body, count: number) {
         ` Only where the connection is real — a strained one is worse than none.`
       : '',
     body.excludeTitles.length
-      ? `\nAlready read or already suggested — do not offer any of these:\n${body.excludeTitles.slice(0, 200).join(', ')}`
+      ? `\nAlready read or already suggested — do not offer any of these:\n${body.excludeTitles.slice(0, 300).join(', ')}`
       : '',
     `\nSuggest ${count} books that appear nowhere above. Vary era, country, and`,
     `register rather than offering the same canon every time — and do not offer`,

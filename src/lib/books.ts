@@ -971,3 +971,45 @@ export async function writeBookThoughts(
 
   return { description: data.description, would: data.would, wouldnt: data.wouldnt }
 }
+
+export interface KnownBook {
+  olKey: string
+  title: string
+}
+
+/**
+ * Every book this reader already has something to do with.
+ *
+ * Read, on a list, or in their hands right now. The shelf excluded only
+ * what had been READ, so a book sitting on a list waiting to be picked up
+ * was recommended back to the person who put it there -- which is the one
+ * suggestion that is certainly no use, because they have already decided.
+ *
+ * Both the title and the key. The title is what the prompt can be told to
+ * avoid; the key is what actually identifies a book when the model offers
+ * it back under a slightly different name.
+ */
+export async function getBooksAlreadyKnown(): Promise<KnownBook[]> {
+  const shape = (rows: unknown) =>
+    ((rows ?? []) as Array<Record<string, any>>)
+      .map((r) => r.book)
+      .filter(Boolean)
+      .map((b: Record<string, any>) => ({ olKey: b.ol_key as string, title: b.title as string }))
+
+  const pick = "book:books!inner(ol_key, title)"
+
+  const [logged, listed, holding] = await Promise.all([
+    supabase.from('book_log_entries').select(pick).limit(500),
+    supabase.from('reading_list_items').select(pick).limit(500),
+    supabase.from('book_progress').select(pick).limit(200),
+  ])
+
+  const all = [...shape(logged.data), ...shape(listed.data), ...shape(holding.data)]
+
+  const seen = new Set<string>()
+  return all.filter((b) => {
+    if (!b.olKey || seen.has(b.olKey)) return false
+    seen.add(b.olKey)
+    return true
+  })
+}

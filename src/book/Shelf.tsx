@@ -15,9 +15,11 @@ import {
   type BookRecommendation,
   type BookVerdict,
   type ReadingSnapshot,
+  getBooksAlreadyKnown,
 } from '@/lib/books'
 import { getFilmRatingsForCrossover } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
+import { BOOK_KEYS, BOOK_LIMIT, BOOK_TITLES, getShown, rememberShown } from '@/lib/shown'
 
 const PAGE_SIZE = 6
 
@@ -45,6 +47,10 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const busyRef = useRef(false)
   const seenRef = useRef<string[]>([])
+  // Books to keep off the shelf whatever title they arrive under: already
+  // read, already on a list, already in their hands, or already offered on
+  // a previous visit. Keys, not titles.
+  const knownKeysRef = useRef<Set<string>>(new Set())
   const snapshotRef = useRef<ReadingSnapshot | null>(null)
   const feedbackRef = useRef<BookFeedbackEntry[]>([])
   const countRef = useRef(0)
@@ -65,7 +71,25 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
     try {
       if (snapshotRef.current === null) {
         snapshotRef.current = await getReadingSnapshot(useNotes)
-        seenRef.current = [...new Set([...seenRef.current, ...snapshotRef.current.readTitles])]
+
+        // Everything they have already decided about, plus everything this
+        // shelf offered on an earlier visit. Without the second half the
+        // exclusion list started empty on every mount, the prompt was
+        // identical, and the model returned its strongest picks again --
+        // the fix the film wall got and this one never did.
+        const known = await getBooksAlreadyKnown()
+        knownKeysRef.current = new Set([
+          ...known.map((k) => k.olKey),
+          ...getShown(BOOK_KEYS),
+        ])
+        seenRef.current = [
+          ...new Set([
+            ...seenRef.current,
+            ...snapshotRef.current.readTitles,
+            ...known.map((k) => k.title),
+            ...getShown(BOOK_TITLES),
+          ]),
+        ]
         feedbackRef.current = await getMyBookFeedback()
         setVerdicts(Object.fromEntries(feedbackRef.current.map((f) => [f.olKey, f.verdict])))
         crossoverRef.current = await getFilmRatingsForCrossover(language)
@@ -73,21 +97,59 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
 
       const rejected = feedbackRef.current.filter((f) => f.verdict === 'less')
 
-      const batch = await getBookRecommendations({
-        ratings: snapshotRef.current.ratings,
-        notes: snapshotRef.current.notes,
-        crossover: crossoverRef.current,
-        feedback: {
-          more: feedbackRef.current
-            .filter((f) => f.verdict === 'more')
-            .map((f) => ({ title: f.title, author: f.authors[0] ?? null })),
-          less: rejected.map((f) => ({ title: f.title, author: f.authors[0] ?? null })),
-        },
-        // Turned-down books first: the function trims this at 200, and these
-        // are the ones that must never be dropped from it.
-        excludeTitles: [...new Set([...rejected.map((f) => f.title), ...seenRef.current])],
-        count: PAGE_SIZE,
-      })
+      const ask = () =>
+        getBookRecommendations({
+          ratings: snapshotRef.current!.ratings,
+          notes: snapshotRef.current!.notes,
+          crossover: crossoverRef.current,
+          feedback: {
+            more: feedbackRef.current
+              .filter((f) => f.verdict === 'more')
+              .map((f) => ({ title: f.title, author: f.authors[0] ?? null })),
+            less: rejected.map((f) => ({ title: f.title, author: f.authors[0] ?? null })),
+          },
+          // Turned-down books first: the function trims this list, and these
+          // are the ones that must never be the part it drops.
+          excludeTitles: [...new Set([...rejected.map((f) => f.title), ...seenRef.current])],
+          count: PAGE_SIZE,
+        })
+
+      /** Offered is offered, whether or not it made it onto the shelf. */
+      const remember = (books: BookRecommendation[]) => {
+        const titles = books.map((b) => b.book.title)
+        const keys = books.map((b) => b.book.olKey)
+        seenRef.current = [...new Set([...seenRef.current, ...titles])].slice(-BOOK_LIMIT)
+        for (const k of keys) knownKeysRef.current.add(k)
+        // Across visits, not only for as long as this screen lives.
+        rememberShown(titles, BOOK_TITLES, BOOK_LIMIT)
+        rememberShown(keys, BOOK_KEYS, BOOK_LIMIT)
+      }
+
+      let batch: BookRecommendation[] = []
+      let fresh: BookRecommendation[] = []
+
+      // Two asks at most. A whole batch can come back already known, and the
+      // second prompt is not the same as the first because those titles have
+      // just joined the exclusion list -- but a shelf that quietly retries for
+      // ever is worse than one that stops. A loop rather than calling this
+      // function again: the recursive version reset the busy flag before its
+      // own finally block did, so a third fetch could start mid-retry.
+      for (let attempt = 0; attempt < 2 && !fresh.length; attempt++) {
+        batch = await ask()
+        if (!batch.length) break
+
+        // The exclusion list is built from TITLES, because that is the
+        // language the prompt speaks -- but a book comes back under a
+        // slightly different title often enough that the Open Library key is
+        // the only thing that identifies it. So the key has the last word,
+        // against this shelf and against everything they already have.
+        const onShelf = new Set(recsRef.current.map((r) => r.book.olKey))
+        fresh = batch.filter(
+          (b) => !onShelf.has(b.book.olKey) && !knownKeysRef.current.has(b.book.olKey),
+        )
+
+        remember(batch)
+      }
 
       if (!batch.length) {
         // A single failed model call looks exactly like a genuinely empty
@@ -97,25 +159,11 @@ export function Shelf({ onOpenBook }: { onOpenBook: (hit: BookHit) => void }) {
         return
       }
 
-      // Belt and braces against the same book arriving twice.
-      //
-      // The exclusion list is built from TITLES, because that is the language
-      // the prompt speaks — but a book can come back under a slightly
-      // different title than the one that was excluded, and then it is a
-      // duplicate cover on the same shelf. The Open Library key is the only
-      // thing that actually identifies a book, so the last word is here.
-      const known = new Set(recsRef.current.map((r) => r.book.olKey))
-      const fresh = batch.filter((b) => !known.has(b.book.olKey))
-
       if (!fresh.length) {
-        // Everything offered was already on the shelf. Asking again with the
-        // same prompt would return the same thing, so stop rather than loop.
         setExhausted(true)
         return
       }
 
-      const titles = fresh.map((b) => b.book.title)
-      seenRef.current = [...new Set([...seenRef.current, ...titles])].slice(-150)
       countRef.current += fresh.length
       recsRef.current = [...recsRef.current, ...fresh]
       setRecs((current) => [...current, ...fresh])
