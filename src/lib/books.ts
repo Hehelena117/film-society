@@ -1,4 +1,16 @@
 import { supabase } from '@/lib/supabase'
+
+/**
+ * Postgres for "no such column".
+ *
+ * Migrations here are run by hand, so there is always a window where the
+ * code knows about a column the database has not been told about yet. A
+ * screen that shows nothing at all is far worse than one missing a date,
+ * so the queries that read new columns fall back to the old shape rather
+ * than throwing. Once the migration is run the fallback simply stops
+ * being reached.
+ */
+const NO_COLUMN = '42703'
 import { announceBook } from '@/lib/bookActivity'
 
 const COVER = (id: number, size: 'M' | 'L' = 'L') =>
@@ -155,14 +167,21 @@ const shapeBook = (b: Record<string, any>) => ({
 })
 
 export async function getMyReading(limit = 100): Promise<ReadEntry[]> {
-  const { data, error } = await supabase
-    .from('book_log_entries')
-    .select(
-      'id, rating, finished_on, started_on, created_at, note:book_entry_notes(body), ' +
-        'book:books!inner(id, ol_key, title, authors, first_published_year, cover_id)',
-    )
-    .order('created_at', { ascending: false })
-    .limit(limit)
+  const columns = (withStart: boolean) =>
+    `id, rating, finished_on, ${withStart ? 'started_on, ' : ''}created_at, ` +
+    'note:book_entry_notes(body), ' +
+    'book:books!inner(id, ol_key, title, authors, first_published_year, cover_id)'
+
+  const run = (withStart: boolean) =>
+    supabase
+      .from('book_log_entries')
+      .select(columns(withStart))
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+  let { data, error } = await run(true)
+  // Everything you have ever read, or nothing at all, over one date.
+  if (error?.code === NO_COLUMN) ({ data, error } = await run(false))
 
   if (error) throw error
 
@@ -185,18 +204,31 @@ export async function logReading(input: {
   startedOn: string | null
   note: string | null
 }): Promise<string> {
-  const { data, error } = await supabase
+  const entry = {
+    book_id: input.bookId,
+    rating: input.rating,
+    finished_on: input.finishedOn,
+  }
+
+  let { data, error } = await supabase
     .from('book_log_entries')
-    .insert({
-      book_id: input.bookId,
-      rating: input.rating,
-      finished_on: input.finishedOn,
-      started_on: input.startedOn,
-    })
+    .insert({ ...entry, started_on: input.startedOn })
     .select('id')
     .single()
 
+  // Better to lose the start date than the reading.
+  if (error?.code === NO_COLUMN) {
+    ;({ data, error } = await supabase
+      .from('book_log_entries')
+      .insert(entry)
+      .select('id')
+      .single())
+  }
+
   if (error) throw error
+  // PostgREST does not answer .single() with neither a row nor an error, but
+  // the fallback path makes that a promise the compiler cannot see for itself.
+  if (!data) throw new Error('The reading was not saved')
   const entryId = data.id as string
 
   if (input.note?.trim()) {
@@ -250,14 +282,20 @@ export async function updateReadEntry(input: {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error('Not signed in')
 
-  const { error } = await supabase
+  const changes = { rating: input.rating, finished_on: input.finishedOn }
+
+  let { error } = await supabase
     .from('book_log_entries')
-    .update({
-      rating: input.rating,
-      finished_on: input.finishedOn,
-      started_on: input.startedOn,
-    })
+    .update({ ...changes, started_on: input.startedOn })
     .eq('id', input.entryId)
+
+  if (error?.code === NO_COLUMN) {
+    ;({ error } = await supabase
+      .from('book_log_entries')
+      .update(changes)
+      .eq('id', input.entryId))
+  }
+
   if (error) throw error
 
   const body = input.note?.trim()
